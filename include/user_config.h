@@ -8,8 +8,13 @@ extern "C" {
 	// UART config
 	#define SERIAL_BAUD_RATE 115200
 
-        // for Logic state analyser measurements
-        #define SCOPE_PIN 16 // GPIO
+  #define INPUT0_PIN       5 // D1
+  #define INPUT1_PIN       4 // D2
+  #define OUTPUT0_PIN      0 // D3
+  #define OUTPUT1_PIN      2 // D4
+
+  // for Logic state analyser measurements
+  #define SCOPE_PIN 16 // GPIO
 
 	// ESP SDK config
 	#define LWIP_OPEN_SRC

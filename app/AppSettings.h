@@ -22,47 +22,48 @@ typedef enum
 
 class ApplicationSettingsStorage
 {
-  public:
+ public:
 #if WIRED_ETHERNET_MODE != WIRED_ETHERNET_NONE
-    bool        wired = true;
+  bool               wired = true;
 #else
-    bool        wired = false;
+  bool               wired = false;
 #endif
-    String      ssid;
-    String      password;
-    eAppMode    apMode = apModeAlwaysOn;
-    String      apPassword;
+  String             ssid;
+  String             password;
+  eAppMode           apMode = apModeAlwaysOn;
+  String             apPassword;
 
-    String      portalUrl;
-    String      portalData;
+  String             portalUrl;
+  String             portalData;
 
-    bool        dhcp = true;
+  bool               dhcp = true;
 
-    IPAddress   ip;
-    IPAddress   netmask;
-    IPAddress   gateway;
+  IPAddress          ip;
+  IPAddress          netmask;
+  IPAddress          gateway;
 
-    String      mqttUser;
-    String      mqttPass;
-    String      mqttServer;
-    int         mqttPort = 1883;
-    String      mqttSensorPfx;
-    String      mqttControllerPfx;
+  String             mqttUser;
+  String             mqttPass;
+  String             mqttServer;
+  int                mqttPort = 1883;
+  String             mqttSensorPfx;
+  String             mqttControllerPfx;
 
-    bool        cpuBoost = true;
-    bool        useOwnBaseAddress = true;
+  bool               cpuBoost = true;
+  bool               useOwnBaseAddress = true;
 
-    String      cloudDeviceToken;
-    String      cloudLogin;
-    String      cloudPassword;
+  String             cloudDeviceToken;
+  String             cloudLogin;
+  String             cloudPassword;
 
-    String      webOtaBaseUrl;
+  String             webOtaBaseUrl;
 
-    void load();
-    void save();
+  int                m_dwMode = 0;
 
-    bool exist() { return fileExist(APP_SETTINGS_FILE); }
-};
+  void               load();
+  void               save();
+  bool               exist() { return fileExist(APP_SETTINGS_FILE); }
+  };
 
 extern ApplicationSettingsStorage AppSettings;
 
