@@ -1,0 +1,39 @@
+Killing Terminal to free /dev/ttyUSB0
+/sources/wsn/MySensorsGateway/tools/Sming/Sming/Makefile-rboot.mk:373: recipe for target 'flash' failed
+make: [flash] Killed (ignored)
+/opt/esp-open-sdk/esptool/esptool.py -p /dev/ttyUSB0 -b 115200 write_flash -ff 40m -fm qio -fs 32m 0x00000 out/firmware/rboot.bin 0x02000 out/firmware/rom0.bin 0x100000 out/firmware/spiff_rom.bin
+Connecting...
+Erasing flash...
+Took 0.16s to erase flash block
+Wrote 3072 bytes at 0x00000000 in 0.3 seconds (82.7 kbit/s)...
+Erasing flash...
+Took 1.89s to erase flash block
+Wrote 393216 bytes at 0x00002000 in 38.4 seconds (81.9 kbit/s)...
+Erasing flash...
+Took 1.63s to erase flash block
+Wrote 262144 bytes at 0x00100000 in 24.9 seconds (84.1 kbit/s)...
+
+Leaving...
+python -m serial.tools.miniterm /dev/ttyUSB0 115200
+--- Miniterm on /dev/ttyUSB0  115200,8,N,1 ---
+--- Quit: Ctrl+] | Menu: Ctrl+T | Help: Ctrl+T followed by Ctrl+H ---
+
+rBoot v1.3.0 - richardaburton@gmail.com
+Flash Size:   32 Mbit
+Flash Mode:   QIO
+Flash Speed:  40 MHz
+rBoot Option: Big flash
+
+Writing default boot config.
+Booting rom 0.
+rException in thread rx:
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/threading.py", line 810, in __bootstrap_inner
+    self.run()
+  File "/usr/lib/python2.7/threading.py", line 763, in run
+    self.__target(*self.__args, **self.__kwargs)
+  File "/usr/local/lib/python2.7/dist-packages/serial/tools/miniterm.py", line 411, in reader
+    self.console.write(text)
+  File "/usr/local/lib/python2.7/dist-packages/serial/tools/miniterm.py", line 60, in write
+    self.output.write(s)
+UnicodeEncodeError: 'ascii' codec can't encode character u'\ufffd' in position 1: ordinal not in range(128)
