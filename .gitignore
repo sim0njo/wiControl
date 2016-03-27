@@ -1,0 +1,9 @@
+tools
+out
+firmware
+app/mutex.h
+app/mutex.c
+app/globals.c
+*~
+*.swp
+spiffs/\.*
