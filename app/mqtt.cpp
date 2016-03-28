@@ -1,19 +1,19 @@
+
 #include <user_config.h>
 #include <SmingCore/SmingCore.h>
 #include <SmingCore/Debug.h>
 #include <AppSettings.h>
 #include <mqtt.h>
-#include <MyGateway.h>
 #include <HTTP.h>
 
 // Forward declarations
 void onMessageReceived(String topic, String message);
 
 // MQTT client
-MqttClient *mqtt = NULL;
-char clientId[33];
-bool MqttConfigured = FALSE;
-bool MqttIsConnected = FALSE;
+MqttClient    *mqtt = NULL;
+char          clientId[33];
+bool          MqttConfigured = FALSE;
+bool          MqttIsConnected = FALSE;
 
 unsigned long mqttPktRx = 0;
 unsigned long mqttPktTx = 0;
@@ -53,7 +53,7 @@ String getValue(String data, char separator, int index)
   return found>index ? data.substring(strIndex[0], strIndex[1]) : "";
 }
 
-int updateSensorStateInt(int node, int sensor, int type, int value);
+//int updateSensorStateInt(int node, int sensor, int type, int value);
 int getTypeFromString(String type);
 
 
@@ -82,11 +82,11 @@ void ICACHE_FLASH_ATTR onMessageReceived(String topic, String message)
         Debug.println(message);
         //strip leading V_
         type.remove(0,2);
-        Debug.println(MyGateway::getSensorTypeFromString(type));
+//      Debug.println(MyGateway::getSensorTypeFromString(type));
 
-        updateSensorStateInt(node.toInt(), sensor.toInt(),
-                             MyGateway::getSensorTypeFromString(type),
-                             message.toInt());
+//      updateSensorStateInt(node.toInt(), sensor.toInt(),
+//                           MyGateway::getSensorTypeFromString(type),
+//                           message.toInt());
     }
 
     if (topic.equals(String("/?")))
@@ -96,79 +96,78 @@ void ICACHE_FLASH_ATTR onMessageReceived(String topic, String message)
     }
 
     Debug.println("RX: " + topic + " = " + message);
-}
+  } //
 
 // Run MQTT client
 void ICACHE_FLASH_ATTR startMqttClient()
 {
-    if (mqtt)
-        delete mqtt;
+  if (mqtt)
+    delete mqtt;
 
-    AppSettings.load();
-    if (!AppSettings.mqttServer.equals(String("")) && AppSettings.mqttPort != 0)
-    {
-        sprintf(clientId, "ESP_%08X", system_get_chip_id());
-        mqtt = new MqttClient(AppSettings.mqttServer, AppSettings.mqttPort, onMessageReceived);
-        MqttIsConnected = mqtt->connect(clientId, AppSettings.mqttUser, AppSettings.mqttPass);
-        mqtt->subscribe("#");
-        mqttPublishVersion();
-        MqttConfigured = TRUE;
+  AppSettings.load();
+  if (!AppSettings.mqttServer.equals(String("")) && AppSettings.mqttPort != 0) {
+    sprintf(clientId, "ESP_%08X", system_get_chip_id());
+    mqtt = new MqttClient(AppSettings.mqttServer, AppSettings.mqttPort, onMessageReceived);
+    MqttIsConnected = mqtt->connect(clientId, AppSettings.mqttUser, AppSettings.mqttPass);
+    mqtt->subscribe("#");
+    mqttPublishVersion();
+    MqttConfigured = TRUE;
     }
-}
+  } //
 
-void ICACHE_FLASH_ATTR checkMqttClient()
+void ICACHE_FLASH_ATTR mqttCheckClient()
 {
-    if (mqtt && mqtt->isProcessing())
-        return;
+  if (mqtt && mqtt->isProcessing())
+    return;
 
-    startMqttClient();
-}
+  startMqttClient();
+  } //
 
 void onMqttConfig(HttpRequest &request, HttpResponse &response)
 {
-    AppSettings.load();
-    MqttConfigured = FALSE;
+  AppSettings.load();
+  MqttConfigured = FALSE;
 
-    if (!HTTP.isHttpClientAllowed(request, response))
-        return;
+  if (!HTTP.isHttpClientAllowed(request, response))
+    return;
 
-    if (request.getRequestMethod() == RequestMethod::POST)
-    {
-        AppSettings.mqttUser = request.getPostParameter("user");
-        AppSettings.mqttPass = request.getPostParameter("password");
-        AppSettings.mqttServer = request.getPostParameter("server");
-        AppSettings.mqttPort = atoi(request.getPostParameter("port").c_str());
-        AppSettings.mqttSensorPfx = request.getPostParameter("sensorPfx");
-        AppSettings.mqttControllerPfx = request.getPostParameter("controllerPfx");
+  if (request.getRequestMethod() == RequestMethod::POST) {
+    AppSettings.mqttUser = request.getPostParameter("user");
+    AppSettings.mqttPass = request.getPostParameter("password");
+    AppSettings.mqttServer = request.getPostParameter("server");
+    AppSettings.mqttPort = atoi(request.getPostParameter("port").c_str());
+    AppSettings.mqttSensorPfx = request.getPostParameter("sensorPfx");
+    AppSettings.mqttControllerPfx = request.getPostParameter("controllerPfx");
+    AppSettings.save();
 
-        AppSettings.save();
-        if (AppSettings.wired || WifiStation.isConnected())
-            startMqttClient();
-    }
+    if (WifiStation.isConnected())
+      startMqttClient();
+    } // if
 
-    TemplateFileStream *tmpl = new TemplateFileStream("mqtt.html");
-    auto &vars = tmpl->variables();
+  TemplateFileStream *tmpl = new TemplateFileStream("mqtt.html");
+  auto &vars = tmpl->variables();
 
-    vars["user"] = AppSettings.mqttUser;
-    vars["password"] = AppSettings.mqttPass;
-    vars["server"] = AppSettings.mqttServer;
-    vars["port"] = AppSettings.mqttPort;
-    vars["sensorPfx"] = AppSettings.mqttSensorPfx;
-    vars["controllerPfx"] = AppSettings.mqttControllerPfx;
-    response.sendTemplate(tmpl); // will be automatically deleted
-}
+  vars["user"] = AppSettings.mqttUser;
+  vars["password"] = AppSettings.mqttPass;
+  vars["server"] = AppSettings.mqttServer;
+  vars["port"] = AppSettings.mqttPort;
+  vars["sensorPfx"] = AppSettings.mqttSensorPfx;
+  vars["controllerPfx"] = AppSettings.mqttControllerPfx;
+  response.sendTemplate(tmpl); // will be automatically deleted
+  } //
 
 void ICACHE_FLASH_ATTR mqttRegisterHttpHandlers(HttpServer &server)
 {
-    server.addPath("/mqttconfig", onMqttConfig);
-}
+  server.addPath("/mqttconfig", onMqttConfig);
+  } //
+
 bool isMqttConnected(void) 
 {
   if (mqtt == NULL)
     return (FALSE);
   else
     return((mqtt->getConnectionState() == eTCS_Connected));
-}
+  } //
 
-bool isMqttConfigured(void) {return(MqttConfigured);}
-String MqttServer(void) {return(AppSettings.mqttServer);}
+bool   isMqttConfigured(void) { return(MqttConfigured); }
+String MqttServer(void)       { return(AppSettings.mqttServer); }

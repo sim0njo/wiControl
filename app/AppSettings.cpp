@@ -20,14 +20,7 @@ void ApplicationSettingsStorage::load()
 
         JsonObject& network = root["network"];
 
-#if WIRED_ETHERNET_MODE == WIRED_ETHERNET_NONE
         wired = false;
-#else
-        if (!network.containsKey("wired"))
-            wired = true;
-        else
-            wired = network["wired"];
-#endif
 
         ssid = (const char *)network["ssid"];
         password = (const char *)network["password"];

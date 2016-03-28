@@ -1,10 +1,11 @@
+
 #include <user_config.h>
 #include <SmingCore/SmingCore.h>
 #include <SmingCore/Debug.h>
 #include <globals.h>
 #include <AppSettings.h>
 #include "Network.h"
-#include "RTClock.h"
+//#include "RTClock.h"
 
 void
 network_cb ( System_Event_t *e )
@@ -16,8 +17,7 @@ extern void otaEnable();
 
 void NetworkClass::begin(NetworkStateChangeDelegate dlg)
 {
-    if (!AppSettings.wired)
-        WifiStation.enable(false);
+    WifiStation.enable(false);
 
     changeDlg = dlg;
 
@@ -31,21 +31,9 @@ void NetworkClass::begin(NetworkStateChangeDelegate dlg)
         softApDisable();
     }
 
-    if (!AppSettings.wired)
-    {
-        WifiStation.config(AppSettings.ssid, AppSettings.password);
-        if (!AppSettings.dhcp && !AppSettings.ip.isNull())
-        {
-            WifiStation.setIP(AppSettings.ip,
-                              AppSettings.netmask,
-                              AppSettings.gateway);
-        }
-    }
-    else
-    {
-    	void w5100_netif_init();
-    	w5100_netif_init();
-    }
+    WifiStation.config(AppSettings.ssid, AppSettings.password);
+    if (!AppSettings.dhcp && !AppSettings.ip.isNull())
+      WifiStation.setIP(AppSettings.ip, AppSettings.netmask, AppSettings.gateway);
 
     // This will work both for wired and wireless
     wifi_set_event_handler_cb(network_cb);
@@ -63,7 +51,7 @@ void NetworkClass::begin(NetworkStateChangeDelegate dlg)
     }
 
     otaEnable();    
-}
+  } //
 
 void NetworkClass::softApEnable()
 {
@@ -92,7 +80,7 @@ void NetworkClass::softApEnable()
     }
 
     WifiAccessPoint.enable(true);
-}
+  } //
 
 void NetworkClass::softApDisable()
 {
@@ -104,7 +92,7 @@ void NetworkClass::softApDisable()
     }
 
     WifiAccessPoint.enable(false);
-}
+  } //
 
 void NetworkClass::handleEvent(System_Event_t *e)
 {
@@ -195,7 +183,7 @@ void NetworkClass::handleEvent(System_Event_t *e)
         if (changeDlg)
             changeDlg(false);
     }
-}
+  } //
 
 void NetworkClass::portalLoginHandler(HttpClient& client, bool successful)
 {
@@ -213,15 +201,12 @@ void NetworkClass::connect()
     if (!WifiStation.getSSID().equals(AppSettings.ssid) ||
         !WifiStation.getPassword().equals(AppSettings.password))
     {
-        WifiStation.config(AppSettings.ssid, AppSettings.password,
-                           FALSE);
+        WifiStation.config(AppSettings.ssid, AppSettings.password, FALSE);
     }
 
     if (!AppSettings.dhcp && !AppSettings.ip.isNull())
     {
-        WifiStation.setIP(AppSettings.ip,
-                          AppSettings.netmask,
-                          AppSettings.gateway);
+        WifiStation.setIP(AppSettings.ip, AppSettings.netmask, AppSettings.gateway);
     }
 
     WifiStation.enable(true);
@@ -229,7 +214,7 @@ void NetworkClass::connect()
     if (AppSettings.dhcp)
         wifi_station_dhcpc_start();
     wifi_station_set_reconnect_policy(true);
-}
+  } //
 
 void NetworkClass::reconnect(int delayMs)
 {
@@ -237,47 +222,29 @@ void NetworkClass::reconnect(int delayMs)
         return;
 
     reconnectTimer.initializeMs(delayMs, TimerDelegate(&NetworkClass::connect, this)).startOnce();
-}
+  } //
 
 void NetworkClass::ntpTimeResultHandler(NtpClient& client, time_t ntpTime)
 {
     SystemClock.setTime(ntpTime, eTZ_UTC);
     Debug.print("Time after NTP sync: ");
     Debug.println(SystemClock.getSystemTimeString());
-    Clock.setTime(ntpTime);
-}
+//    Clock.setTime(ntpTime);
+  } //
 
 IPAddress NetworkClass::getClientIP()
 {
-    if (AppSettings.wired)
-    {
-        extern IPAddress w5100_netif_get_ip();
-        return w5100_netif_get_ip();
-    }
-
     return WifiStation.getIP();
-}
+  } //
 
 IPAddress NetworkClass::getClientMask()
 {
-    if (AppSettings.wired)
-    {
-        extern IPAddress w5100_netif_get_netmask();
-        return w5100_netif_get_netmask();
-    }
-
     return WifiStation.getNetworkMask();
-}
+  } //
 
 IPAddress NetworkClass::getClientGW()
 {
-    if (AppSettings.wired)
-    {
-        extern IPAddress w5100_netif_get_gateway();
-        return w5100_netif_get_gateway();
-    }
-
     return WifiStation.getNetworkGateway();
-}
+  } //
 
 NetworkClass Network;

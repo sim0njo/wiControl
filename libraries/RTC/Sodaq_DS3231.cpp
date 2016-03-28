@@ -12,7 +12,7 @@
 #include <SmingCore/Clock.h>
 #include <Wiring/WiringFrameworkIncludes.h>
 #include "Sodaq_DS3231.h"
-#include "i2c.h"
+//#include "i2c.h"
 
 #define EPOCH_TIME_OFF 946684800  // This is 2000-jan-01 00:00:00 in epoch time
 #define SECONDS_PER_DAY 86400L

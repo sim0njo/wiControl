@@ -5,112 +5,96 @@
 #include <AppSettings.h>
 #include <globals.h>
 #include <Network.h>
-//#include <MyGateway.h>
 #include <HTTP.h>
 #include <controller.h>
 
-FTPServer      ftp;
-TelnetServer   telnet;
-static boolean first_time = TRUE;
-int            isNetworkConnected = FALSE;
-//char           convBuf[MAX_PAYLOAD*2+1];
+FTPServer      g_ftp;
+TelnetServer   g_telnet;
+static boolean g_firstTime = TRUE;
+int            g_isNetworkConnected = FALSE;
+Timer          g_heapCheckTimer;
 
-/*
-void incomingMessage(const MyMessage &message)
-{
-    // Pass along the message from sensors to serial line
-    Debug.printf("APP RX %d;%d;%d;%d;%d;%s\n",
-                  message.sender, message.sensor,
-                  mGetCommand(message), mGetAck(message),
-                  message.type, message.getString(convBuf));
-
-    if (GW.getSensorTypeString(message.type) == "VAR2") 
-    {
-        Debug.printf("received pong\n");
-    }
-
-    if (mGetCommand(message) == C_SET)
-    {
-        String type = GW.getSensorTypeString(message.type);
-        String topic = message.sender + String("/") +
-                       message.sensor + String("/") +
-                       "V_" + type;
-        controller.notifyChange(topic, message.getString(convBuf));
-    }
-
-    return;
-}
-*/
-void startFTP()
-{
-  if (!fileExist("index.html"))
-      fileSetContent("index.html", "<h3>Please connect to FTP and upload files from folder 'web/build' (details in code)</h3>");
-
-  // Start FTP server
-  ftp.listen(21);
-  ftp.addUser("admin", "12345678"); // FTP account
-  } //
-
-int updateSensorStateInt(int node, int sensor, int type, int value)
-{
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
+//int updateSensorStateInt(int node, int sensor, int type, int value)
+//{
 //MyMessage myMsg;
 //myMsg.set(value);
 //GW.sendRoute(GW.build(myMsg, node, sensor, C_SET, type, 0));
 //rfPacketsTx++;
-  } // 
+//  } // 
 
-int updateSensorState(int node, int sensor, int value)
-{
-  updateSensorStateInt(node, sensor, 2 , value);
-  } //
+//int updateSensorState(int node, int sensor, int value)
+//{
+//  updateSensorStateInt(node, sensor, 2 , value);
+//  } //
 
-Timer heapCheckTimer;
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 void heapCheckUsage()
 {
   controller.notifyChange("memory", String(system_get_free_heap_size()));    
   } //
 
-//void i2cChangeHandler(String object, String value)
-//{
-//  controller.notifyChange(object, value);
-//  } //
-
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 // Will be called when system initialization was completed
 void startServers()
 {
-  HTTP.begin(); //HTTP must be first so handlers can be registered
-  heapCheckTimer.initializeMs(60000, heapCheckUsage).start(true);
-  startFTP();
-  telnet.listen(23);
+  //HTTP must be first so handlers can be registered
+  if (!fileExist("index.html"))
+    fileSetContent("index.html", "<h3>Please connect to FTP and upload files from folder 'web/build' (details in code)</h3>");
+
+  HTTP.begin(); 
+
+  g_heapCheckTimer.initializeMs(60000, heapCheckUsage).start(true);
+
+  // Start FTP server
+  g_ftp.listen(21);
+  g_ftp.addUser("admin", "12345678"); // FTP account
+
+  g_telnet.listen(23);
+
   controller.begin(); // gpiod
   } //
 
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 // Will be called when WiFi station was connected to AP
 void wifiCb(bool connected)
 {
-  isNetworkConnected = connected;
+  g_isNetworkConnected = connected;
   if (connected) {
     Debug.println("--> I'm CONNECTED");
-    if (first_time) 
-      first_time = FALSE;
+    if (g_firstTime) 
+      g_firstTime = FALSE;
     }
   } //
 
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 void processInfoCommand(String commandLine, CommandOutput* out)
 {
 //  uint64_t rfBaseAddress = GW.getBaseAddress();
 
-    out->printf("System information : ESP8266 based MySensors gateway\r\n");
-    out->printf("Build time         : %s\n", build_time);
-    out->printf("Version            : %s\n", build_git_sha);
-    out->printf("Sming Version      : %s\n", SMING_VERSION);
-    out->printf("ESP SDK version    : %s\n", system_get_sdk_version());
-//    out->printf("MySensors version  : %s\n", GW.version());
+    out->printf("\r\n");
+    
+    out->printf("System information : ESP8266 based Wifi IO node\r\n");
+    out->printf("Build time         : %s\r\n", build_time);
+    out->printf("Version            : %s\r\n", build_git_sha);
+    out->printf("Sming Version      : %s\r\n", SMING_VERSION);
+    out->printf("ESP SDK version    : %s\r\n", system_get_sdk_version());
+    out->printf("Gpoiod version     : %s\r\n", CGPIOD_VERSION);
     out->printf("\r\n");
 
-    out->printf("Station SSID       : %s\n", AppSettings.ssid.c_str());
-    out->printf("Station DHCP       : %s\n", AppSettings.dhcp ? "TRUE" : "FALSE");
-    out->printf("Station IP         : %s\n", Network.getClientIP().toString().c_str());
+    out->printf("Station SSID       : %s\r\n", AppSettings.ssid.c_str());
+    out->printf("Station DHCP       : %s\r\n", AppSettings.dhcp ? "TRUE" : "FALSE");
+    out->printf("Station IP         : %s\r\n", Network.getClientIP().toString().c_str());
     out->printf("\r\n");
 
     String apModeStr;
@@ -121,7 +105,7 @@ void processInfoCommand(String commandLine, CommandOutput* out)
     else
         apModeStr= "whenDisconnected";
 
-    out->printf("Access Point Mode  : %s\n", apModeStr.c_str());
+    out->printf("Access Point Mode  : %s\r\n", apModeStr.c_str());
     out->printf("\r\n");
 
     out->printf("System Time        : ");
@@ -140,6 +124,9 @@ void processInfoCommand(String commandLine, CommandOutput* out)
 //  out->printf("\r\n");
   }
 
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 void processRestartCommand(String commandLine, CommandOutput* out)
 {
   System.restart();
@@ -150,15 +137,18 @@ void processRestartCommandWeb(void)
   System.restart();
   }
 
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 void processDebugCommand(String commandLine, CommandOutput* out)
 {
   Vector<String> commandToken;
-  int numToken = splitString(commandLine, ' ' , commandToken);
+  int            numToken = splitString(commandLine, ' ' , commandToken);
 
   if ((numToken != 2) || (commandToken[1] != "on" && commandToken[1] != "off")) {
-    out->printf("usage : \r\n\r\n");
-    out->printf("debug on  : Enable debug\r\n");
-    out->printf("debug off : Disable debug\r\n");
+    out->printf("Usage : \r\n\r\n");
+    out->printf("  debug on  : Enable debug\r\n");
+    out->printf("  debug off : Disable debug\r\n");
     return;
     }
 
@@ -166,8 +156,11 @@ void processDebugCommand(String commandLine, CommandOutput* out)
     Debug.start();
   else
     Debug.stop();
-  } // 
+  } // processDebugCommand
 
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 void processCpuCommand(String commandLine, CommandOutput* out)
 {
     Vector<String> commandToken;
@@ -176,9 +169,9 @@ void processCpuCommand(String commandLine, CommandOutput* out)
     if (numToken != 2 ||
         (commandToken[1] != "80" && commandToken[1] != "160"))
     {
-        out->printf("usage : \r\n\r\n");
-        out->printf("cpu 80  : Run at 80MHz\r\n");
-        out->printf("cpu 160 : Run at 160MHz\r\n");
+        out->printf("Usage : \r\n\r\n");
+        out->printf("  cpu 80  : Run at 80MHz\r\n");
+        out->printf("  cpu 160 : Run at 160MHz\r\n");
         return;
     }
 
@@ -194,8 +187,11 @@ void processCpuCommand(String commandLine, CommandOutput* out)
     }
 
     AppSettings.save();
-}
+  }
 
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 void processBaseAddressCommand(String commandLine, CommandOutput* out)
 {
     Vector<String> commandToken;
@@ -204,9 +200,9 @@ void processBaseAddressCommand(String commandLine, CommandOutput* out)
     if (numToken != 2 ||
         (commandToken[1] != "default" && commandToken[1] != "private"))
     {
-        out->printf("usage : \r\n\r\n");
-        out->printf("base-address default : Use the default MySensors base address\r\n");
-        out->printf("base-address private : Use a base address based on ESP chip ID\r\n");
+        out->printf("Usage : \r\n\r\n");
+        out->printf("  base-address default : Use the default MySensors base address\r\n");
+        out->printf("  base-address private : Use a base address based on ESP chip ID\r\n");
         return;
     }
 
@@ -223,11 +219,17 @@ void processBaseAddressCommand(String commandLine, CommandOutput* out)
     System.restart();
 }
 
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 void processShowConfigCommand(String commandLine, CommandOutput* out)
 {
   out->println(fileGetContent(".settings.conf"));
   }
 
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 void processAPModeCommand(String commandLine, CommandOutput* out)
 {
   Vector<String> commandToken;
@@ -237,11 +239,11 @@ void processAPModeCommand(String commandLine, CommandOutput* out)
         (commandToken[1] != "always" && commandToken[1] != "never" &&
          commandToken[1] != "whenDisconnected"))
     {
-      out->printf("usage : \r\n\r\n");
-      out->printf("apMode always           : Always have the AP enabled\r\n");
-      out->printf("apMode never            : Never have the AP enabled\r\n");
-      out->printf("apMode whenDisconnected : Only enable the AP when discnnected\r\n");
-      out->printf("                          from the network\r\n");
+      out->printf("Usage : \r\n\r\n");
+      out->printf("  apMode always           : Always have the AP enabled\r\n");
+      out->printf("  apMode never            : Never have the AP enabled\r\n");
+      out->printf("  apMode whenDisconnected : Only enable the AP when disconnected\r\n");
+      out->printf("                            from the network\r\n");
       return;
     }
 
@@ -262,6 +264,9 @@ void processAPModeCommand(String commandLine, CommandOutput* out)
   System.restart();
   }
 
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 void init()
 {
   /* Make sure wifi does not start yet! */
