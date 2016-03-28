@@ -5,54 +5,138 @@
 #include <globals.h>
 #include <AppSettings.h>
 #include "Network.h"
-//#include "RTClock.h"
+#include <HTTP.h>
 
-void
-network_cb ( System_Event_t *e )
+NetworkClass Network;
+Timer        softApSetPasswordTimer;
+
+void         processRestartCommandWeb(void);
+extern void  otaEnable();
+
+
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
+void apEnable()
 {
-    Network.handleEvent(e);
-}
-
-extern void otaEnable();
-
-void NetworkClass::begin(NetworkStateChangeDelegate dlg)
-{
-    WifiStation.enable(false);
-
-    changeDlg = dlg;
-
-    if (AppSettings.apMode == apModeAlwaysOn ||
-        AppSettings.apMode == apModeWhenDisconnected)
-    {
-        softApEnable();
-    }
-    else
-    {
-        softApDisable();
-    }
-
-    WifiStation.config(AppSettings.ssid, AppSettings.password);
-    if (!AppSettings.dhcp && !AppSettings.ip.isNull())
-      WifiStation.setIP(AppSettings.ip, AppSettings.netmask, AppSettings.gateway);
-
-    // This will work both for wired and wireless
-    wifi_set_event_handler_cb(network_cb);
-
-    if (!AppSettings.wired)
-    {
-        if (AppSettings.ssid.equals(""))
-        {
-            WifiStation.enable(false);
-        }
-        else
-        {
-            reconnect(1);
-        }
-    }
-
-    otaEnable();    
+  Network.softApEnable();
   } //
 
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
+void onNetwork(HttpRequest &request, HttpResponse &response)
+{
+  if (!HTTP.isHttpClientAllowed(request, response))
+    return;
+
+  if (request.getRequestMethod() == RequestMethod::POST)
+  {
+    bool connectionTypeChanges =
+     	AppSettings.wired != (request.getPostParameter("wired") == "1");
+
+    AppSettings.wired = request.getPostParameter("wired") == "1";
+
+    String oldApPass = AppSettings.apPassword;
+    AppSettings.apPassword = request.getPostParameter("apPassword");
+    if (!AppSettings.apPassword.equals(oldApPass))
+    {
+      softApSetPasswordTimer.initializeMs(500, apEnable).startOnce();
+      }
+
+    AppSettings.ssid = request.getPostParameter("ssid");
+    AppSettings.password = request.getPostParameter("password");
+    AppSettings.portalUrl = request.getPostParameter("portalUrl");
+    AppSettings.portalData = request.getPostParameter("portalData");
+
+    AppSettings.dhcp = request.getPostParameter("dhcp") == "1";
+    AppSettings.ip = request.getPostParameter("ip");
+    AppSettings.netmask = request.getPostParameter("netmask");
+    AppSettings.gateway = request.getPostParameter("gateway");
+    Debug.printf("Updating IP settings: %d", AppSettings.ip.isNull());
+    AppSettings.save();
+    
+    Network.reconnect(500);
+
+    if (connectionTypeChanges)
+      processRestartCommandWeb();
+    }
+
+  TemplateFileStream *tmpl = new TemplateFileStream("network.html");
+
+  auto &vars = tmpl->variables();
+
+  vars["appAlias"] = APP_ALIAS;
+
+  vars["wiredon"] = AppSettings.wired ? "checked='checked'" : "";
+  vars["wiredoff"] = AppSettings.wired ? "" : "checked='checked'";
+
+  vars["ssid"] = AppSettings.ssid;
+  vars["password"] = AppSettings.password;
+  vars["apPassword"] = AppSettings.apPassword;
+
+  vars["portalUrl"] = AppSettings.portalUrl;
+  vars["portalData"] = AppSettings.portalData;
+
+  bool dhcp = AppSettings.dhcp;
+  vars["dhcpon"] = dhcp ? "checked='checked'" : "";
+  vars["dhcpoff"] = !dhcp ? "checked='checked'" : "";
+
+  vars["ip"] = Network.getClientIP().toString();
+  vars["netmask"] = Network.getClientMask().toString();
+  vars["gateway"] = Network.getClientGW().toString();
+
+  response.sendTemplate(tmpl); // will be automatically deleted
+  } //
+
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
+void network_cb ( System_Event_t *e )
+{
+  Network.handleEvent(e);
+  } //
+
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
+void NetworkClass::begin(NetworkStateChangeDelegate dlg)
+{
+  WifiStation.enable(false);
+
+  changeDlg = dlg;
+
+  if (AppSettings.apMode == apModeAlwaysOn ||
+      AppSettings.apMode == apModeWhenDisconnected)
+    softApEnable();
+  else
+    softApDisable();
+
+  WifiStation.config(AppSettings.ssid, AppSettings.password);
+  if (!AppSettings.dhcp && !AppSettings.ip.isNull())
+    WifiStation.setIP(AppSettings.ip, AppSettings.netmask, AppSettings.gateway);
+
+  // This will work both for wired and wireless
+  wifi_set_event_handler_cb(network_cb);
+
+  if (!AppSettings.wired)
+  {
+    if (AppSettings.ssid.equals(""))
+    {
+      WifiStation.enable(false);
+      }
+    else
+    {
+      reconnect(1);
+      }
+    }
+
+  otaEnable();    
+  } //
+
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 void NetworkClass::softApEnable()
 {
     char id[16];
@@ -82,6 +166,9 @@ void NetworkClass::softApEnable()
     WifiAccessPoint.enable(true);
   } //
 
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 void NetworkClass::softApDisable()
 {
     if (AppSettings.apMode == apModeAlwaysOn ||
@@ -94,13 +181,16 @@ void NetworkClass::softApDisable()
     WifiAccessPoint.enable(false);
   } //
 
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 void NetworkClass::handleEvent(System_Event_t *e)
 {
-    int event = e->event;
+  int event = e->event;
 
-    if (event == EVENT_STAMODE_GOT_IP)
-    {
-	Debug.printf("Got IP\n");
+  if (event == EVENT_STAMODE_GOT_IP)
+  {
+    Debug.printf("Got IP\n");
         if (!haveIp && changeDlg)
         {
             changeDlg(true);
@@ -185,66 +275,77 @@ void NetworkClass::handleEvent(System_Event_t *e)
     }
   } //
 
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 void NetworkClass::portalLoginHandler(HttpClient& client, bool successful)
 {
-    String response = client.getResponseString();
-    Debug.println("Portal server response: '" + response + "'");
-}
+  String response = client.getResponseString();
+  Debug.println("Portal server response: '" + response + "'");
+  } // 
 
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 void NetworkClass::connect()
 {
-    if (AppSettings.wired)
-        return;
+  Debug.println("Connecting...");
 
-    Debug.println("Connecting...");
+  if (!WifiStation.getSSID().equals(AppSettings.ssid) ||
+      !WifiStation.getPassword().equals(AppSettings.password))
+    WifiStation.config(AppSettings.ssid, AppSettings.password, FALSE);
 
-    if (!WifiStation.getSSID().equals(AppSettings.ssid) ||
-        !WifiStation.getPassword().equals(AppSettings.password))
-    {
-        WifiStation.config(AppSettings.ssid, AppSettings.password, FALSE);
-    }
+  if (!AppSettings.dhcp && !AppSettings.ip.isNull())
+    WifiStation.setIP(AppSettings.ip, AppSettings.netmask, AppSettings.gateway);
 
-    if (!AppSettings.dhcp && !AppSettings.ip.isNull())
-    {
-        WifiStation.setIP(AppSettings.ip, AppSettings.netmask, AppSettings.gateway);
-    }
+  WifiStation.enable(true);
+  wifi_station_connect();
+  if (AppSettings.dhcp)
+    wifi_station_dhcpc_start();
 
-    WifiStation.enable(true);
-    wifi_station_connect();
-    if (AppSettings.dhcp)
-        wifi_station_dhcpc_start();
-    wifi_station_set_reconnect_policy(true);
+  wifi_station_set_reconnect_policy(true);
   } //
 
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 void NetworkClass::reconnect(int delayMs)
 {
-    if (AppSettings.wired)
-        return;
-
-    reconnectTimer.initializeMs(delayMs, TimerDelegate(&NetworkClass::connect, this)).startOnce();
+  reconnectTimer.initializeMs(delayMs, TimerDelegate(&NetworkClass::connect, this)).startOnce();
   } //
 
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 void NetworkClass::ntpTimeResultHandler(NtpClient& client, time_t ntpTime)
 {
-    SystemClock.setTime(ntpTime, eTZ_UTC);
-    Debug.print("Time after NTP sync: ");
-    Debug.println(SystemClock.getSystemTimeString());
+  SystemClock.setTime(ntpTime, eTZ_UTC);
+  Debug.print("Time after NTP sync: ");
+  Debug.println(SystemClock.getSystemTimeString());
 //    Clock.setTime(ntpTime);
   } //
 
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 IPAddress NetworkClass::getClientIP()
 {
-    return WifiStation.getIP();
+  return WifiStation.getIP();
   } //
 
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 IPAddress NetworkClass::getClientMask()
 {
-    return WifiStation.getNetworkMask();
+  return WifiStation.getNetworkMask();
   } //
 
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 IPAddress NetworkClass::getClientGW()
 {
-    return WifiStation.getNetworkGateway();
+  return WifiStation.getNetworkGateway();
   } //
 
-NetworkClass Network;

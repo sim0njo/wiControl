@@ -45,14 +45,14 @@ void heapCheckUsage()
 void startServers()
 {
   //HTTP must be first so handlers can be registered
-  if (!fileExist("index.html"))
-    fileSetContent("index.html", "<h3>Please connect to FTP and upload files from folder 'web/build' (details in code)</h3>");
-
   HTTP.begin(); 
 
   g_heapCheckTimer.initializeMs(60000, heapCheckUsage).start(true);
 
   // Start FTP server
+  if (!fileExist("index.html"))
+    fileSetContent("index.html", "<h3>Please connect to FTP and upload files from folder 'web/build' (details in code)</h3>");
+
   g_ftp.listen(21);
   g_ftp.addUser("admin", "12345678"); // FTP account
 
@@ -69,10 +69,12 @@ void wifiCb(bool connected)
 {
   g_isNetworkConnected = connected;
   if (connected) {
-    Debug.println("--> I'm CONNECTED");
+    Debug.println("--> Wifi CONNECTED");
     if (g_firstTime) 
       g_firstTime = FALSE;
     }
+  else
+    Debug.println("--> Wifi DISCONNECTED");
   } //
 
 //----------------------------------------------------------------------------
@@ -82,47 +84,46 @@ void processInfoCommand(String commandLine, CommandOutput* out)
 {
 //  uint64_t rfBaseAddress = GW.getBaseAddress();
 
-    out->printf("\r\n");
+  out->printf("\r\n");
     
-    out->printf("System information : ESP8266 based Wifi IO node\r\n");
-    out->printf("Build time         : %s\r\n", build_time);
-    out->printf("Version            : %s\r\n", build_git_sha);
-    out->printf("Sming Version      : %s\r\n", SMING_VERSION);
-    out->printf("ESP SDK version    : %s\r\n", system_get_sdk_version());
-    out->printf("Gpoiod version     : %s\r\n", CGPIOD_VERSION);
-    out->printf("\r\n");
+  out->printf("System information : ESP8266 based Wifi IO node\r\n");
+  out->printf("Build time         : %s\r\n", build_time);
+  out->printf("Version            : %s\r\n", build_git_sha);
+  out->printf("Sming Version      : %s\r\n", SMING_VERSION);
+  out->printf("ESP SDK version    : %s\r\n", system_get_sdk_version());
+  out->printf("Gpoiod version     : %s\r\n", CGPIOD_VERSION);
+  out->printf("\r\n");
 
-    out->printf("Station SSID       : %s\r\n", AppSettings.ssid.c_str());
-    out->printf("Station DHCP       : %s\r\n", AppSettings.dhcp ? "TRUE" : "FALSE");
-    out->printf("Station IP         : %s\r\n", Network.getClientIP().toString().c_str());
-    out->printf("\r\n");
+  out->printf("Station SSID       : %s\r\n", AppSettings.ssid.c_str());
+  out->printf("Station DHCP       : %s\r\n", AppSettings.dhcp ? "TRUE" : "FALSE");
+  out->printf("Station IP         : %s\r\n", Network.getClientIP().toString().c_str());
+  out->printf("\r\n");
 
-    String apModeStr;
-    if (AppSettings.apMode == apModeAlwaysOn)
-        apModeStr = "always";
-    else if (AppSettings.apMode == apModeAlwaysOff)
-        apModeStr = "never";
-    else
-        apModeStr= "whenDisconnected";
+  String apModeStr;
+  if (AppSettings.apMode == apModeAlwaysOn)
+    apModeStr = "always";
+  else if (AppSettings.apMode == apModeAlwaysOff)
+    apModeStr = "never";
+  else
+    apModeStr= "whenDisconnected";
 
-    out->printf("Access Point Mode  : %s\r\n", apModeStr.c_str());
-    out->printf("\r\n");
+  out->printf("Access Point Mode  : %s\r\n", apModeStr.c_str());
+  out->printf("\r\n");
 
-    out->printf("System Time        : ");
-    out->printf(SystemClock.getSystemTimeString().c_str());
-    out->printf("\r\n");
+  out->printf("Gpiod mode         : %s\r\n", AppSettings.m_dwMode ? "shutter" : "output");
+  out->printf("\r\n");
 
-    out->printf("Free Heap          : %d\r\n", system_get_free_heap_size());
-    out->printf("CPU Frequency      : %d MHz\r\n", system_get_cpu_freq());
-    out->printf("System Chip ID     : %x\r\n", system_get_chip_id());
-    out->printf("SPI Flash ID       : %x\r\n", spi_flash_get_id());
-    out->printf("SPI Flash Size     : %d\r\n", (1 << ((spi_flash_get_id() >> 16) & 0xff)));
-    out->printf("\r\n");
+  out->printf("System Time        : ");
+  out->printf(SystemClock.getSystemTimeString().c_str());
+  out->printf("\r\n");
 
-//  out->printf("RF base address    : %02x", (rfBaseAddress >> 32) & 0xff);
-//  out->printf("%08x\r\n", rfBaseAddress);
-//  out->printf("\r\n");
-  }
+  out->printf("Free Heap          : %d\r\n", system_get_free_heap_size());
+  out->printf("CPU Frequency      : %d MHz\r\n", system_get_cpu_freq());
+  out->printf("System Chip ID     : %x\r\n", system_get_chip_id());
+  out->printf("SPI Flash ID       : %x\r\n", spi_flash_get_id());
+  out->printf("SPI Flash Size     : %d\r\n", (1 << ((spi_flash_get_id() >> 16) & 0xff)));
+  out->printf("\r\n");
+  } //
 
 //----------------------------------------------------------------------------
 //
@@ -163,61 +164,61 @@ void processDebugCommand(String commandLine, CommandOutput* out)
 //----------------------------------------------------------------------------
 void processCpuCommand(String commandLine, CommandOutput* out)
 {
-    Vector<String> commandToken;
-    int numToken = splitString(commandLine, ' ' , commandToken);
+  Vector<String> commandToken;
+  int numToken = splitString(commandLine, ' ' , commandToken);
 
-    if (numToken != 2 ||
-        (commandToken[1] != "80" && commandToken[1] != "160"))
-    {
-        out->printf("Usage : \r\n\r\n");
-        out->printf("  cpu 80  : Run at 80MHz\r\n");
-        out->printf("  cpu 160 : Run at 160MHz\r\n");
-        return;
+  if (numToken != 2 ||
+      (commandToken[1] != "80" && commandToken[1] != "160"))
+  {
+    out->printf("Usage : \r\n\r\n");
+    out->printf("  cpu 80  : Run at 80MHz\r\n");
+    out->printf("  cpu 160 : Run at 160MHz\r\n");
+    return;
     }
 
-    if (commandToken[1] == "80")
-    {
-        System.setCpuFrequency(eCF_80MHz);
-        AppSettings.cpuBoost = false;
+  if (commandToken[1] == "80")
+  {
+    System.setCpuFrequency(eCF_80MHz);
+    AppSettings.cpuBoost = false;
     }
-    else
-    {
-        System.setCpuFrequency(eCF_160MHz);
-        AppSettings.cpuBoost = true;
+  else
+  {
+    System.setCpuFrequency(eCF_160MHz);
+    AppSettings.cpuBoost = true;
     }
 
-    AppSettings.save();
-  }
+  AppSettings.save();
+  } //
 
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
 void processBaseAddressCommand(String commandLine, CommandOutput* out)
 {
-    Vector<String> commandToken;
-    int numToken = splitString(commandLine, ' ' , commandToken);
+  Vector<String> commandToken;
+  int numToken = splitString(commandLine, ' ' , commandToken);
 
-    if (numToken != 2 ||
-        (commandToken[1] != "default" && commandToken[1] != "private"))
-    {
-        out->printf("Usage : \r\n\r\n");
-        out->printf("  base-address default : Use the default MySensors base address\r\n");
-        out->printf("  base-address private : Use a base address based on ESP chip ID\r\n");
-        return;
+  if (numToken != 2 ||
+      (commandToken[1] != "default" && commandToken[1] != "private"))
+  {
+    out->printf("Usage : \r\n\r\n");
+    out->printf("  base-address default : Use the default MySensors base address\r\n");
+    out->printf("  base-address private : Use a base address based on ESP chip ID\r\n");
+    return;
     }
 
-    if (commandToken[1] == "default")
-    {
-        AppSettings.useOwnBaseAddress = false;
+  if (commandToken[1] == "default")
+  {
+    AppSettings.useOwnBaseAddress = false;
     }
-    else
-    {
-        AppSettings.useOwnBaseAddress = true;
+  else
+  {
+    AppSettings.useOwnBaseAddress = true;
     }
 
-    AppSettings.save();
-    System.restart();
-}
+  AppSettings.save();
+  System.restart();
+  } //
 
 //----------------------------------------------------------------------------
 //
@@ -225,7 +226,7 @@ void processBaseAddressCommand(String commandLine, CommandOutput* out)
 void processShowConfigCommand(String commandLine, CommandOutput* out)
 {
   out->println(fileGetContent(".settings.conf"));
-  }
+  } //
 
 //----------------------------------------------------------------------------
 //
@@ -262,7 +263,7 @@ void processAPModeCommand(String commandLine, CommandOutput* out)
 
   AppSettings.save();
   System.restart();
-  }
+  } //
 
 //----------------------------------------------------------------------------
 //

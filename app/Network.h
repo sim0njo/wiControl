@@ -8,6 +8,8 @@
 
 typedef Delegate<void(bool)> NetworkStateChangeDelegate;
 
+void                 onNetwork(HttpRequest &request, HttpResponse &response);
+
 class NetworkClass {
  public:
   NetworkClass() : ntpClient(NTP_DEFAULT_SERVER,
@@ -28,9 +30,9 @@ class NetworkClass {
   IPAddress getClientGW();
     
  private:
-  void portalLoginHandler(HttpClient& client, bool successful);
-  void connect();
-  void ntpTimeResultHandler(NtpClient& client, time_t ntpTime);
+  void      portalLoginHandler(HttpClient& client, bool successful);
+  void      connect();
+  void      ntpTimeResultHandler(NtpClient& client, time_t ntpTime);
 
  private:
   NetworkStateChangeDelegate changeDlg;

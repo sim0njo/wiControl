@@ -147,6 +147,7 @@ void onMqttConfig(HttpRequest &request, HttpResponse &response)
   TemplateFileStream *tmpl = new TemplateFileStream("mqtt.html");
   auto &vars = tmpl->variables();
 
+  vars["appAlias"] = APP_ALIAS;
   vars["user"] = AppSettings.mqttUser;
   vars["password"] = AppSettings.mqttPass;
   vars["server"] = AppSettings.mqttServer;
@@ -158,7 +159,7 @@ void onMqttConfig(HttpRequest &request, HttpResponse &response)
 
 void ICACHE_FLASH_ATTR mqttRegisterHttpHandlers(HttpServer &server)
 {
-  server.addPath("/mqttconfig", onMqttConfig);
+  server.addPath("/mqtt", onMqttConfig);
   } //
 
 bool isMqttConnected(void) 

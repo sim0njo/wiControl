@@ -13,164 +13,89 @@ void StartOtaUpdateWeb(String);
 void processRestartCommandWeb(void);
 
 
-Timer softApSetPasswordTimer;
-
-//----------------------------------------------------------------------------
-//
-//----------------------------------------------------------------------------
-void apEnable()
-{
-  Network.softApEnable();
-  } //
-
-//----------------------------------------------------------------------------
-//
-//----------------------------------------------------------------------------
-void onIpConfig(HttpRequest &request, HttpResponse &response)
-{
-    if (!HTTP.isHttpClientAllowed(request, response))
-        return;
-
-    if (request.getRequestMethod() == RequestMethod::POST)
-    {
-        bool connectionTypeChanges =
-        	AppSettings.wired != (request.getPostParameter("wired") == "1");
-
-        AppSettings.wired = request.getPostParameter("wired") == "1";
-
-        String oldApPass = AppSettings.apPassword;
-        AppSettings.apPassword = request.getPostParameter("apPassword");
-        if (!AppSettings.apPassword.equals(oldApPass))
-        {
-            softApSetPasswordTimer.initializeMs(500, apEnable).startOnce();
-        }
-
-        AppSettings.ssid = request.getPostParameter("ssid");
-        AppSettings.password = request.getPostParameter("password");
-        AppSettings.portalUrl = request.getPostParameter("portalUrl");
-        AppSettings.portalData = request.getPostParameter("portalData");
-
-        AppSettings.dhcp = request.getPostParameter("dhcp") == "1";
-        AppSettings.ip = request.getPostParameter("ip");
-        AppSettings.netmask = request.getPostParameter("netmask");
-        AppSettings.gateway = request.getPostParameter("gateway");
-        Debug.printf("Updating IP settings: %d", AppSettings.ip.isNull());
-        AppSettings.save();
-    
-        Network.reconnect(500);
-
-        if (connectionTypeChanges)
-            processRestartCommandWeb();
-    }
-
-    TemplateFileStream *tmpl = new TemplateFileStream("settings.html");
-
-    auto &vars = tmpl->variables();
-
-    vars["appAlias"] = APP_ALIAS;
-
-    vars["wiredon"] = AppSettings.wired ? "checked='checked'" : "";
-    vars["wiredoff"] = AppSettings.wired ? "" : "checked='checked'";
-
-    vars["ssid"] = AppSettings.ssid;
-    vars["password"] = AppSettings.password;
-    vars["apPassword"] = AppSettings.apPassword;
-
-    vars["portalUrl"] = AppSettings.portalUrl;
-    vars["portalData"] = AppSettings.portalData;
-
-    bool dhcp = AppSettings.dhcp;
-    vars["dhcpon"] = dhcp ? "checked='checked'" : "";
-    vars["dhcpoff"] = !dhcp ? "checked='checked'" : "";
-
-    vars["ip"] = Network.getClientIP().toString();
-    vars["netmask"] = Network.getClientMask().toString();
-    vars["gateway"] = Network.getClientGW().toString();
-
-    response.sendTemplate(tmpl); // will be automatically deleted
-  } //
-
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
 void onStatus(HttpRequest &request, HttpResponse &response)
 {
-    char buf [200];
-    TemplateFileStream *tmpl = new TemplateFileStream("status.html");
-    auto &vars = tmpl->variables();
+  char buf [200];
+  TemplateFileStream *tmpl = new TemplateFileStream("status.html");
+  auto &vars = tmpl->variables();
 
-    vars["appAlias"] = APP_ALIAS;
+  vars["appAlias"] = APP_ALIAS;
 
-    vars["ssid"] = AppSettings.ssid;
-    vars["wifiStatus"] = g_isNetworkConnected ? "Connected" : "Not connected";
+  vars["ssid"] = AppSettings.ssid;
+  vars["wifiStatus"] = g_isNetworkConnected ? "Connected" : "Not connected";
     
-    bool dhcp = AppSettings.dhcp;
-    if (dhcp)
-    {
-      vars["ipOrigin"] = "From DHCP";
+  bool dhcp = AppSettings.dhcp;
+  if (dhcp)
+  {
+    vars["ipOrigin"] = "From DHCP";
     }
-    else
-    {
-      vars["ipOrigin"] = "Static";
+  else
+  {
+    vars["ipOrigin"] = "Static";
     }
 
-    if (!Network.getClientIP().isNull())
-    {
-        vars["ip"] = Network.getClientIP().toString();
+  if (!Network.getClientIP().isNull())
+  {
+    vars["ip"] = Network.getClientIP().toString();
     }
-    else
-    {
-        vars["ip"] = "0.0.0.0";
-        vars["ipOrigin"] = "not configured";
+  else
+  {
+    vars["ip"] = "0.0.0.0";
+    vars["ipOrigin"] = "not configured";
     }
-    if (AppSettings.mqttServer != "")
-    {
-        vars["mqttIp"] = AppSettings.mqttServer;
-        vars["mqttStatus"] = isMqttConnected() ? "Connected":"Not connected";
+
+  if (AppSettings.mqttServer != "")
+  {
+    vars["mqttIp"] = AppSettings.mqttServer;
+    vars["mqttStatus"] = isMqttConnected() ? "Connected":"Not connected";
     }
-    else
-    {
-        vars["mqttIp"] = "0.0.0.0";
-        vars["mqttStatus"] = "Not configured";
+  else
+  {
+    vars["mqttIp"] = "0.0.0.0";
+    vars["mqttStatus"] = "Not configured";
     }
-    uint64_t rfBaseAddress = 0; // GW.getBaseAddress();
-    uint32_t rfBaseLow = (rfBaseAddress & 0xffffffff);
-    uint8_t  rfBaseHigh = ((rfBaseAddress >> 32) & 0xff);
-    if (AppSettings.useOwnBaseAddress)
-      sprintf (buf, "%02x%08x (private)", rfBaseHigh, rfBaseLow);
-    else
-      sprintf (buf, "%02x%08x (default)", rfBaseHigh, rfBaseLow);
-    vars["baseAddress"] = buf;
+
+  uint64_t rfBaseAddress = 0; // GW.getBaseAddress();
+  uint32_t rfBaseLow = (rfBaseAddress & 0xffffffff);
+  uint8_t  rfBaseHigh = ((rfBaseAddress >> 32) & 0xff);
+  if (AppSettings.useOwnBaseAddress)
+    sprintf (buf, "%02x%08x (private)", rfBaseHigh, rfBaseLow);
+  else
+    sprintf (buf, "%02x%08x (default)", rfBaseHigh, rfBaseLow);
+  vars["baseAddress"] = buf;
 //    vars["radioStatus"] = getRadioStatus();
 //    vars["detNodes"] = GW.getNumDetectedNodes();
 //    vars["detSensors"] = GW.getNumDetectedSensors();
     
     
-    // --- System info -------------------------------------------------
-    sprintf (buf, "%x", system_get_chip_id());
-    vars["systemVersion"] = build_git_sha;
-    vars["systemBuild"] = build_time;
-    vars["systemFreeHeap"] = system_get_free_heap_size();
-    vars["systemStartup"] = "todo";
-    vars["systemChipId"] = buf;
-    uint32_t curMillis = millis();
-    sprintf(buf, "%d s, %03d ms : ", curMillis/1000, curMillis % 1000);
-    vars["systemUptime"] = buf;
+  // --- System info -------------------------------------------------
+  sprintf (buf, "%x", system_get_chip_id());
+  vars["systemVersion"] = build_git_sha;
+  vars["systemBuild"] = build_time;
+  vars["systemFreeHeap"] = system_get_free_heap_size();
+  vars["systemStartup"] = "todo";
+  vars["systemChipId"] = buf;
+  uint32_t curMillis = millis();
+  sprintf(buf, "%d s, %03d ms : ", curMillis/1000, curMillis % 1000);
+  vars["systemUptime"] = buf;
 
 
-    // --- Statistics --------------------------------------------------
+  // --- Statistics --------------------------------------------------
 //    vars["nrfRx"] = rfPacketsRx; //TODO check counters at MySensor.cpp
 //    vars["nrfTx"] = rfPacketsTx;
-    vars["mqttRx"] = mqttPktRx;
-    vars["mqttTx"] = mqttPktTx;
+  vars["mqttRx"] = mqttPktRx;
+  vars["mqttTx"] = mqttPktTx;
     
-   response.sendTemplate(tmpl); // will be automatically deleted
-}
+  response.sendTemplate(tmpl); // will be automatically deleted
+  } //
 
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-void onMaintenance(HttpRequest &request, HttpResponse &response)
+void onTools(HttpRequest &request, HttpResponse &response)
 {
     AppSettings.load();
 
@@ -201,15 +126,13 @@ void onMaintenance(HttpRequest &request, HttpResponse &response)
 
     }
 
-    TemplateFileStream *tmpl = new TemplateFileStream("maintenance.html");
-    auto &vars = tmpl->variables();
+  TemplateFileStream *tmpl = new TemplateFileStream("tools.html");
+  auto &vars = tmpl->variables();
 
-    vars["appAlias"] = APP_ALIAS;
-
-    vars["webOtaBaseUrl"] = AppSettings.webOtaBaseUrl;
-
-    response.sendTemplate(tmpl); // will be automatically deleted
-}
+  vars["appAlias"] = APP_ALIAS;
+  vars["webOtaBaseUrl"] = AppSettings.webOtaBaseUrl;
+  response.sendTemplate(tmpl); // will be automatically deleted
+  } //
 
 void onFile(HttpRequest &request, HttpResponse &response)
 {
@@ -378,10 +301,10 @@ void HTTPClass::begin()
 {
   server.listen(80);
   server.enableHeaderProcessing("Authorization");
-  server.addPath("/", onStatus);
-  server.addPath("/ipconfig", onIpConfig);
-  server.addPath("/status", onStatus);
-  server.addPath("/maintenance", onMaintenance);
+  server.addPath("/",        onStatus);
+  server.addPath("/status",  onStatus);
+  server.addPath("/network", onNetwork);
+  server.addPath("/tools",   onTools);
 
 //  GW.registerHttpHandlers(server);
   controller.registerHttpHandlers(server);
