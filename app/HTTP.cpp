@@ -5,7 +5,7 @@
 #include <mqtt.h>
 #include <Network.h>
 #include <AppSettings.h>
-#include <controller.h>
+#include <gpiod.h>
 #include <Services/WebHelpers/base64.h>
 #include <Wiring/SplitString.h>
 
@@ -274,7 +274,7 @@ void HTTPClass::begin()
   server.addPath("/tools",   httpOnTools);
 
 //  GW.registerHttpHandlers(server);
-  controller.registerHttpHandlers(server);
+  g_gpiod.registerHttpHandlers(server);
   server.setDefaultHandler(httpOnFile);
 
   // Web Sockets configuration

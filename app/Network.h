@@ -19,20 +19,20 @@ class NetworkClass {
     connected = false;
     };
 
-  void      begin(NetworkStateChangeDelegate dlg = NULL);
-  void      softApEnable();
-  void      softApDisable();
-  void      reconnect(int delayMs);
-  void      handleEvent(System_Event_t *e);
+  void               begin(NetworkStateChangeDelegate dlg = NULL);
+  void               softApEnable();
+  void               softApDisable();
+  void               reconnect(int delayMs);
+  void               handleEvent(System_Event_t *e);
 
-  IPAddress getClientIP();
-  IPAddress getClientMask();
-  IPAddress getClientGW();
+  IPAddress          getClientIP();
+  IPAddress          getClientMask();
+  IPAddress          getClientGW();
     
  private:
-  void      portalLoginHandler(HttpClient& client, bool successful);
-  void      connect();
-  void      ntpTimeResultHandler(NtpClient& client, time_t ntpTime);
+  void               portalLoginHandler(HttpClient& client, bool successful);
+  void               connect();
+  void               ntpTimeResultHandler(NtpClient& client, time_t ntpTime);
 
  private:
   NetworkStateChangeDelegate changeDlg;

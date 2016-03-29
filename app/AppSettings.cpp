@@ -62,6 +62,8 @@ void ApplicationSettingsStorage::load()
       mqttClientId = (const char *) str; 
       }
 
+    gpiodMode = network["gpiodMode"];
+
     cpuBoost = root["cpuBoost"];
     useOwnBaseAddress = root["useOwnBaseAddress"];
 

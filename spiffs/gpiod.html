@@ -1,5 +1,4 @@
-<!--http://192.168.4.1/ajax/get-networks-->
-<!--http://192.168.4.1/ajax/connect     -->
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -14,7 +13,6 @@
 
     <!-- Bootstrap core CSS -->
     <link href="bootstrap.css" rel="stylesheet">
-    <link href="style.css" rel="stylesheet">
     <script src="jquery.js"></script>
 	
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
@@ -23,149 +21,34 @@
       <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
   </head>
-  <script>
-      $(document).ready(function () {
-          App.GetSensors();
-      });
 
-      var App = {
-          GetSensorsURL: '/ajax/getSensors',
-          RemoveSensorURL: '/ajax/removeSensor',
-          Save: null,
-          GetSensors: function () {
-              (function worker() {
-                  $('#floatingCirclesG').show();
-                  var ajax = $.ajax({
-                      url: App.GetSensorsURL,
-                      type: 'POST',
-                      success: function (data) {
-                          App.SetOWs(data);
-                          App.ShowSensorRemove();
-                          App.BindRemoveSensor();
-                      }
-                  })
-                  .done(function () {
-                        $('#floatingCirclesG').hide();
-                  })
-                  .fail(function () {
-                        setTimeout(worker, 5000);
-                  });
-                  App.Utilities.AbortSave(ajax);
-              })();
-          },
-          BindRemoveSensor: function () {
-              $(".remove-sensor-btn").unbind('click');
-              $('.remove-sensor-btn').on('click', function () {
-                  var that = this;
-                  var item = $(that).parent().parent().parent();
-                  var sensor = item.find('h4').text();
-                  App.Utilities.ShowLoader(that);
-                  if (App.Save) {
-                      clearInterval(App.Save);
-                      App.Utilities.HideLoader();
-                  }
-                  App.Utilities.ShowLoader(that);
-                  (function worker() {
-                      $('.error').empty();
-                      var ajax = $.ajax({
-                          url: App.RemoveSensorURL,
-                          type: 'POST',
-                          data: {
-                              'rom': rom
-                          },
-                          success: function (data) {
-                              if (data.status == true) {
-                                  App.Utilities.HideLoader();
-                                  location.reload();
-                              }
-                              if (data.error) {
-                                  $('.error').append('<div class="alert alert-danger" role="alert">' +
-                                          '<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>' +
-                                          '<span>Error:</span> ' + data.error +
-                                          '</div>');
-                                  App.Utilities.HideLoader();
-                              }
-                          },
-                          error: function(){
-                              setTimeout(worker, 5000);
-                          }
-                      })
-                      App.Utilities.AbortSave(ajax);
-                  })()
-              })
-          },
-          SetOWs: function (data) {
-              var ids = App.Utilities.GetOWId();
-              $.each(data.available, function (key, val) {
-                  if (ids.indexOf(val.id) != -1) {
-                      ids.splice(ids.indexOf(val.id), 1);
-                  } else {
-                      App.AddOW(val);
-                  }
-              });
-              $.each(ids, function (key, val) {
-                  App.Utilities.RemoveInput($('.sensor[data-id=' + val + ']'));
-              });
-          },
-          ShowSensorRemove: function () {
-              $(".sensor").unbind('click');
-              $('.sensor').on('click', function (e) {
-                  $('.removeSensor').each(function () {
-                      $(this).hide();
-                  })
-                  $(this).find('.removeSensor').show();
-              })
-          },
-          AddOW: function (val) {
-              var remove =
-                  '<div class="connect-btn-wrapper"><button class="btn btn-success remove-sensor-btn">Remove</button></div>';
-              
-              $('.sensors').append(
-                      '<div class="list-group-item sensor" href="#" data-id="' + val.id + '">' +
-                              '<p class="list-group-item-text">' +
-                              '<h4 class="list-group-item-heading">' + val.node + '/' + val.sensor + '</h4><br>State: ' + val.value +
-                              '<br>Type: ' + val.type +
-                              '</p>' +
-                              '<div class="form-group removeSensor"  style="display: none" data-name="'+val.id+'">'+ remove +
-                              '</div>'+
-                              '</div>'
-              );
+<script>
+    $(document).ready(function () {
+        ToggleReadonly($('input[checked=checked]').val());
+        $('input[name=dhcp]').on('click', function(){
+            $('input[name=dhcp]').each(function(e){
+                $(e).removeAttr('checked');
+            })
+            $(this).attr('checked', 'checked');
+            ToggleReadonly($(this).val());
+        })
+    });
 
-              return true;
-          },
-          Events: {
-              ReloadNetworks: function(){
-                  $('.reload').on('click', function(){App.GetIOs()})
-              }
-          },
-          Utilities: {
-              AbortSave: function(ajax){
-                  if(ajax.readyState != 4){
-                      setTimeout(function(){ajax.abort()}, 6000);
-                  }
-              },
-              RemoveInput: function (input) {
-                  $(input).remove();
-              },
-              GetOWId: function () {
-                  var ids = [];
-                  $('.sensor').each(function () {
-                      ids.push($(this).attr('data-id'));
-                  })
-                  return ids;
-              },
-              ShowLoader: function (obj) {
-                  var loader = $('#circularG');
-                  loader.show();
-                  loader.css('margin-left', '100px');
-                  $(obj).parent().append(loader);
-              },
-              HideLoader: function(){
-                  $('#circularG').hide();
-              }
-          }
-      }
-	</script>
+    function ToggleReadonly(value){
+        /*if(value == '1'){
+            $('.form-control').each(function(){
+                $(this).attr('readonly', 'readonly');
+            })
+        }
+        else*/
+        {
+            $('.form-control').each(function(){
+                $(this).removeAttr('readonly');
+            })
+        }
+    }
+</script>
+
   <body>
 
   <div class="container">
@@ -186,54 +69,31 @@
           <h1>Gpiod</h1>
       </div>
 
-      <div class="row">
-          <!--div class="col-lg-6 col-md-offset-7">
-              <button class="btn btn-success reload">Reload</button>
-          </div-->
-          <div class="col-lg-6 col-md-offset-3">
-              <div class="error"></div>
-              <div id="floatingCirclesG">
-                  <div class="f_circleG" id="frotateG_01">
-                  </div>
-                  <div class="f_circleG" id="frotateG_02">
-                  </div>
-                  <div class="f_circleG" id="frotateG_03">
-                  </div>
-                  <div class="f_circleG" id="frotateG_04">
-                  </div>
-                  <div class="f_circleG" id="frotateG_05">
-                  </div>
-                  <div class="f_circleG" id="frotateG_06">
-                  </div>
-                  <div class="f_circleG" id="frotateG_07">
-                  </div>
-                  <div class="f_circleG" id="frotateG_08">
-                  </div>
-              </div>
-              <div>
-                  <legend>Discovered sensors</legend>
-                  <div class="sensors list-group">
-              </div>
-          </div>
-      </div>
-      <div id="circularG" style="display: none">
-          <div id="circularG_1" class="circularG">
-          </div>
-          <div id="circularG_2" class="circularG">
-          </div>
-          <div id="circularG_3" class="circularG">
-          </div>
-          <div id="circularG_4" class="circularG">
-          </div>
-          <div id="circularG_5" class="circularG">
-          </div>
-          <div id="circularG_6" class="circularG">
-          </div>
-          <div id="circularG_7" class="circularG">
-          </div>
-          <div id="circularG_8" class="circularG">
-          </div>
-      </div>
+    <div class="row">
+        <div class="col-lg-6 col-md-offset-3">
+            <form method="post" action="">
+                <fieldset>
+                    <legend>Mode</legend>
+                    <div class="col-md-offset-2">
+                        <div class="form-group">
+                            <label>gpiodMode</label>
+                            <div class="checkbox">
+                                <label>
+                                    <input type="radio" value="1" name="gpiodMode1" {gpiodMode1}> Shutter x1
+                                </label>
+                                <label>
+                                    <input type="radio" value="0" name="gpiodMode0" {gpiodMode0}> Output x2
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </fieldset>
+                <div class="col-md-offset-3">
+                    <input type="submit" class="btn btn-success">
+                </div>
+            </form>
+        </div>
+    </div>
       <footer class="footer">
           <!--<p>&copy; Company 2014</p>-->
       </footer>

@@ -55,7 +55,7 @@ class ApplicationSettingsStorage
 
   String             webOtaBaseUrl;
 
-  int                m_dwMode = 0;
+  int                gpiodMode = 0;
 
   void               load();
   void               save();

@@ -6,9 +6,9 @@
 #include <mqtt.h>
 #include <HTTP.h>
 #include <globals.h>
+#include <gpiod.h>
 
 // Forward declarations
-void mqttOnPublish(String topic, String message);
 
 // MQTT client
 MqttClient*          g_pMqtt = NULL;
@@ -41,67 +41,9 @@ void ICACHE_FLASH_ATTR mqttPublishVersion()
 
 // Callback for messages, arrived from MQTT server
 
-//----------------------------------------------------------------------------
-//
-//----------------------------------------------------------------------------
-String getValue(String data, char separator, int index)
-{
-  int found = 0;
-  int strIndex[] = {0, -1};
-  int maxIndex = data.length() - 1;
-
-  for (int i = 0; i <= maxIndex && found <= index; i++) {
-    if (data.charAt(i) == separator || i == maxIndex) {
-      found++;
-      strIndex[0] = strIndex[1] + 1;
-      strIndex[1] = (i == maxIndex) ? i + 1 : i;
-      }
-    } // for
-
-  return found>index ? data.substring(strIndex[0], strIndex[1]) : "";
-  } // getValue
-
 //int updateSensorStateInt(int node, int sensor, int type, int value);
 //int getTypeFromString(String type);
 
-
-//----------------------------------------------------------------------------
-//
-//----------------------------------------------------------------------------
-void ICACHE_FLASH_ATTR mqttOnPublish(String strTopic, String strMsg)
-{
-  /*
-   * Supported topics:
-   *   /? => send version info
-   *   <clientid>/<cmdpfx>/<object>, i.e. astr76b32/L3R1W2/cmd/shutter0=up.0.5
-   */
-
-  // check to be sure, but we should not receive other messages
-  if (strTopic.startsWith(AppSettings.mqttClientId + String("/") + AppSettings.mqttCmdPfx + "/")) {
-    g_dwMqttPktRx++;
-
-    String strObj = getValue(strTopic, '/', 3);
-    Debug.println();
-    Debug.println();
-    Debug.println(strObj);
-    Debug.println(strMsg);
-    //strip leading V_
-//    type.remove(0,2);
-//      Debug.println(MyGateway::getSensorTypeFromString(type));
-
-//      updateSensorStateInt(node.toInt(), sensor.toInt(),
-//                           MyGateway::getSensorTypeFromString(type),
-//                           message.toInt());
-    }
-
-//  if (strTopic.equals(String("/?")))
-//  {
-//      mqttPublishVersion();
-//      return;
-//  }
-
-  Debug.println("mqttOnPublish: " + strTopic + " = " + strMsg);
-  } // mqttOnPublish
 
 //----------------------------------------------------------------------------
 // start MQTT client
@@ -114,7 +56,7 @@ void ICACHE_FLASH_ATTR mqttStartClient()
 
   AppSettings.load();
   if (!AppSettings.mqttServer.equals(String("")) && AppSettings.mqttPort != 0) {
-    g_pMqtt = new MqttClient(AppSettings.mqttServer, AppSettings.mqttPort, mqttOnPublish);
+    g_pMqtt = new MqttClient(AppSettings.mqttServer, AppSettings.mqttPort, gpiodOnPublish);
     g_bMqttIsConnected = g_pMqtt->connect(AppSettings.mqttClientId, AppSettings.mqttUser, AppSettings.mqttPass);
 
     g_pMqtt->subscribe(AppSettings.mqttClientId + String("/") + AppSettings.mqttCmdPfx + String("/#"));

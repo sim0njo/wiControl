@@ -6,7 +6,7 @@
 #include <globals.h>
 #include <Network.h>
 #include <HTTP.h>
-#include <controller.h>
+#include <gpiod.h>
 
 FTPServer      g_ftp;
 TelnetServer   g_telnet;
@@ -35,7 +35,7 @@ Timer          g_heapCheckTimer;
 //----------------------------------------------------------------------------
 void heapCheckUsage()
 {
-  controller.notifyChange("memory", String(system_get_free_heap_size()));    
+  g_gpiod.notifyChange("memory", String(system_get_free_heap_size()));    
   } //
 
 //----------------------------------------------------------------------------
@@ -58,7 +58,7 @@ void startServers()
 
   g_telnet.listen(23);
 
-  controller.begin(); // gpiod
+  g_gpiod.begin(); // gpiod
   } //
 
 //----------------------------------------------------------------------------
@@ -80,24 +80,24 @@ void wifiCb(bool connected)
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-void processInfoCommand(String commandLine, CommandOutput* out)
+void processInfoCommand(String commandLine, CommandOutput* pOut)
 {
 //  uint64_t rfBaseAddress = GW.getBaseAddress();
 
-  out->printf("\r\n");
+  pOut->printf("\r\n");
     
-  out->printf("System information : ESP8266 based Wifi IO node\r\n");
-  out->printf("Build time         : %s\r\n", build_time);
-  out->printf("Version            : %s\r\n", build_git_sha);
-  out->printf("Sming Version      : %s\r\n", SMING_VERSION);
-  out->printf("ESP SDK version    : %s\r\n", system_get_sdk_version());
-  out->printf("Gpoiod version     : %s\r\n", CGPIOD_VERSION);
-  out->printf("\r\n");
+  pOut->printf("System information : ESP8266 based Wifi IO node\r\n");
+  pOut->printf("Build time         : %s\r\n", build_time);
+  pOut->printf("Version            : %s\r\n", build_git_sha);
+  pOut->printf("Sming Version      : %s\r\n", SMING_VERSION);
+  pOut->printf("ESP SDK version    : %s\r\n", system_get_sdk_version());
+  pOut->printf("Gpoiod version     : %s\r\n", CGPIOD_VERSION);
+  pOut->printf("\r\n");
 
-  out->printf("Station SSID       : %s\r\n", AppSettings.ssid.c_str());
-  out->printf("Station DHCP       : %s\r\n", AppSettings.dhcp ? "TRUE" : "FALSE");
-  out->printf("Station IP         : %s\r\n", Network.getClientIP().toString().c_str());
-  out->printf("\r\n");
+  pOut->printf("Station SSID       : %s\r\n", AppSettings.ssid.c_str());
+  pOut->printf("Station DHCP       : %s\r\n", AppSettings.dhcp ? "TRUE" : "FALSE");
+  pOut->printf("Station IP         : %s\r\n", Network.getClientIP().toString().c_str());
+  pOut->printf("\r\n");
 
   String apModeStr;
   if (AppSettings.apMode == apModeAlwaysOn)
@@ -107,28 +107,28 @@ void processInfoCommand(String commandLine, CommandOutput* out)
   else
     apModeStr= "whenDisconnected";
 
-  out->printf("Access Point Mode  : %s\r\n", apModeStr.c_str());
-  out->printf("\r\n");
+  pOut->printf("Access Point Mode  : %s\r\n", apModeStr.c_str());
+  pOut->printf("\r\n");
 
-  out->printf("Gpiod mode         : %s\r\n", AppSettings.m_dwMode ? "shutter" : "output");
-  out->printf("\r\n");
+  pOut->printf("Gpiod mode         : %s\r\n", AppSettings.gpiodMode ? "shutter" : "output");
+  pOut->printf("\r\n");
 
-  out->printf("System Time        : ");
-  out->printf(SystemClock.getSystemTimeString().c_str());
-  out->printf("\r\n");
+  pOut->printf("System Time        : ");
+  pOut->printf(SystemClock.getSystemTimeString().c_str());
+  pOut->printf("\r\n");
 
-  out->printf("Free Heap          : %d\r\n", system_get_free_heap_size());
-  out->printf("CPU Frequency      : %d MHz\r\n", system_get_cpu_freq());
-  out->printf("System Chip ID     : %x\r\n", system_get_chip_id());
-  out->printf("SPI Flash ID       : %x\r\n", spi_flash_get_id());
-  out->printf("SPI Flash Size     : %d\r\n", (1 << ((spi_flash_get_id() >> 16) & 0xff)));
-  out->printf("\r\n");
+  pOut->printf("Free Heap          : %d\r\n", system_get_free_heap_size());
+  pOut->printf("CPU Frequency      : %d MHz\r\n", system_get_cpu_freq());
+  pOut->printf("System Chip ID     : %x\r\n", system_get_chip_id());
+  pOut->printf("SPI Flash ID       : %x\r\n", spi_flash_get_id());
+  pOut->printf("SPI Flash Size     : %d\r\n", (1 << ((spi_flash_get_id() >> 16) & 0xff)));
+  pOut->printf("\r\n");
   } //
 
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-void processRestartCommand(String commandLine, CommandOutput* out)
+void processRestartCommand(String commandLine, CommandOutput* pOut)
 {
   System.restart();
   }
@@ -141,15 +141,15 @@ void processRestartCommandWeb(void)
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-void processDebugCommand(String commandLine, CommandOutput* out)
+void processDebugCommand(String commandLine, CommandOutput* pOut)
 {
   Vector<String> commandToken;
   int            numToken = splitString(commandLine, ' ' , commandToken);
 
   if ((numToken != 2) || (commandToken[1] != "on" && commandToken[1] != "off")) {
-    out->printf("Usage : \r\n\r\n");
-    out->printf("  debug on  : Enable debug\r\n");
-    out->printf("  debug off : Disable debug\r\n");
+    pOut->printf("Usage : \r\n\r\n");
+    pOut->printf("  debug on  : Enable debug\r\n");
+    pOut->printf("  debug off : Disable debug\r\n");
     return;
     }
 
@@ -162,7 +162,7 @@ void processDebugCommand(String commandLine, CommandOutput* out)
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-void processCpuCommand(String commandLine, CommandOutput* out)
+void processCpuCommand(String commandLine, CommandOutput* pOut)
 {
   Vector<String> commandToken;
   int numToken = splitString(commandLine, ' ' , commandToken);
@@ -170,9 +170,9 @@ void processCpuCommand(String commandLine, CommandOutput* out)
   if (numToken != 2 ||
       (commandToken[1] != "80" && commandToken[1] != "160"))
   {
-    out->printf("Usage : \r\n\r\n");
-    out->printf("  cpu 80  : Run at 80MHz\r\n");
-    out->printf("  cpu 160 : Run at 160MHz\r\n");
+    pOut->printf("Usage : \r\n\r\n");
+    pOut->printf("  cpu 80  : Run at 80MHz\r\n");
+    pOut->printf("  cpu 160 : Run at 160MHz\r\n");
     return;
     }
 
@@ -193,7 +193,7 @@ void processCpuCommand(String commandLine, CommandOutput* out)
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-void processBaseAddressCommand(String commandLine, CommandOutput* out)
+void processBaseAddressCommand(String commandLine, CommandOutput* pOut)
 {
   Vector<String> commandToken;
   int numToken = splitString(commandLine, ' ' , commandToken);
@@ -201,9 +201,9 @@ void processBaseAddressCommand(String commandLine, CommandOutput* out)
   if (numToken != 2 ||
       (commandToken[1] != "default" && commandToken[1] != "private"))
   {
-    out->printf("Usage : \r\n\r\n");
-    out->printf("  base-address default : Use the default MySensors base address\r\n");
-    out->printf("  base-address private : Use a base address based on ESP chip ID\r\n");
+    pOut->printf("Usage : \r\n\r\n");
+    pOut->printf("  base-address default : Use the default MySensors base address\r\n");
+    pOut->printf("  base-address private : Use a base address based on ESP chip ID\r\n");
     return;
     }
 
@@ -223,15 +223,15 @@ void processBaseAddressCommand(String commandLine, CommandOutput* out)
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-void processShowConfigCommand(String commandLine, CommandOutput* out)
+void processShowConfigCommand(String commandLine, CommandOutput* pOut)
 {
-  out->println(fileGetContent(".settings.conf"));
+  pOut->println(fileGetContent(".settings.conf"));
   } //
 
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-void processAPModeCommand(String commandLine, CommandOutput* out)
+void processAPModeCommand(String commandLine, CommandOutput* pOut)
 {
   Vector<String> commandToken;
   int numToken = splitString(commandLine, ' ' , commandToken);
@@ -240,11 +240,11 @@ void processAPModeCommand(String commandLine, CommandOutput* out)
         (commandToken[1] != "always" && commandToken[1] != "never" &&
          commandToken[1] != "whenDisconnected"))
     {
-      out->printf("Usage : \r\n\r\n");
-      out->printf("  apMode always           : Always have the AP enabled\r\n");
-      out->printf("  apMode never            : Never have the AP enabled\r\n");
-      out->printf("  apMode whenDisconnected : Only enable the AP when disconnected\r\n");
-      out->printf("                            from the network\r\n");
+      pOut->printf("Usage : \r\n\r\n");
+      pOut->printf("  apMode always           : Always have the AP enabled\r\n");
+      pOut->printf("  apMode never            : Never have the AP enabled\r\n");
+      pOut->printf("  apMode whenDisconnected : Only enable the AP when disconnected\r\n");
+      pOut->printf("                            from the network\r\n");
       return;
     }
 
@@ -273,7 +273,7 @@ void init()
   /* Make sure wifi does not start yet! */
   wifi_station_set_auto_connect(0);
 
-  controller.OnInit();
+  g_gpiod.OnInit();
 
     /* Make sure all chip enable pins are HIGH */
 /*
