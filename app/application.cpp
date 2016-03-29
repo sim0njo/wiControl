@@ -273,12 +273,7 @@ void init()
   /* Make sure wifi does not start yet! */
   wifi_station_set_auto_connect(0);
 
-  pinMode(OUTPUT0_PIN, OUTPUT);
-  digitalWrite(OUTPUT0_PIN, HIGH);
-  pinMode(OUTPUT1_PIN, OUTPUT);
-  digitalWrite(OUTPUT1_PIN, HIGH);
-  pinMode(INPUT0_PIN, INPUT);
-  pinMode(INPUT1_PIN, INPUT);
+  controller.OnInit();
 
     /* Make sure all chip enable pins are HIGH */
 /*

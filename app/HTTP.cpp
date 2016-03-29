@@ -2,6 +2,7 @@
 #include <user_config.h>
 #include <SmingCore.h>
 #include <HTTP.h>
+#include <mqtt.h>
 #include <Network.h>
 #include <AppSettings.h>
 #include <controller.h>
@@ -50,7 +51,7 @@ void onStatus(HttpRequest &request, HttpResponse &response)
   if (AppSettings.mqttServer != "")
   {
     vars["mqttIp"] = AppSettings.mqttServer;
-    vars["mqttStatus"] = isMqttConnected() ? "Connected":"Not connected";
+    vars["mqttStatus"] = mqttIsConnected() ? "Connected":"Not connected";
     }
   else
   {

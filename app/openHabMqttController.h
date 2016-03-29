@@ -23,6 +23,10 @@
 #define CGPIOD_MODE_OUTPUT                       0 // configured as out0-3
 #define CGPIOD_MODE_SHUTTER                      1 // configured as udm0-1
 
+#define CGPIOD_OUT0_PIN                          0 //
+#define CGPIOD_OUT1_PIN                          2 //
+#define CGPIOD_IN0_PIN                           5 //
+#define CGPIOD_IN1_PIN                           4 //
 
 //----------------------------------------------------------------------------
 //
@@ -43,6 +47,19 @@ class CGpiod {
   //--------------------------------------------------------------------------
   // run daemon
   //--------------------------------------------------------------------------
+  unsigned int       OnInit() {
+    pinMode(OUTPUT0_PIN, OUTPUT);
+    digitalWrite(OUTPUT0_PIN, HIGH);
+    pinMode(OUTPUT1_PIN, OUTPUT);
+    digitalWrite(OUTPUT1_PIN, HIGH);
+    pinMode(INPUT0_PIN, INPUT);
+    pinMode(INPUT1_PIN, INPUT);
+    return 0;
+    } //
+
+  //--------------------------------------------------------------------------
+  // run daemon
+  //--------------------------------------------------------------------------
   unsigned int       OnRun();
 
   }; // CGpiod
@@ -57,6 +74,16 @@ class OpenHabMqttController : public Controller
   void notifyChange(String object, String value);
   void registerHttpHandlers(HttpServer &server);
   void registerCommandHandlers();
+
+  unsigned int       OnInit() {
+    pinMode(OUTPUT0_PIN, OUTPUT);
+    digitalWrite(OUTPUT0_PIN, HIGH);
+    pinMode(OUTPUT1_PIN, OUTPUT);
+    digitalWrite(OUTPUT1_PIN, HIGH);
+    pinMode(INPUT0_PIN, INPUT);
+    pinMode(INPUT1_PIN, INPUT);
+    return 0;
+    } //
 
  private:
   void checkConnection();

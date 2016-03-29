@@ -42,8 +42,9 @@ class ApplicationSettingsStorage
   String             mqttPass;
   String             mqttServer;
   int                mqttPort = 1883;
-  String             mqttSensorPfx;
-  String             mqttControllerPfx;
+  String             mqttClientId;
+  String             mqttEvtPfx;
+  String             mqttCmdPfx;
 
   bool               cpuBoost = true;
   bool               useOwnBaseAddress = true;

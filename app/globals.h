@@ -9,7 +9,7 @@ extern const char* build_git_sha;
 extern int         g_isNetworkConnected;
 /* why is type bool not known ?*/
 
-#define APP_ALIAS           "Wifi IO/Shutter Node" //
+#define APP_ALIAS           "Wifi IO Node" //
 
 #define PLATFORM_TYPE_GENERIC            1 //
 #define PLATFORM_TYPE_SDSHIELD           2 //

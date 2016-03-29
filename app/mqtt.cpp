@@ -5,34 +5,35 @@
 #include <AppSettings.h>
 #include <mqtt.h>
 #include <HTTP.h>
+#include <globals.h>
 
 // Forward declarations
 void onMessageReceived(String topic, String message);
 
 // MQTT client
-MqttClient    *mqtt = NULL;
-char          clientId[33];
-bool          MqttConfigured = FALSE;
-bool          MqttIsConnected = FALSE;
+MqttClient           *mqtt = NULL;
+//char                 clientId[33];
+bool                 MqttConfigured = FALSE;
+bool                 MqttIsConnected = FALSE;
 
-unsigned long mqttPktRx = 0;
-unsigned long mqttPktTx = 0;
+unsigned long        mqttPktRx = 0;
+unsigned long        mqttPktTx = 0;
+
 
 void ICACHE_FLASH_ATTR mqttPublishMessage(String topic, String message)
 {
-    if (!mqtt)
-        return;
+  if (!mqtt)
+    return;
 
-    mqtt->publish(AppSettings.mqttSensorPfx + String("/") + topic, message);
-    mqttPktTx++;
-}
+  mqtt->publish(AppSettings.mqttClientId + String("/") + AppSettings.mqttEvtPfx + String("/") + topic, message);
+  mqttPktTx++;
+  } //
 
 void ICACHE_FLASH_ATTR mqttPublishVersion()
 {
-    mqtt->publish(String("/") + clientId + String("/version"),
-                  "MySensors gateway");
-    mqttPktTx++;
-}
+  mqtt->publish(AppSettings.mqttClientId + String("/") + AppSettings.mqttEvtPfx + String("/version"), APP_ALIAS);
+  mqttPktTx++;
+  } //
 
 // Callback for messages, arrived from MQTT server
 
@@ -66,7 +67,7 @@ void ICACHE_FLASH_ATTR onMessageReceived(String topic, String message)
      */
 
     //MyMQTT/22/1/V_LIGHT
-    if (topic.startsWith(AppSettings.mqttControllerPfx + "/"))
+    if (topic.startsWith(AppSettings.mqttClientId + String("/") + AppSettings.mqttCmdPfx + "/"))
     {
         mqttPktRx++;
 
@@ -95,21 +96,32 @@ void ICACHE_FLASH_ATTR onMessageReceived(String topic, String message)
         return;
     }
 
-    Debug.println("RX: " + topic + " = " + message);
+  Debug.println("mqttRX: " + topic + " = " + message);
   } //
 
-// Run MQTT client
-void ICACHE_FLASH_ATTR startMqttClient()
+//----------------------------------------------------------------------------
+// start MQTT client
+//----------------------------------------------------------------------------
+void ICACHE_FLASH_ATTR mqttStartClient()
 {
+//  char str[64];
+
   if (mqtt)
     delete mqtt;
 
   AppSettings.load();
   if (!AppSettings.mqttServer.equals(String("")) && AppSettings.mqttPort != 0) {
-    sprintf(clientId, "ESP_%08X", system_get_chip_id());
+//    if (AppSettings.mqttClientId.equals(String("")))
+//      sprintf(clientId, "ESP_%08X", system_get_chip_id());
+//    else
+//      sprintf(clientId, "%s", AppSettings.mqttClientId.c_str());
+
     mqtt = new MqttClient(AppSettings.mqttServer, AppSettings.mqttPort, onMessageReceived);
-    MqttIsConnected = mqtt->connect(clientId, AppSettings.mqttUser, AppSettings.mqttPass);
-    mqtt->subscribe("#");
+    MqttIsConnected = mqtt->connect(AppSettings.mqttClientId, AppSettings.mqttUser, AppSettings.mqttPass);
+
+    mqtt->subscribe(AppSettings.mqttClientId + String("/") + AppSettings.mqttCmdPfx + String("/#"));
+//    sprintf(str, "%s/%s/#", AppSettings.mqttClientId, AppSettings.mqttCmdPfx);
+//    mqtt->subscribe(str);
     mqttPublishVersion();
     MqttConfigured = TRUE;
     }
@@ -120,10 +132,10 @@ void ICACHE_FLASH_ATTR mqttCheckClient()
   if (mqtt && mqtt->isProcessing())
     return;
 
-  startMqttClient();
+  mqttStartClient();
   } //
 
-void onMqttConfig(HttpRequest &request, HttpResponse &response)
+void mqttOnConfig(HttpRequest &request, HttpResponse &response)
 {
   AppSettings.load();
   MqttConfigured = FALSE;
@@ -132,37 +144,39 @@ void onMqttConfig(HttpRequest &request, HttpResponse &response)
     return;
 
   if (request.getRequestMethod() == RequestMethod::POST) {
-    AppSettings.mqttUser = request.getPostParameter("user");
-    AppSettings.mqttPass = request.getPostParameter("password");
-    AppSettings.mqttServer = request.getPostParameter("server");
-    AppSettings.mqttPort = atoi(request.getPostParameter("port").c_str());
-    AppSettings.mqttSensorPfx = request.getPostParameter("sensorPfx");
-    AppSettings.mqttControllerPfx = request.getPostParameter("controllerPfx");
+    AppSettings.mqttUser     = request.getPostParameter("user");
+    AppSettings.mqttPass     = request.getPostParameter("password");
+    AppSettings.mqttServer   = request.getPostParameter("server");
+    AppSettings.mqttPort     = atoi(request.getPostParameter("port").c_str());
+    AppSettings.mqttClientId = request.getPostParameter("clientId");
+    AppSettings.mqttEvtPfx   = request.getPostParameter("evtPfx");
+    AppSettings.mqttCmdPfx   = request.getPostParameter("cmdPfx");
     AppSettings.save();
 
     if (WifiStation.isConnected())
-      startMqttClient();
+      mqttStartClient();
     } // if
 
   TemplateFileStream *tmpl = new TemplateFileStream("mqtt.html");
   auto &vars = tmpl->variables();
 
   vars["appAlias"] = APP_ALIAS;
-  vars["user"] = AppSettings.mqttUser;
+  vars["user"]     = AppSettings.mqttUser;
   vars["password"] = AppSettings.mqttPass;
-  vars["server"] = AppSettings.mqttServer;
-  vars["port"] = AppSettings.mqttPort;
-  vars["sensorPfx"] = AppSettings.mqttSensorPfx;
-  vars["controllerPfx"] = AppSettings.mqttControllerPfx;
+  vars["server"]   = AppSettings.mqttServer;
+  vars["port"]     = AppSettings.mqttPort;
+  vars["clientId"] = AppSettings.mqttClientId;
+  vars["evtPfx"]   = AppSettings.mqttEvtPfx;
+  vars["cmdPfx"]   = AppSettings.mqttCmdPfx;
   response.sendTemplate(tmpl); // will be automatically deleted
-  } //
+  } // mqttOnConfig
 
 void ICACHE_FLASH_ATTR mqttRegisterHttpHandlers(HttpServer &server)
 {
-  server.addPath("/mqtt", onMqttConfig);
+  server.addPath("/mqtt", mqttOnConfig);
   } //
 
-bool isMqttConnected(void) 
+bool mqttIsConnected(void) 
 {
   if (mqtt == NULL)
     return (FALSE);
@@ -170,5 +184,5 @@ bool isMqttConnected(void)
     return((mqtt->getConnectionState() == eTCS_Connected));
   } //
 
-bool   isMqttConfigured(void) { return(MqttConfigured); }
-String MqttServer(void)       { return(AppSettings.mqttServer); }
+bool   mqttIsConfigured(void) { return(MqttConfigured); }
+String mqttServer(void)       { return(AppSettings.mqttServer); }

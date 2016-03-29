@@ -10,67 +10,70 @@
 
 void ApplicationSettingsStorage::load()
 {
-    DynamicJsonBuffer jsonBuffer;
-    if (exist())
-    {
-        int size = fileGetSize(APP_SETTINGS_FILE);
-        char* jsonString = new char[size + 1];
-        fileGetContent(APP_SETTINGS_FILE, jsonString, size + 1);
-        JsonObject& root = jsonBuffer.parseObject(jsonString);
+  char              str[64];
+  DynamicJsonBuffer jsonBuffer;
 
-        JsonObject& network = root["network"];
+  if (exist()) {
+    int size = fileGetSize(APP_SETTINGS_FILE);
+    char* jsonString = new char[size + 1];
+    fileGetContent(APP_SETTINGS_FILE, jsonString, size + 1);
+    JsonObject& root = jsonBuffer.parseObject(jsonString);
 
-        wired = false;
+    JsonObject& network = root["network"];
 
-        ssid = (const char *)network["ssid"];
-        password = (const char *)network["password"];
-        apPassword = (const char *)network["apPassword"];
-        portalUrl = (const char *)network["portalUrl"];
-        portalData = (const char *)network["portalData"];
+    wired = false;
 
-        if (!network.containsKey("apMode"))
-        {
-            apMode = apModeAlwaysOn;
-        }
-        else
-        {
-            String newMode = (const char *)network["apMode"];
-            if (newMode.equals("always"))
-                apMode = apModeAlwaysOn;
-            else if (newMode.equals("never"))
-                apMode = apModeAlwaysOff;
-            else if (newMode.equals("whenDisconnected"))
-                apMode = apModeWhenDisconnected;
-            else
-                apMode = apModeAlwaysOff;
-        }
+    ssid = (const char *)network["ssid"];
+    password = (const char *)network["password"];
+    apPassword = (const char *)network["apPassword"];
+    portalUrl = (const char *)network["portalUrl"];
+    portalData = (const char *)network["portalData"];
 
-        dhcp = network["dhcp"];
+    if (!network.containsKey("apMode"))
+      apMode = apModeAlwaysOn;
+    else {
+      String newMode = (const char *)network["apMode"];
+      if (newMode.equals("always"))
+        apMode = apModeAlwaysOn;
+      else if (newMode.equals("never"))
+        apMode = apModeAlwaysOff;
+      else if (newMode.equals("whenDisconnected"))
+        apMode = apModeWhenDisconnected;
+      else
+        apMode = apModeAlwaysOff;
+      } // else
 
-        ip = (const char *)network["ip"];
-        netmask = (const char *)network["netmask"];
-        gateway = (const char *)network["gateway"];
+    dhcp    = network["dhcp"];
+    ip      = (const char *)network["ip"];
+    netmask = (const char *)network["netmask"];
+    gateway = (const char *)network["gateway"];
 
-        JsonObject& mqtt = root["mqtt"];
-        mqttUser = (const char *)mqtt["user"];
-        mqttPass = (const char *)mqtt["password"];
-        mqttServer = (const char *)mqtt["server"];
-        mqttPort = mqtt["port"];
-        mqttSensorPfx = (const char *)mqtt["sensorPfx"];
-        mqttControllerPfx = (const char *)mqtt["controllerPfx"];
+    JsonObject& mqtt = root["mqtt"];
+    mqttUser     = (const char *)mqtt["user"];
+    mqttPass     = (const char *)mqtt["password"];
+    mqttServer   = (const char *)mqtt["server"];
+    mqttPort     = mqtt["port"];
+    mqttClientId = (const char *)mqtt["clientId"];
+    mqttEvtPfx   = (const char *)mqtt["evtPfx"];
+    mqttCmdPfx   = (const char *)mqtt["cmdPfx"];
 
-        cpuBoost = root["cpuBoost"];
-        useOwnBaseAddress = root["useOwnBaseAddress"];
+    if (mqttClientId.equals(String(""))) {
+      sprintf(str, "ESP_%08X", system_get_chip_id());
+      mqttClientId = (const char *) str; 
+      }
 
-        cloudDeviceToken = (const char *)root["cloudDeviceToken"];
-        cloudLogin = (const char *)root["cloudLogin"];
-        cloudPassword = (const char *)root["cloudPassword"];
+    cpuBoost = root["cpuBoost"];
+    useOwnBaseAddress = root["useOwnBaseAddress"];
 
-        webOtaBaseUrl = (const char *)root["webOtaBaseUrl"];
+    cloudDeviceToken = (const char *)root["cloudDeviceToken"];
+    cloudLogin = (const char *)root["cloudLogin"];
+    cloudPassword = (const char *)root["cloudPassword"];
 
-        delete[] jsonString;
+    webOtaBaseUrl = (const char *)root["webOtaBaseUrl"];
+
+    delete[] jsonString;
     }
-}
+  } //
 
 void ApplicationSettingsStorage::save()
 {
@@ -106,8 +109,9 @@ void ApplicationSettingsStorage::save()
     mqtt.set("password", mqttPass);
     mqtt.set("server", mqttServer);
     mqtt["port"] = mqttPort;
-    mqtt.set("sensorPfx", mqttSensorPfx);
-    mqtt.set("controllerPfx", mqttControllerPfx);
+    mqtt.set("clientId", mqttClientId);
+    mqtt.set("evtPfx", mqttEvtPfx);
+    mqtt.set("cmdPfx", mqttCmdPfx);
 
     root["cpuBoost"] = cpuBoost;
     root["useOwnBaseAddress"] = useOwnBaseAddress;
