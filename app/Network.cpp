@@ -25,34 +25,32 @@ void apEnable()
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-void onNetwork(HttpRequest &request, HttpResponse &response)
+void networkOnConfig(HttpRequest &request, HttpResponse &response)
 {
-  if (!HTTP.isHttpClientAllowed(request, response))
+  if (!g_http.isHttpClientAllowed(request, response))
     return;
 
-  if (request.getRequestMethod() == RequestMethod::POST)
-  {
+  if (request.getRequestMethod() == RequestMethod::POST) {
     bool connectionTypeChanges =
      	AppSettings.wired != (request.getPostParameter("wired") == "1");
 
-    AppSettings.wired = request.getPostParameter("wired") == "1";
+    AppSettings.wired      = request.getPostParameter("wired") == "1";
 
-    String oldApPass = AppSettings.apPassword;
+    String oldApPass       = AppSettings.apPassword;
     AppSettings.apPassword = request.getPostParameter("apPassword");
-    if (!AppSettings.apPassword.equals(oldApPass))
-    {
-      softApSetPasswordTimer.initializeMs(500, apEnable).startOnce();
-      }
 
-    AppSettings.ssid = request.getPostParameter("ssid");
-    AppSettings.password = request.getPostParameter("password");
-    AppSettings.portalUrl = request.getPostParameter("portalUrl");
+    if (!AppSettings.apPassword.equals(oldApPass))
+      softApSetPasswordTimer.initializeMs(500, apEnable).startOnce();
+
+    AppSettings.ssid       = request.getPostParameter("ssid");
+    AppSettings.password   = request.getPostParameter("password");
+    AppSettings.portalUrl  = request.getPostParameter("portalUrl");
     AppSettings.portalData = request.getPostParameter("portalData");
 
-    AppSettings.dhcp = request.getPostParameter("dhcp") == "1";
-    AppSettings.ip = request.getPostParameter("ip");
-    AppSettings.netmask = request.getPostParameter("netmask");
-    AppSettings.gateway = request.getPostParameter("gateway");
+    AppSettings.dhcp       = request.getPostParameter("dhcp") == "1";
+    AppSettings.ip         = request.getPostParameter("ip");
+    AppSettings.netmask    = request.getPostParameter("netmask");
+    AppSettings.gateway    = request.getPostParameter("gateway");
     Debug.printf("Updating IP settings: %d", AppSettings.ip.isNull());
     AppSettings.save();
     
@@ -60,34 +58,33 @@ void onNetwork(HttpRequest &request, HttpResponse &response)
 
     if (connectionTypeChanges)
       processRestartCommandWeb();
-    }
+    } // if POST
 
   TemplateFileStream *tmpl = new TemplateFileStream("network.html");
-
   auto &vars = tmpl->variables();
 
-  vars["appAlias"] = APP_ALIAS;
+  vars["appAlias"]   = APP_ALIAS;
 
-  vars["wiredon"] = AppSettings.wired ? "checked='checked'" : "";
-  vars["wiredoff"] = AppSettings.wired ? "" : "checked='checked'";
+  vars["wiredon"]    = AppSettings.wired ? "checked='checked'" : "";
+  vars["wiredoff"]   = AppSettings.wired ? "" : "checked='checked'";
 
-  vars["ssid"] = AppSettings.ssid;
-  vars["password"] = AppSettings.password;
+  vars["ssid"]       = AppSettings.ssid;
+  vars["password"]   = AppSettings.password;
   vars["apPassword"] = AppSettings.apPassword;
 
-  vars["portalUrl"] = AppSettings.portalUrl;
+  vars["portalUrl"]  = AppSettings.portalUrl;
   vars["portalData"] = AppSettings.portalData;
 
-  bool dhcp = AppSettings.dhcp;
-  vars["dhcpon"] = dhcp ? "checked='checked'" : "";
-  vars["dhcpoff"] = !dhcp ? "checked='checked'" : "";
+  bool dhcp          = AppSettings.dhcp;
+  vars["dhcpon"]     = dhcp  ? "checked='checked'" : "";
+  vars["dhcpoff"]    = !dhcp ? "checked='checked'" : "";
 
-  vars["ip"] = Network.getClientIP().toString();
-  vars["netmask"] = Network.getClientMask().toString();
-  vars["gateway"] = Network.getClientGW().toString();
+  vars["ip"]         = Network.getClientIP().toString();
+  vars["netmask"]    = Network.getClientMask().toString();
+  vars["gateway"]    = Network.getClientGW().toString();
 
   response.sendTemplate(tmpl); // will be automatically deleted
-  } //
+  } // networkOnConfig
 
 //----------------------------------------------------------------------------
 //

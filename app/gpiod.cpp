@@ -12,9 +12,9 @@ OpenHabMqttController controller;
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-void onGpiod(HttpRequest &request, HttpResponse &response)
+void gpiodOnConfig(HttpRequest &request, HttpResponse &response)
 {
-  if (!HTTP.isHttpClientAllowed(request, response))
+  if (!g_http.isHttpClientAllowed(request, response))
     return;
 
   // handle new settings
@@ -26,7 +26,7 @@ void onGpiod(HttpRequest &request, HttpResponse &response)
   auto &vars = tmpl->variables();
   vars["appAlias"] = APP_ALIAS;
   response.sendTemplate(tmpl); // will be automatically deleted
-  } // onGpiod
+  } // gpiodOnConfig
 
 //----------------------------------------------------------------------------
 //
@@ -34,6 +34,7 @@ void onGpiod(HttpRequest &request, HttpResponse &response)
 void OpenHabMqttController::begin()
 {
   checkTimer.initializeMs(1000, TimerDelegate(&OpenHabMqttController::checkConnection, this)).start(true);
+  checkTimer.initializeMs(5000, TimerDelegate(&OpenHabMqttController::onRun, this)).start(true);
   } //
 
 //----------------------------------------------------------------------------
@@ -50,7 +51,7 @@ void OpenHabMqttController::notifyChange(String object, String value)
 void OpenHabMqttController::registerHttpHandlers(HttpServer &server)
 {
   mqttRegisterHttpHandlers(server);
-  server.addPath("/gpiod", onGpiod);
+  server.addPath("/gpiod", gpiodOnConfig);
   } //
 
 //----------------------------------------------------------------------------
@@ -69,4 +70,12 @@ void OpenHabMqttController::checkConnection()
   if (WifiStation.isConnected())
     mqttCheckClient();
   } //
+
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
+void OpenHabMqttController::onRun()
+{
+  Debug.println("OpenHabMqttController::onRun");
+  } // onRun
 

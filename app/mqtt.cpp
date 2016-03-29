@@ -8,81 +8,85 @@
 #include <globals.h>
 
 // Forward declarations
-void onMessageReceived(String topic, String message);
+void mqttOnPublish(String topic, String message);
 
 // MQTT client
-MqttClient           *mqtt = NULL;
-//char                 clientId[33];
-bool                 MqttConfigured = FALSE;
-bool                 MqttIsConnected = FALSE;
-
-unsigned long        mqttPktRx = 0;
-unsigned long        mqttPktTx = 0;
+MqttClient*          g_pMqtt = NULL;
+bool                 g_bMqttIsConfigured = FALSE;
+bool                 g_bMqttIsConnected = FALSE;
+unsigned long        g_dwMqttPktRx = 0;
+unsigned long        g_dwMqttPktTx = 0;
 
 
-void ICACHE_FLASH_ATTR mqttPublishMessage(String topic, String message)
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
+void ICACHE_FLASH_ATTR mqttPublishMessage(String strTopic, String strMsg)
 {
-  if (!mqtt)
+  if (!g_pMqtt)
     return;
 
-  mqtt->publish(AppSettings.mqttClientId + String("/") + AppSettings.mqttEvtPfx + String("/") + topic, message);
-  mqttPktTx++;
-  } //
+  g_pMqtt->publish(AppSettings.mqttClientId + String("/") + AppSettings.mqttEvtPfx + String("/") + strTopic, strMsg);
+  g_dwMqttPktTx++;
+  } // mqttPublishMessage
 
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 void ICACHE_FLASH_ATTR mqttPublishVersion()
 {
-  mqtt->publish(AppSettings.mqttClientId + String("/") + AppSettings.mqttEvtPfx + String("/version"), APP_ALIAS);
-  mqttPktTx++;
-  } //
+  g_pMqtt->publish(AppSettings.mqttClientId + String("/") + AppSettings.mqttEvtPfx + String("/version"), APP_ALIAS);
+  g_dwMqttPktTx++;
+  } // mqttPublishVersion
 
 // Callback for messages, arrived from MQTT server
 
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 String getValue(String data, char separator, int index)
 {
   int found = 0;
   int strIndex[] = {0, -1};
-  int maxIndex = data.length()-1;
+  int maxIndex = data.length() - 1;
 
-  for(int i=0; i<=maxIndex && found<=index; i++){
-    if(data.charAt(i)==separator || i==maxIndex){
-        found++;
-        strIndex[0] = strIndex[1]+1;
-        strIndex[1] = (i == maxIndex) ? i+1 : i;
-    }
-  }
+  for (int i = 0; i <= maxIndex && found <= index; i++) {
+    if (data.charAt(i) == separator || i == maxIndex) {
+      found++;
+      strIndex[0] = strIndex[1] + 1;
+      strIndex[1] = (i == maxIndex) ? i + 1 : i;
+      }
+    } // for
 
   return found>index ? data.substring(strIndex[0], strIndex[1]) : "";
-}
+  } // getValue
 
 //int updateSensorStateInt(int node, int sensor, int type, int value);
-int getTypeFromString(String type);
+//int getTypeFromString(String type);
 
 
-void ICACHE_FLASH_ATTR onMessageReceived(String topic, String message)
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
+void ICACHE_FLASH_ATTR mqttOnPublish(String strTopic, String strMsg)
 {
-    /*
-     * Supported topics:
-     *   /? => send version info
-     *   <MQTTPREFIX>/<NODEID>/<SENSOR_ID>/<SENSOR_TYPE>/<VALUE>
-     */
+  /*
+   * Supported topics:
+   *   /? => send version info
+   *   <clientid>/<cmdpfx>/<object>, i.e. astr76b32/L3R1W2/cmd/shutter0=up.0.5
+   */
 
-    //MyMQTT/22/1/V_LIGHT
-    if (topic.startsWith(AppSettings.mqttClientId + String("/") + AppSettings.mqttCmdPfx + "/"))
-    {
-        mqttPktRx++;
+  // check to be sure, but we should not receive other messages
+  if (strTopic.startsWith(AppSettings.mqttClientId + String("/") + AppSettings.mqttCmdPfx + "/")) {
+    g_dwMqttPktRx++;
 
-        String node   = getValue(topic, '/', 1);
-        String sensor = getValue(topic, '/', 2);
-        String type   = getValue(topic, '/', 3);
-        Debug.println();
-        Debug.println();
-        Debug.println();
-        Debug.println(node);
-        Debug.println(sensor);
-        Debug.println(type);
-        Debug.println(message);
-        //strip leading V_
-        type.remove(0,2);
+    String strObj = getValue(strTopic, '/', 3);
+    Debug.println();
+    Debug.println();
+    Debug.println(strObj);
+    Debug.println(strMsg);
+    //strip leading V_
+//    type.remove(0,2);
 //      Debug.println(MyGateway::getSensorTypeFromString(type));
 
 //      updateSensorStateInt(node.toInt(), sensor.toInt(),
@@ -90,57 +94,55 @@ void ICACHE_FLASH_ATTR onMessageReceived(String topic, String message)
 //                           message.toInt());
     }
 
-    if (topic.equals(String("/?")))
-    {
-        mqttPublishVersion();
-        return;
-    }
+//  if (strTopic.equals(String("/?")))
+//  {
+//      mqttPublishVersion();
+//      return;
+//  }
 
-  Debug.println("mqttRX: " + topic + " = " + message);
-  } //
+  Debug.println("mqttOnPublish: " + strTopic + " = " + strMsg);
+  } // mqttOnPublish
 
 //----------------------------------------------------------------------------
 // start MQTT client
 //----------------------------------------------------------------------------
 void ICACHE_FLASH_ATTR mqttStartClient()
 {
-//  char str[64];
-
-  if (mqtt)
-    delete mqtt;
+  // delete existing instance
+  if (g_pMqtt)
+    delete g_pMqtt;
 
   AppSettings.load();
   if (!AppSettings.mqttServer.equals(String("")) && AppSettings.mqttPort != 0) {
-//    if (AppSettings.mqttClientId.equals(String("")))
-//      sprintf(clientId, "ESP_%08X", system_get_chip_id());
-//    else
-//      sprintf(clientId, "%s", AppSettings.mqttClientId.c_str());
+    g_pMqtt = new MqttClient(AppSettings.mqttServer, AppSettings.mqttPort, mqttOnPublish);
+    g_bMqttIsConnected = g_pMqtt->connect(AppSettings.mqttClientId, AppSettings.mqttUser, AppSettings.mqttPass);
 
-    mqtt = new MqttClient(AppSettings.mqttServer, AppSettings.mqttPort, onMessageReceived);
-    MqttIsConnected = mqtt->connect(AppSettings.mqttClientId, AppSettings.mqttUser, AppSettings.mqttPass);
-
-    mqtt->subscribe(AppSettings.mqttClientId + String("/") + AppSettings.mqttCmdPfx + String("/#"));
-//    sprintf(str, "%s/%s/#", AppSettings.mqttClientId, AppSettings.mqttCmdPfx);
-//    mqtt->subscribe(str);
+    g_pMqtt->subscribe(AppSettings.mqttClientId + String("/") + AppSettings.mqttCmdPfx + String("/#"));
     mqttPublishVersion();
-    MqttConfigured = TRUE;
+    g_bMqttIsConfigured = TRUE;
     }
-  } //
+  } // mqttStartClient
 
+//----------------------------------------------------------------------------
+// restart MQTT client if needed
+//----------------------------------------------------------------------------
 void ICACHE_FLASH_ATTR mqttCheckClient()
 {
-  if (mqtt && mqtt->isProcessing())
+  if (g_pMqtt && g_pMqtt->isProcessing())
     return;
 
   mqttStartClient();
-  } //
+  } // mqttCheckClient
 
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 void mqttOnConfig(HttpRequest &request, HttpResponse &response)
 {
   AppSettings.load();
-  MqttConfigured = FALSE;
+  g_bMqttIsConfigured = FALSE;
 
-  if (!HTTP.isHttpClientAllowed(request, response))
+  if (!g_http.isHttpClientAllowed(request, response))
     return;
 
   if (request.getRequestMethod() == RequestMethod::POST) {
@@ -171,18 +173,31 @@ void mqttOnConfig(HttpRequest &request, HttpResponse &response)
   response.sendTemplate(tmpl); // will be automatically deleted
   } // mqttOnConfig
 
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 void ICACHE_FLASH_ATTR mqttRegisterHttpHandlers(HttpServer &server)
 {
   server.addPath("/mqtt", mqttOnConfig);
   } //
 
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 bool mqttIsConnected(void) 
 {
-  if (mqtt == NULL)
+  if (g_pMqtt == NULL)
     return (FALSE);
   else
-    return((mqtt->getConnectionState() == eTCS_Connected));
+    return((g_pMqtt->getConnectionState() == eTCS_Connected));
   } //
 
-bool   mqttIsConfigured(void) { return(MqttConfigured); }
-String mqttServer(void)       { return(AppSettings.mqttServer); }
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
+bool   mqttIsConfigured(void) { return g_bMqttIsConfigured; }
+
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
+String mqttServer(void)       { return AppSettings.mqttServer; }

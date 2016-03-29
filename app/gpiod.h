@@ -87,6 +87,7 @@ class OpenHabMqttController : public Controller
 
  private:
   void checkConnection();
+  void onRun();
 
  private:
   Timer checkTimer;

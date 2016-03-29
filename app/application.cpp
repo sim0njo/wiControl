@@ -45,7 +45,7 @@ void heapCheckUsage()
 void startServers()
 {
   //HTTP must be first so handlers can be registered
-  HTTP.begin(); 
+  g_http.begin(); 
 
   g_heapCheckTimer.initializeMs(60000, heapCheckUsage).start(true);
 

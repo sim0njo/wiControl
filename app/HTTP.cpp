@@ -10,14 +10,16 @@
 #include <Wiring/SplitString.h>
 
 // Forward declarations
-void StartOtaUpdateWeb(String);
-void processRestartCommandWeb(void);
+void                 StartOtaUpdateWeb(String);
+void                 processRestartCommandWeb(void);
+
+HTTPClass            g_http;
 
 
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-void onStatus(HttpRequest &request, HttpResponse &response)
+void httpOnStatus(HttpRequest &request, HttpResponse &response)
 {
   char buf [200];
   TemplateFileStream *tmpl = new TemplateFileStream("status.html");
@@ -74,21 +76,21 @@ void onStatus(HttpRequest &request, HttpResponse &response)
     
   // --- System info -------------------------------------------------
   sprintf (buf, "%x", system_get_chip_id());
-  vars["systemVersion"] = build_git_sha;
-  vars["systemBuild"] = build_time;
+  vars["systemVersion"]  = build_git_sha;
+  vars["systemBuild"]    = build_time;
   vars["systemFreeHeap"] = system_get_free_heap_size();
-  vars["systemStartup"] = "todo";
-  vars["systemChipId"] = buf;
-  uint32_t curMillis = millis();
-  sprintf(buf, "%d s, %03d ms : ", curMillis/1000, curMillis % 1000);
-  vars["systemUptime"] = buf;
+  vars["systemStartup"]  = "todo";
+  vars["systemChipId"]   = buf;
+  uint32_t curMillis     = millis();
+  sprintf(buf, "%d s, %03d ms : ", curMillis / 1000, curMillis % 1000);
+  vars["systemUptime"]   = buf;
 
 
   // --- Statistics --------------------------------------------------
 //    vars["nrfRx"] = rfPacketsRx; //TODO check counters at MySensor.cpp
 //    vars["nrfTx"] = rfPacketsTx;
-  vars["mqttRx"] = mqttPktRx;
-  vars["mqttTx"] = mqttPktTx;
+  vars["mqttRx"] = g_dwMqttPktRx;
+  vars["mqttTx"] = g_dwMqttPktTx;
     
   response.sendTemplate(tmpl); // will be automatically deleted
   } //
@@ -96,11 +98,11 @@ void onStatus(HttpRequest &request, HttpResponse &response)
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-void onTools(HttpRequest &request, HttpResponse &response)
+void httpOnTools(HttpRequest &request, HttpResponse &response)
 {
     AppSettings.load();
 
-    if (!HTTP.isHttpClientAllowed(request, response))
+    if (!g_http.isHttpClientAllowed(request, response))
         return;
 
     if (request.getRequestMethod() == RequestMethod::POST)
@@ -135,64 +137,30 @@ void onTools(HttpRequest &request, HttpResponse &response)
   response.sendTemplate(tmpl); // will be automatically deleted
   } //
 
-void onFile(HttpRequest &request, HttpResponse &response)
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
+void httpOnFile(HttpRequest &request, HttpResponse &response)
 {
-#ifdef SD_SPI_SS_PIN
-    static bool alreadyInitialized = false;
-#endif
+  if (!g_http.isHttpClientAllowed(request, response))
+    return;
 
-    if (!HTTP.isHttpClientAllowed(request, response))
-        return;
+  String file = request.getPath();
+  if (file[0] == '/')
+    file = file.substring(1);
 
-    String file = request.getPath();
-    if (file[0] == '/')
-        file = file.substring(1);
-
-    if (file[0] == '.')
-        response.forbidden();
-    else
+  if (file[0] == '.')
+    response.forbidden();
+  else
     {
-        response.setCache(86400, true); // It's important to use cache for better performance.
+    response.setCache(86400, true); // It's important to use cache for better performance.
 
-        // open the file. note that only one file can be open at a time,
-        // so you have to close this one before opening another.
-        Debug.printf("REQUEST for %s\n", file.c_str());
-#ifdef SD_SPI_SS_PIN
-        if (alreadyInitialized || SD.begin(0))
-        {
-            alreadyInitialized = true;
-            Debug.printf("SD card present\n");
-            File f = SD.open(file);
-            if (!f) //SD.exists(file) does not seem to work
-            {
-                Debug.printf("NOT FOUND %s\n", file.c_str());
-                response.sendFile(file);
-            }
-            else if (f.isDirectory())
-            {
-                f.close();
-                Debug.printf("%s IS A DIRECTORY\n", file.c_str());
-                response.forbidden();
-            }
-            else
-            {
-                f.close();
-                Debug.printf("OPEN STREAM FOR %s\n", file.c_str());
-                response.setAllowCrossDomainOrigin("*");
-                const char *mime = ContentType::fromFullFileName(file);
-		if (mime != NULL)
-		    response.setContentType(mime);
-                SdFileStream *stream = new SdFileStream(file);
-                response.sendDataStream(stream);
-            }
-        }
-        else
-#endif
-        {
-            response.sendFile(file);
-        }
+    // open the file. note that only one file can be open at a time,
+    // so you have to close this one before opening another.
+    Debug.printf("REQUEST for %s\n", file.c_str());
+    response.sendFile(file);
     }
-}
+  } // 
 
 //----------------------------------------------------------------------------
 //
@@ -243,20 +211,18 @@ void HTTPClass::wsConnected(WebSocket& socket)
 //----------------------------------------------------------------------------
 void HTTPClass::wsMessageReceived(WebSocket& socket, const String& message)
 {
-    Vector<String> commandToken;
-    int numToken = splitString((String &)message,' ' , commandToken);
+  Vector<String> commandToken;
+  int numToken = splitString((String &)message,' ' , commandToken);
 
-    if (numToken > 0 && wsCommandHandlers.contains(commandToken[0]))
-    {
-        Serial.printf("WebSocket command received: %s\r\n", commandToken[0].c_str());
-        wsCommandHandlers[commandToken[0]](socket, message);
-        return;
+  if (numToken > 0 && wsCommandHandlers.contains(commandToken[0])) {
+    Serial.printf("WebSocket command received: %s\r\n", commandToken[0].c_str());
+    wsCommandHandlers[commandToken[0]](socket, message);
+    return;
     }
-    else
-    {
-        Serial.printf("WebSocket received unknown string: %s\r\n", message.c_str());
-        String response = "Unknown command: " + message;
-        socket.sendString(response);
+  else {
+    Serial.printf("WebSocket received unknown string: %s\r\n", message.c_str());
+    String response = "Unknown command: " + message;
+    socket.sendString(response);
     }
   } //
 
@@ -302,14 +268,14 @@ void HTTPClass::begin()
 {
   server.listen(80);
   server.enableHeaderProcessing("Authorization");
-  server.addPath("/",        onStatus);
-  server.addPath("/status",  onStatus);
-  server.addPath("/network", onNetwork);
-  server.addPath("/tools",   onTools);
+  server.addPath("/",        httpOnStatus);
+  server.addPath("/status",  httpOnStatus);
+  server.addPath("/network", networkOnConfig);
+  server.addPath("/tools",   httpOnTools);
 
 //  GW.registerHttpHandlers(server);
   controller.registerHttpHandlers(server);
-  server.setDefaultHandler(onFile);
+  server.setDefaultHandler(httpOnFile);
 
   // Web Sockets configuration
   server.enableWebSockets(true);
@@ -319,4 +285,3 @@ void HTTPClass::begin()
   server.setWebSocketDisconnectionHandler(WebSocketDelegate(&HTTPClass::wsDisconnected, this));
   } //
 
-HTTPClass HTTP;
