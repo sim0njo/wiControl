@@ -37,8 +37,6 @@ void ICACHE_FLASH_ATTR mqttPublishMessage(String strTopic, String strMsg)
 void ICACHE_FLASH_ATTR mqttPublishVersion()
 {
   mqttPublishMessage("system/version", APP_ALIAS);
-//g_pMqtt->publish(AppSettings.mqttClientId + String("/") + AppSettings.mqttEvtPfx + String("/version"), APP_ALIAS);
-//g_dwMqttPktTx++;
   } // mqttPublishVersion
 
 //----------------------------------------------------------------------------
@@ -52,7 +50,7 @@ void ICACHE_FLASH_ATTR mqttStartClient()
 
   AppSettings.load();
   if (!AppSettings.mqttServer.equals(String("")) && AppSettings.mqttPort != 0) {
-    g_pMqtt = new MqttClient(AppSettings.mqttServer, AppSettings.mqttPort, gpiodOnPublish);
+    g_pMqtt = new MqttClient(AppSettings.mqttServer, AppSettings.mqttPort, gpiodOnMqttPublish);
     g_bMqttIsConnected = g_pMqtt->connect(AppSettings.mqttClientId, AppSettings.mqttUser, AppSettings.mqttPass);
 
     g_pMqtt->subscribe(AppSettings.mqttClientId + String("/") + AppSettings.mqttCmdPfx + String("/#"));

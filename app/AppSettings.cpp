@@ -62,7 +62,9 @@ void ApplicationSettingsStorage::load()
       mqttClientId = (const char *) str; 
       }
 
-    gpiodMode = network["gpiodMode"];
+    JsonObject& gpiod = root["gpiod"];
+    gpiodEmul = gpiod["gpiodEmul"];
+    gpiodMode = gpiod["gpiodMode"];
 
     cpuBoost = root["cpuBoost"];
     useOwnBaseAddress = root["useOwnBaseAddress"];
@@ -79,55 +81,60 @@ void ApplicationSettingsStorage::load()
 
 void ApplicationSettingsStorage::save()
 {
-    DynamicJsonBuffer jsonBuffer;
-    JsonObject& root = jsonBuffer.createObject();
+  DynamicJsonBuffer jsonBuffer;
+  JsonObject& root = jsonBuffer.createObject();
 
-    JsonObject& network = jsonBuffer.createObject();
-    root["network"] = network;
-    network["wired"] = wired;
-    network["ssid"] = ssid.c_str();
-    network["password"] = password.c_str();
-    network["apPassword"] = apPassword.c_str();
-    network["portalUrl"] = portalUrl.c_str();
-    network["portalData"] = portalData.c_str();
+  JsonObject& network = jsonBuffer.createObject();
+  root["network"] = network;
+  network["wired"] = wired;
+  network["ssid"] = ssid.c_str();
+  network["password"] = password.c_str();
+  network["apPassword"] = apPassword.c_str();
+  network["portalUrl"] = portalUrl.c_str();
+  network["portalData"] = portalData.c_str();
 
-    if (apMode == apModeAlwaysOn)
-        network["apMode"] = "always";
-    else if (apMode == apModeAlwaysOff)
-        network["apMode"] = "never";
-    else
-        network["apMode"] = "whenDisconnected";
+  if (apMode == apModeAlwaysOn)
+    network["apMode"] = "always";
+  else if (apMode == apModeAlwaysOff)
+    network["apMode"] = "never";
+  else
+    network["apMode"] = "whenDisconnected";
 
-    network["dhcp"] = dhcp;
+  network["dhcp"] = dhcp;
 
-    // Make copy by value for temporary string objects
-    network.set("ip", ip.toString());
-    network.set("netmask", netmask.toString());
-    network.set("gateway", gateway.toString());
+  // Make copy by value for temporary string objects
+  network.set("ip", ip.toString());
+  network.set("netmask", netmask.toString());
+  network.set("gateway", gateway.toString());
 
-    JsonObject& mqtt = jsonBuffer.createObject();
-    root["mqtt"] = mqtt;
-    mqtt.set("user", mqttUser);
-    mqtt.set("password", mqttPass);
-    mqtt.set("server", mqttServer);
-    mqtt["port"] = mqttPort;
-    mqtt.set("clientId", mqttClientId);
-    mqtt.set("evtPfx", mqttEvtPfx);
-    mqtt.set("cmdPfx", mqttCmdPfx);
+  JsonObject& mqtt = jsonBuffer.createObject();
+  root["mqtt"] = mqtt;
+  mqtt.set("user", mqttUser);
+  mqtt.set("password", mqttPass);
+  mqtt.set("server", mqttServer);
+  mqtt["port"] = mqttPort;
+  mqtt.set("clientId", mqttClientId);
+  mqtt.set("evtPfx", mqttEvtPfx);
+  mqtt.set("cmdPfx", mqttCmdPfx);
 
-    root["cpuBoost"] = cpuBoost;
-    root["useOwnBaseAddress"] = useOwnBaseAddress;
+  JsonObject& gpiod = jsonBuffer.createObject();
+  root["gpiod"] = gpiod;
+  gpiod["emul"] = gpiodEmul;
+  gpiod["mode"] = gpiodMode;
 
-    root.set("cloudDeviceToken", cloudDeviceToken);
-    root.set("cloudLogin", cloudLogin);
-    root.set("cloudPassword", cloudPassword);
+  root["cpuBoost"] = cpuBoost;
+  root["useOwnBaseAddress"] = useOwnBaseAddress;
 
-    root.set("webOtaBaseUrl", webOtaBaseUrl.c_str());
+  root.set("cloudDeviceToken", cloudDeviceToken);
+  root.set("cloudLogin", cloudLogin);
+  root.set("cloudPassword", cloudPassword);
 
-    //TODO: add direct file stream writing
-    String out;
-    root.printTo(out);
-    fileSetContent(APP_SETTINGS_FILE, out);
-}
+  root.set("webOtaBaseUrl", webOtaBaseUrl.c_str());
+
+  //TODO: add direct file stream writing
+  String out;
+  root.printTo(out);
+  fileSetContent(APP_SETTINGS_FILE, out);
+  } //
 
 ApplicationSettingsStorage AppSettings;

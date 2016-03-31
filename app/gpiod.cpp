@@ -1,5 +1,4 @@
 
-#include <user_config.h>
 #include <SmingCore/SmingCore.h>
 #include <AppSettings.h>
 #include <HTTP.h>
@@ -10,20 +9,25 @@ CGpiod               g_gpiod;
 //----------------------------------------------------------------------------
 // HTTP config callback
 //----------------------------------------------------------------------------
-void gpiodOnConfig(HttpRequest &request, HttpResponse &response)
+void gpiodOnHttpConfig(HttpRequest &request, HttpResponse &response)
 {
   if (!g_http.isHttpClientAllowed(request, response))
     return;
 
   // handle new settings
   if (request.getRequestMethod() == RequestMethod::POST) {
-    bool bModeChange =
-     	AppSettings.gpiodMode != (request.getPostParameter("gpiodMode") == "1");
+    bool bEmulChange =
+     	AppSettings.gpiodEmul != (request.getPostParameter("gpiodEmul") == "1");
 
+    AppSettings.gpiodEmul = request.getPostParameter("gpiodEmul") == "1";
     AppSettings.gpiodMode = request.getPostParameter("gpiodMode") == "1";
     
-//  if (bModeChange)
-//
+    AppSettings.save();
+
+    if (bEmulChange) {
+      g_gpiod.OnConfig();
+      g_gpiod.OnInit();
+      } // if
     } // if
 
   // send page
@@ -31,18 +35,22 @@ void gpiodOnConfig(HttpRequest &request, HttpResponse &response)
   auto &vars = tmpl->variables();
   vars["appAlias"] = APP_ALIAS;
 
+  bool gpiodEmul     = AppSettings.gpiodEmul;
+  vars["gpiodEmul0"] = gpiodEmul ? "" : "checked='checked'";
+  vars["gpiodEmul1"] = gpiodEmul ? "checked='checked'" : "";
+
   bool gpiodMode     = AppSettings.gpiodMode;
   vars["gpiodMode0"] = gpiodMode ? "" : "checked='checked'";
   vars["gpiodMode1"] = gpiodMode ? "checked='checked'" : "";
 
   response.sendTemplate(tmpl); // will be automatically deleted
-  } // gpiodOnConfig
+  } // gpiodOnHttpConfig
 
 //----------------------------------------------------------------------------
 // MQTT client callback
 // <clientid>/<cmdpfx>/<object>, i.e. astr76b32/L3R1W2/cmd/shutter0=up.0.5
 //----------------------------------------------------------------------------
-void ICACHE_FLASH_ATTR gpiodOnPublish(String strTopic, String strMsg)
+void ICACHE_FLASH_ATTR gpiodOnMqttPublish(String strTopic, String strMsg)
 {
   tUint32   dwErr = XERROR_SUCCESS;
   tUint32   msNow = millis();
@@ -64,7 +72,7 @@ void ICACHE_FLASH_ATTR gpiodOnPublish(String strTopic, String strMsg)
     g_dwMqttPktRx++;
 
     // parse object, cmd and optional parms
-    if (g_gpiod.ParseCmd(&cmd, pTopic, pMsg, (g_gpiod.GetMode() == CGPIOD_MODE_OUTPUT) ? CGPIOD_OBJ_CLS_OUTPUT : CGPIOD_OBJ_CLS_SHUTTER)) {
+    if (g_gpiod.ParseCmd(&cmd, pTopic, pMsg, (g_gpiod.GetEmul() == CGPIOD_EMUL_OUTPUT) ? CGPIOD_OBJ_CLS_OUTPUT : CGPIOD_OBJ_CLS_SHUTTER)) {
       Debug.println("gpiodOnPublish,ParseCmd() failed,dropping");
       dwErr = XERROR_DATA;
       break;
@@ -76,7 +84,7 @@ void ICACHE_FLASH_ATTR gpiodOnPublish(String strTopic, String strMsg)
 
   if (pTopic) free(pTopic);
   if (pMsg) free(pMsg);
-  } // gpiodOnPublish
+  } // gpiodOnMqttPublish
 
 //--------------------------------------------------------------------------
 // configure daemon
@@ -86,6 +94,9 @@ tUint32 CGpiod::OnConfig()
   tUint32 dwObj;
 
   do {
+    m_dwEmul = AppSettings.gpiodEmul;
+    m_dwMode = AppSettings.gpiodMode;
+
     // configure heartbeat timers
     Debug.println("CGpiod::OnConfig");
     memset(m_hb, 0, sizeof(m_hb));
@@ -99,7 +110,7 @@ tUint32 CGpiod::OnConfig()
     _inputOnConfig();
 
     // configure outputs
-    if (m_dwMode == CGPIOD_MODE_OUTPUT)
+    if (m_dwEmul == CGPIOD_EMUL_OUTPUT)
       _outputOnConfig();
     else
       _shutterOnConfig();
@@ -119,7 +130,7 @@ tUint32 CGpiod::OnInit()
   _inputOnInit();
 
   // initialise outputs
-  if (m_dwMode == CGPIOD_MODE_OUTPUT)
+  if (m_dwEmul == CGPIOD_EMUL_OUTPUT)
     _outputOnInit();
   else
     _shutterOnInit();
@@ -145,7 +156,7 @@ void CGpiod::OnRun() {
 
     _inputOnRun(msNow);
 
-    if (m_dwMode == CGPIOD_MODE_OUTPUT)
+    if (m_dwEmul == CGPIOD_EMUL_OUTPUT)
       _outputOnRun(msNow);
     else
       _shutterOnRun(msNow);
@@ -161,7 +172,7 @@ tUint32 CGpiod::OnExit() {
 
 //  gsprintf(szTopic, "%s/%s/#", g_mqttcd.GetStrAttr("mqttcd.clientid"), m_szCmdPfx);
 
-  if (m_dwMode == CGPIOD_MODE_OUTPUT)
+  if (m_dwEmul == CGPIOD_EMUL_OUTPUT)
     _outputOnExit();
   else
     _shutterOnExit();
@@ -198,14 +209,12 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
       if (m_input[dwObj].dwFlags & (0x1 << pEvt->dwEvt))
         _DoPublish(0, 0, 0, m_input[dwObj].szName, _inputEvt2String(pEvt->dwEvt));
 
-      if (m_dwMode == CGPIOD_MODE_OUTPUT) {
-        if (m_output[dwObj].dwFlags & CGPIOD_OUT_FLG_STANDALONE)
+      if (m_dwMode == CGPIOD_MODE_STANDALONE) { 
+        if (m_dwEmul == CGPIOD_EMUL_OUTPUT) 
           _outputDoEvt(pEvt);
-        } // if
-      else {
-        if (m_shutter[dwObj / 2].dwFlags & CGPIOD_UDM_FLG_STANDALONE)
+        else 
           _shutterDoEvt(pEvt);
-        } // else
+        } // if
 
       break;
     case CGPIOD_OBJ_CLS_OUTPUT:
@@ -285,8 +294,8 @@ void CGpiod::begin()
   OnConfig();
   OnInit();
 
-  checkTimer.initializeMs(1000, TimerDelegate(&CGpiod::checkConnection, this)).start(true);
-  checkTimer.initializeMs(50, TimerDelegate(&CGpiod::OnRun, this)).start(true);
+  m_timerMqtt.initializeMs(1000, TimerDelegate(&CGpiod::checkConnection, this)).start(true);
+  m_timer.initializeMs(50, TimerDelegate(&CGpiod::OnRun, this)).start(true);
   } // begin
 
 //----------------------------------------------------------------------------
@@ -295,7 +304,7 @@ void CGpiod::begin()
 void CGpiod::checkConnection()
 {
   if (WifiStation.isConnected()) {
-    Debug.println("CGpiod::checkConnection,make sure MQTT is running");
+//  Debug.println("CGpiod::checkConnection,make sure MQTT is running");
     mqttCheckClient();
     } 
   } // checkConnection

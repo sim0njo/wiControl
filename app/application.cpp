@@ -94,7 +94,8 @@ void processInfoCommand(String commandLine, CommandOutput* pOut)
   pOut->printf("Access Point Mode  : %s\r\n", apModeStr.c_str());
   pOut->printf("\r\n");
 
-  pOut->printf("Gpiod mode         : %s\r\n", AppSettings.gpiodMode ? "shutter" : "output");
+  pOut->printf("Gpiod emulation    : %s\r\n", AppSettings.gpiodEmul ? "shutter" : "output");
+  pOut->printf("Gpiod mode         : %s\r\n", AppSettings.gpiodMode ? "integrated" : "standalone");
   pOut->printf("\r\n");
 
   pOut->printf("System Time        : ");

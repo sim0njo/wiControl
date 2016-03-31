@@ -73,16 +73,16 @@
         <div class="col-lg-6 col-md-offset-3">
             <form method="post" action="">
                 <fieldset>
-                    <legend>Mode</legend>
+                    <legend>Emul</legend>
                     <div class="col-md-offset-2">
                         <div class="form-group">
-                            <label>gpiodMode</label>
+                            <label>gpiodEmul</label>
                             <div class="checkbox">
                                 <label>
-                                    <input type="radio" value="1" name="gpiodMode1" {gpiodMode1}> Shutter x1
+                                    <input type="radio" value="1" name="gpiodEmul1" {gpiodEmul1}> Shutter x1
                                 </label>
                                 <label>
-                                    <input type="radio" value="0" name="gpiodMode0" {gpiodMode0}> Output x2
+                                    <input type="radio" value="0" name="gpiodEmul0" {gpiodEmul0}> Output x2
                                 </label>
                             </div>
                         </div>
@@ -94,6 +94,33 @@
             </form>
         </div>
     </div>
+
+    <div class="row">
+        <div class="col-lg-6 col-md-offset-3">
+            <form method="post" action="">
+                <fieldset>
+                    <legend>Mode</legend>
+                    <div class="col-md-offset-2">
+                        <div class="form-group">
+                            <label>gpiodMode</label>
+                            <div class="checkbox">
+                                <label>
+                                    <input type="radio" value="1" name="gpiodMode1" {gpiodMode1}> Integrated
+                                </label>
+                                <label>
+                                    <input type="radio" value="0" name="gpiodMode0" {gpiodMode0}> Standalone
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </fieldset>
+                <div class="col-md-offset-3">
+                    <input type="submit" class="btn btn-success">
+                </div>
+            </form>
+        </div>
+    </div>
+
       <footer class="footer">
           <!--<p>&copy; Company 2014</p>-->
       </footer>

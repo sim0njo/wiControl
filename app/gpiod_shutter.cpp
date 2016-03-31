@@ -4,11 +4,8 @@
 //
 // Copyright (c) Jo Simons, 2016-2016, All Rights Reserved.
 //----------------------------------------------------------------------------
-//#include <user_config.h>
-#include <SmingCore/SmingCore.h>
-#include <SmingCore/Debug.h>
-//#include <AppSettings.h>
-//#include <HTTP.h>
+//#include <SmingCore/SmingCore.h>
+//#include <SmingCore/Debug.h>
 #include <gpiod.h>
 
   //--------------------------------------------------------------------------

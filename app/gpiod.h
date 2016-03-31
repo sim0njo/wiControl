@@ -7,20 +7,12 @@
 #ifndef __cgpiod_hpp__
 #define __cgpiod_hpp__
 
-#include <user_config.h>
 #include <SmingCore/SmingCore.h>
-//#include <controller.h>
+#include <SmingCore/Debug.h>
 #include <mqtt.h>
 #include <stdafx.h>
 #include <xerror.h>
 #include <cparse.hpp>
-
-
-extern tParseRsvd    g_gpiodParseObj[];
-extern tParseRsvd    g_gpiodParseCmdOutput[];
-extern tParseRsvd    g_gpiodParseCmdShutter[];
-extern tParseRsvd    g_gpiodParseCmdSystem[];
-extern tParseRsvd    g_gpiodParseCmdCounter[];
 
 
 #define CGPIOD_VERSION                   "4.0.1.0" //                                   
@@ -28,8 +20,11 @@ extern tParseRsvd    g_gpiodParseCmdCounter[];
 #define CGPIOD_CMD_PFX                       "cmd" //
 #define CGPIOD_EVT_PFX                       "evt" //
 
-#define CGPIOD_MODE_OUTPUT                       0 // configured as out0-3
-#define CGPIOD_MODE_SHUTTER                      1 // configured as udm0-1
+#define CGPIOD_EMUL_OUTPUT                       0 // configured as out0-3
+#define CGPIOD_EMUL_SHUTTER                      1 // configured as udm0-1
+
+#define CGPIOD_MODE_STANDALONE                   0 // configured as out0-3
+#define CGPIOD_MODE_INTEGRATED                   1 // configured as udm0-1
 
 //                                      0x0000CCNN //
 #define CGPIOD_OBJ_NUM_MASK             0x000000FF //
@@ -309,7 +304,7 @@ typedef struct {
 // callbacks
 //----------------------------------------------------------------------------
 void                 gpiodOnHttpConfig(HttpRequest &request, HttpResponse &response);
-void                 gpiodOnPublish(String topic, String message);
+void                 gpiodOnMqttPublish(String topic, String message);
 
 //----------------------------------------------------------------------------
 //
@@ -318,6 +313,7 @@ class CGpiod {
  private:
   tUint32            m_dwError;                    //
 
+  tUint32            m_dwEmul;                     //
   tUint32            m_dwMode;                     //
   tCChar*            m_szCmdPfx;                   //
   tCChar*            m_szEvtPfx;                   //
@@ -326,8 +322,9 @@ class CGpiod {
   tGpiodInput        m_input[CGPIOD_IN_COUNT];     //
   tGpiodOutput       m_output[CGPIOD_OUT_COUNT];   //
   tGpiodShutter      m_shutter[CGPIOD_UDM_COUNT];  // 
-  CParse             m_parse;
-  Timer              checkTimer;
+  CParse             m_parse;                      //
+  Timer              m_timer;                      //
+  Timer              m_timerMqtt;                  //
 
 
  public:
@@ -347,7 +344,8 @@ class CGpiod {
   //--------------------------------------------------------------------------
   // gpiod.cpp
   //--------------------------------------------------------------------------
-  tUint32            GetMode()                     { return m_dwMode; }
+  tUint32            GetEmul()                     { return m_dwEmul; }
+//tUint32            GetMode()                     { return m_dwMode; }
 
   tUint32            OnConfig();
   tUint32            OnInit();

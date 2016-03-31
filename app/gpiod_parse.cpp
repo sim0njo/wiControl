@@ -1,10 +1,18 @@
 
-//nclude <user_config.h>
-#include <SmingCore/SmingCore.h>
-#include <SmingCore/Debug.h>
-//nclude <AppSettings.h>
-//nclude <HTTP.h>
+//----------------------------------------------------------------------------
+// cgpiod_parse.hpp : command parser
+//
+// Copyright (c) Jo Simons, 2016-2016, All Rights Reserved.
+//----------------------------------------------------------------------------
+//#include <SmingCore/SmingCore.h>
+//#include <SmingCore/Debug.h>
 #include <gpiod.h>
+
+extern tParseRsvd    g_gpiodParseObj[];
+extern tParseRsvd    g_gpiodParseCmdOutput[];
+extern tParseRsvd    g_gpiodParseCmdShutter[];
+extern tParseRsvd    g_gpiodParseCmdSystem[];
+extern tParseRsvd    g_gpiodParseCmdCounter[];
 
 //--------------------------------------------------------------------------
 //
@@ -29,8 +37,8 @@ tUint32 CGpiod::ParseCmd(tGpiodCmd* pOut, tChar* pObj, tChar* pCmd, tUint32 dwMa
     switch (pOut->dwObj & CGPIOD_OBJ_CLS_MASK) {
       case CGPIOD_OBJ_CLS_OUTPUT:  dwErr = _parseCmdOutput(pOut);
         break;
-//      case CGPIOD_OBJ_CLS_SHUTTER: dwErr = _parseCmdShutter(pOut);
-//        break;
+      case CGPIOD_OBJ_CLS_SHUTTER: dwErr = _parseCmdShutter(pOut);
+        break;
 //      case CGPIOD_OBJ_CLS_COUNTER: dwErr = _parseCmdCounter(pOut);
 //        break;
       case CGPIOD_OBJ_CLS_SYSTEM:  dwErr = _parseCmdSystem(pOut);
@@ -61,32 +69,7 @@ tUint32 CGpiod::_parseCmdSystem(tGpiodCmd* pOut) {
 
   return dwErr; 
   } // _parseCmdSystem
-/*
-tUint32 CGpiod::_parseCmdSystem(tGpiodCmd* pOut) {
-  tUint32 dwErr = XERROR_SUCCESS;
 
-  do {
-//  Debug.println("CGpiod::ParseCmdSystem,in=" + strIn);
-//  String strCmd = gpiodGetValue(strIn, '.', 1);
-//  Debug.println("CGpiod::ParseCmdSystem,cmd=" + strCmd);
-
-    // parse command
-    if      (strCmd.equalsIgnoreCase(String("ping")))
-      pOut->dwCmd = CGPIOD_SYS_CMD_PING;
-    else if (strCmd.equalsIgnoreCase(String("mode")))
-      pOut->dwCmd = CGPIOD_SYS_CMD_MODE;
-    else if (strCmd.equalsIgnoreCase(String("version")))
-      pOut->dwCmd = CGPIOD_SYS_CMD_VERSION;
-    else {
-      pOut->dwCmd = CGPIOD_SYS_CMD_PING;
-      break;
-      } // else
-
-    } while (FALSE);
-
-  return dwErr;
-  } // _parseCmdSystem
-*/
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
@@ -105,66 +88,11 @@ tUint32 CGpiod::_parseCmdOutput(tGpiodCmd* pOut) {
 
   return dwErr; 
   } // _parseCmdOutput
-/*
-tUint32 CGpiod::_parseCmdOutput(tGpiodCmd* pOut) {
-  tUint32 dwErr = XERROR_SUCCESS;
-  tChar   str[64];
 
-  do {
-//  Debug.println("CGpiod::ParseCmdOutput,in=" + strIn);
-//  String strCmd = gpiodGetValue(strIn, '.', 0);
-//  Debug.println("CGpiod::ParseCmdOutput,cmd=" + strCmd);
-
-    // parse command
-    if      (strCmd.equalsIgnoreCase(String("on")))
-      pOut->dwCmd = CGPIOD_OUT_CMD_ON;
-    else if (strCmd.equalsIgnoreCase(String("off")))
-      pOut->dwCmd = CGPIOD_OUT_CMD_OFF;
-    else if (strCmd.equalsIgnoreCase(String("onlocked")))
-      pOut->dwCmd = CGPIOD_OUT_CMD_ONLOCKED;
-    else if (strCmd.equalsIgnoreCase(String("offlocked")))
-      pOut->dwCmd = CGPIOD_OUT_CMD_OFFLOCKED;
-    else if (strCmd.equalsIgnoreCase(String("toggle")))
-      pOut->dwCmd = CGPIOD_OUT_CMD_TOGGLE;
-    else if (strCmd.equalsIgnoreCase(String("unlock")))
-      pOut->dwCmd = CGPIOD_OUT_CMD_UNLOCK;
-    else if (strCmd.equalsIgnoreCase(String("ondelayed")))
-      pOut->dwCmd = CGPIOD_OUT_CMD_ONDELAYED;
-    else if (strCmd.equalsIgnoreCase(String("offdelayed")))
-      pOut->dwCmd = CGPIOD_OUT_CMD_OFFDELAYED;
-    else if (strCmd.equalsIgnoreCase(String("ontimed")))
-      pOut->dwCmd = CGPIOD_OUT_CMD_ONTIMED;
-    else if (strCmd.equalsIgnoreCase(String("offtimed")))
-      pOut->dwCmd = CGPIOD_OUT_CMD_OFFTIMED;
-    else if (strCmd.equalsIgnoreCase(String("toggledelayed")))
-      pOut->dwCmd = CGPIOD_OUT_CMD_TOGGLEDELAYED;
-    else if (strCmd.equalsIgnoreCase(String("toggletimed")))
-      pOut->dwCmd = CGPIOD_OUT_CMD_TOGGLETIMED;
-    else if (strCmd.equalsIgnoreCase(String("lock")))
-      pOut->dwCmd = CGPIOD_OUT_CMD_LOCK;
-    else if (strCmd.equalsIgnoreCase(String("locktimed")))
-      pOut->dwCmd = CGPIOD_OUT_CMD_LOCKTIMED;
-    else if (strCmd.equalsIgnoreCase(String("blink")))
-      pOut->dwCmd = CGPIOD_OUT_CMD_BLINK;
-    else {
-      pOut->dwCmd = CGPIOD_OUT_CMD_NONE;
-      break;
-      } // else
-
-    // parse params
-    dwErr = _parseCmdParams(pOut, strIn);
-    } while (FALSE);
-
-  sprintf(str, "%08X", pOut->dwCmd);
-  Debug.println("CGpiod::_parseCmdOutput,cmd=" + String(str));
-  return dwErr;
-  } // _parseCmdOutput
-*/
 //--------------------------------------------------------------------------
 //
 //--------------------------------------------------------------------------
 tUint32 CGpiod::_parseCmdShutter(tGpiodCmd* pOut) {
-//    tCChar  *pFunc = "CGpiod::_parseCmdShutter";
   tUint32 dwErr = XERROR_SUCCESS;
 
   do {
@@ -174,11 +102,9 @@ tUint32 CGpiod::_parseCmdShutter(tGpiodCmd* pOut) {
       break;
 
     pOut->dwCmd = m_parse.TVal();
-//    g_log.LogPrt(m_dwClsLvl | 0x0010, "%s,cmd=%08X", pFunc, pOut->dwCmd);
     dwErr = _parseCmdParams(pOut);
     } while (FALSE);
 
-//  g_log.LogPrt(m_dwClsLvl | 0x9999, "%s,err=%u", pFunc, dwErr);
   return dwErr; 
   } // _parseCmdShutter
 
@@ -186,7 +112,6 @@ tUint32 CGpiod::_parseCmdShutter(tGpiodCmd* pOut) {
 //
 //----------------------------------------------------------------------------
 tUint32 CGpiod::_parseCmdParams(tGpiodCmd* pOut) {
-//tCChar  *pFunc = "CGpiod::_parseCmdParams";
   tUint32 dwErr = XERROR_SUCCESS;
 //tUint32 dwParm;
 
@@ -260,18 +185,13 @@ tParseRsvd g_gpiodParseObj[] = {
 //                    CGPIOD_OBJ_CLS                       0xPPPPMMMM                                   
 //{ 0x00000001      , 0x00000100       , CPARSE_TYPE_NODE, 0x00000100,       "input0",    },
 //{ 0x00000001      , 0x00000100       , CPARSE_TYPE_NODE, 0x00000101,       "input1",    },
-//{ 0x00000001      , 0x00000100       , CPARSE_TYPE_NODE, 0x00000102,       "input2",    },
-//{ 0x00000001      , 0x00000100       , CPARSE_TYPE_NODE, 0x00000103,       "input3",    },
   { 0x00000001      , 0x00000201       , CPARSE_TYPE_NODE, 0x00000200,       "output0",   },
   { 0x00000001      , 0x00000201       , CPARSE_TYPE_NODE, 0x00000201,       "output1",   },
-  { 0x00000001      , 0x00000201       , CPARSE_TYPE_NODE, 0x00000202,       "output2",   },
-  { 0x00000001      , 0x00000201       , CPARSE_TYPE_NODE, 0x00000203,       "output3",   },
   { 0x00000001      , 0x00000402       , CPARSE_TYPE_NODE, 0x00000400,       "shutter0",  },
-  { 0x00000001      , 0x00000402       , CPARSE_TYPE_NODE, 0x00000401,       "shutter1",  },
-  { 0x00000001      , 0x00000603       , CPARSE_TYPE_NODE, 0x00000800,       "counter0",  },
-  { 0x00000001      , 0x00000603       , CPARSE_TYPE_NODE, 0x00000801,       "counter1",  },
-  { 0x00000001      , 0x00000603       , CPARSE_TYPE_NODE, 0x00000802,       "counter2",  },
-  { 0x00000001      , 0x00000603       , CPARSE_TYPE_NODE, 0x00000803,       "counter3",  },
+//{ 0x00000001      , 0x00000603       , CPARSE_TYPE_NODE, 0x00000800,       "counter0",  },
+//{ 0x00000001      , 0x00000603       , CPARSE_TYPE_NODE, 0x00000801,       "counter1",  },
+//{ 0x00000001      , 0x00000603       , CPARSE_TYPE_NODE, 0x00000802,       "counter2",  },
+//{ 0x00000001      , 0x00000603       , CPARSE_TYPE_NODE, 0x00000803,       "counter3",  },
   { 0x00000001      , 0x00000603       , CPARSE_TYPE_NODE, 0x00001000,       "system",    },
                                                                          
   { 0x00000000      , 0x00000000       , 0x00000000      , 0x00000000,       "",          },

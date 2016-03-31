@@ -4,11 +4,6 @@
 //
 // Copyright (c) Jo Simons, 2016-2016, All Rights Reserved.
 //----------------------------------------------------------------------------
-//#include <user_config.h>
-#include <SmingCore/SmingCore.h>
-#include <SmingCore/Debug.h>
-//#include <AppSettings.h>
-//#include <HTTP.h>
 #include <gpiod.h>
 
   //--------------------------------------------------------------------------
@@ -61,7 +56,11 @@
     Debug.println("CGpiod::_inputOnInit");
     for (dwObj = 0; dwObj < CGPIOD_IN_COUNT; dwObj++, pObj++) {
       pinMode(pObj->dwPin, INPUT);
-//    _hwSetPinDir(pObj->dwPin, COGPIO_DIR_INPUT);
+
+      if (pObj->dwPol = CGPIOD_IN_POL_INVERT)
+        pullup(pObj->dwPin);
+      else
+        noPullup(pObj->dwPin);
       } // for
 
     return m_dwError;
@@ -168,7 +167,6 @@
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_inputGetPinVal(tGpiodInput* pObj, tUint32 msNow) 
   {
-//  tUint32 dwVal = _hwGetPinVal(pObj->dwPin) ^ pObj->dwPol;
     tUint32 dwVal = digitalRead(pObj->dwPin) ^ pObj->dwPol;
 
     if (pObj->dwVal != dwVal) {
