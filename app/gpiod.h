@@ -9,52 +9,18 @@
 
 #include <user_config.h>
 #include <SmingCore/SmingCore.h>
-#include <controller.h>
+//#include <controller.h>
 #include <mqtt.h>
+#include <stdafx.h>
+#include <xerror.h>
+#include <cparse.hpp>
 
 
-typedef const char         tCChar;
-typedef char               tChar;
-typedef signed char        tInt8;
-typedef unsigned char      tUint8;
-typedef short              tInt16;
-typedef unsigned short     tUint16;
-typedef int                tInt32;
-typedef long               tLong;
-typedef unsigned long      tUlong;
-typedef unsigned int       tUint32;
-typedef unsigned int       tBool;
-typedef unsigned int       tIpAddr;
-typedef double             tDouble;
-typedef float              tFloat;
-
-#define XERROR_SUCCESS                           0 // success
-#define XERROR_INTERNAL                          1 // internal error cannot be resolved by user
-
-#define XERROR_MEMORY                            2 // out of memory or buffer too small
-#define XERROR_CREATE                            3 // error creating file or socket
-#define XERROR_OPEN                              4 // error opening file or socket
-#define XERROR_WRITE                             5 // error writing file or socket
-#define XERROR_READ                              6 // error reading file or socket
-#define XERROR_SEEK                              7 // error reading file or socket
-
-#define XERROR_STATE                             8 // invalid state
-#define XERROR_INPUT                             9 // invalid input
-#define XERROR_DATA                             10 // invalid (response) data
-
-#define XERROR_RESOURCES                        11 // no resources to complete operation
-#define XERROR_NOT_FOUND                        12 // resource not found
-#define XERROR_LICENSE                          13 // resource not licensed
-#define XERROR_ACCESS                           14 // resource not accessible
-#define XERROR_DISABLED                         15 // resource disabled                 
-#define XERROR_BUSY                             16 // resource busy
-
-#define XERROR_PENDING                          17 // request  pending
-#define XERROR_TIMEOUT                          18 // request  timed out
-#define XERROR_ABORTED                          19 // request  aborted
-
-#define XERROR_NO_DATA                          20 // internal only
-#define XERROR_CLOSED                           21 // file, socket or connection closed
+extern tParseRsvd    g_gpiodParseObj[];
+extern tParseRsvd    g_gpiodParseCmdOutput[];
+extern tParseRsvd    g_gpiodParseCmdShutter[];
+extern tParseRsvd    g_gpiodParseCmdSystem[];
+extern tParseRsvd    g_gpiodParseCmdCounter[];
 
 
 #define CGPIOD_VERSION                   "4.0.1.0" //                                   
@@ -191,23 +157,23 @@ typedef struct {
 
 #define CGPIOD_OUT_CMD_MASK             0x0000FFFF //
 #define CGPIOD_OUT_CMD_PARMS            0xFFFF0000 //
-#define CGPIOD_OUT_CMD_NONE             0x00000000 //
-#define CGPIOD_OUT_CMD_STATUS           0x00000001 //
-#define CGPIOD_OUT_CMD_ON               0x00000002 //
-#define CGPIOD_OUT_CMD_OFF              0x00000003 //
-#define CGPIOD_OUT_CMD_ONLOCKED         0x00000004 //
-#define CGPIOD_OUT_CMD_OFFLOCKED        0x00000005 //
-#define CGPIOD_OUT_CMD_TOGGLE           0x00000006 //
-#define CGPIOD_OUT_CMD_UNLOCK           0x00000007 //
-#define CGPIOD_OUT_CMD_ONDELAYED        0x00080008 //
-#define CGPIOD_OUT_CMD_OFFDELAYED       0x00080009 //
-#define CGPIOD_OUT_CMD_ONTIMED          0x0200000A //
-#define CGPIOD_OUT_CMD_OFFTIMED         0x0200000B //
-#define CGPIOD_OUT_CMD_TOGGLEDELAYED    0x0008000C //
-#define CGPIOD_OUT_CMD_TOGGLETIMED      0x0200000D //
-#define CGPIOD_OUT_CMD_LOCK             0x0000000E //
-#define CGPIOD_OUT_CMD_LOCKTIMED        0x0000000F //
-#define CGPIOD_OUT_CMD_BLINK            0x00000010 //
+#define CGPIOD_OUT_CMD_NONE                      0 //
+#define CGPIOD_OUT_CMD_STATUS                    1 //
+#define CGPIOD_OUT_CMD_ON                        2 //
+#define CGPIOD_OUT_CMD_OFF                       3 //
+#define CGPIOD_OUT_CMD_ONLOCKED                  4 //
+#define CGPIOD_OUT_CMD_OFFLOCKED                 5 //
+#define CGPIOD_OUT_CMD_TOGGLE                    6 //
+#define CGPIOD_OUT_CMD_UNLOCK                    7 //
+#define CGPIOD_OUT_CMD_ONDELAYED                 8 //
+#define CGPIOD_OUT_CMD_OFFDELAYED                9 //
+#define CGPIOD_OUT_CMD_ONTIMED                  10 //
+#define CGPIOD_OUT_CMD_OFFTIMED                 11 //
+#define CGPIOD_OUT_CMD_TOGGLEDELAYED            12 //
+#define CGPIOD_OUT_CMD_TOGGLETIMED              13 //
+#define CGPIOD_OUT_CMD_LOCK                     14 //
+#define CGPIOD_OUT_CMD_LOCKTIMED                15 //
+#define CGPIOD_OUT_CMD_BLINK                    16 //
 
 #define CGPIOD_OUT_EVT_ON                        2 //
 #define CGPIOD_OUT_EVT_OFF                       3 //
@@ -339,6 +305,7 @@ typedef struct {
   tCChar*            szEvt;                        //
   } tGpiodEvt;
 
+void                 gpiodOnConfig(HttpRequest &request, HttpResponse &response);
 void                 gpiodOnPublish(String topic, String message);
 
 //----------------------------------------------------------------------------
@@ -352,9 +319,11 @@ class CGpiod {
   tUint32            m_dwError;
 
   tGpiodCounter      m_hb[CGPIOD_HB_COUNT];        // heartbeat counters
+  tGpiodInput        m_input[CGPIOD_IN_COUNT];     //
   tGpiodOutput       m_output[CGPIOD_OUT_COUNT];   //
   tGpiodShutter      m_shutter[CGPIOD_UDM_COUNT];  // 
- 
+  CParse             m_parse;
+
  public:
   //--------------------------------------------------------------------------
   // constructor/destructor   
@@ -371,45 +340,42 @@ class CGpiod {
   //--------------------------------------------------------------------------
   // run daemon
   //--------------------------------------------------------------------------
-  unsigned int       OnInit() {
-    tUint32 dwObj;
+  tUint32            GetMode()                     { return m_dwMode; }
 
-    pinMode(OUTPUT0_PIN, OUTPUT);
-    digitalWrite(OUTPUT0_PIN, HIGH);
-    pinMode(OUTPUT1_PIN, OUTPUT);
-    digitalWrite(OUTPUT1_PIN, HIGH);
-    pinMode(INPUT0_PIN, INPUT);
-    pinMode(INPUT1_PIN, INPUT);
-
-    memset(m_hb, 0, sizeof(m_hb));
-    for (dwObj = 0; dwObj < CGPIOD_HB_COUNT; dwObj++) {
-      m_hb[dwObj].dwFlags  = CGPIOD_CNT_FLG_CNTR;
-      m_hb[dwObj].msPeriod = (dwObj == CGPIOD_HB1) ? CGPIOD_HB1_PERIOD :
-                             (dwObj == CGPIOD_HB2) ? CGPIOD_HB2_PERIOD : CGPIOD_HB0_PERIOD;
-      } // for
-    return 0;
-    } //
+  tUint32            OnConfig();
+  tUint32            OnInit();
+  void               OnRun();
+  tUint32            OnExit();
 
   //--------------------------------------------------------------------------
-  // run daemon
-  //--------------------------------------------------------------------------
-  unsigned int       OnRun();
+  tUint32            ParseCmd(tGpiodCmd* pOut, tChar* pObj, tChar* pCmd, tUint32 dwMask1);
+  tUint32            _parseCmdSystem(tGpiodCmd* pOut);
+  tUint32            _parseCmdOutput(tGpiodCmd* pOut);
+  tUint32            _parseCmdShutter(tGpiodCmd* pOut);
+  tUint32            _parseCmdParams(tGpiodCmd* pOut);
 
-  tUint32            ParseCmdParamsGetNumber(tUint32* pOut, String strIn, tChar cSep, tUint32 dwIdx, tUint32 dwMin, tUint32 dwMax);
-  tUint32            ParseCmdParams(tGpiodCmd* pOut, String strIn);
-  tUint32            ParseCmdSystem(tGpiodCmd* pOut, String strIn);
-  tUint32            ParseCmdOutput(tGpiodCmd* pOut, String strIn);
-  tUint32            ParseObj(String strObj);
+  tUint32            DoCmd(tGpiodCmd* pCmd);
+  tUint32            DoEvt(tGpiodEvt* pEvt);
+  void               _DoPublish(tUint32 fDup, tUint32 fQoS, tUint32 fRetain, tCChar* szObj, tCChar* szMsg);
 
  private:
   void               checkConnection();
-  void               onRun();
 
-  tUint32            DoCmd(tGpiodCmd* pCmd);
+  tUint32            DumpCmd(tGpiodCmd* pCmd);
   
+  tCChar*            _inputEvt2String(tUint32 dwEvt);
+  tUint32            _inputOnConfig();
+  tUint32            _inputOnInit();
+  tUint32            _inputOnRun(tUint32 msNow);
+  tUint32            _inputOnExit();
+  tUint32            _inputGetPinVal(tGpiodInput* pObj, tUint32 msNow);
+
+  tCChar*            _outputEvt2String(tUint32 dwEvt);
   tUint32            _outputOnConfig();
+  tUint32            _outputOnInit();
   tUint32            _outputOnRun(tUint32 msNow);
   tUint32            _outputOnHbTick(tUint32 dwHb, tUint32 dwCntr);
+  tUint32            _outputOnExit();
   tUint32            _outputDoEvt(tGpiodEvt* pEvt);
   tUint32            _outputDoCmd(tGpiodCmd* pCmd);
   void               _outputSetState(tGpiodOutput* pObj, tUint32 dwState, tGpiodEvt* pEvt);
