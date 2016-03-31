@@ -52,6 +52,7 @@ void ICACHE_FLASH_ATTR gpiodOnPublish(String strTopic, String strMsg)
   do {
     Debug.println("gpiodOnPublish,topic=" + strTopic + ",msg=" + strMsg);
   
+    // check to be sure, but we should not receive other messages
     gsprintf(str, "%s/%s/", AppSettings.mqttClientId.c_str(), AppSettings.mqttCmdPfx.c_str());
     if (xstrnicmp(pTopic, str, gstrlen(str)) && (dwErr = XERROR_DATA)) {
       Debug.println("gpiodOnPublish,not for us,dropping");
@@ -60,53 +61,21 @@ void ICACHE_FLASH_ATTR gpiodOnPublish(String strTopic, String strMsg)
 
     // point to <obj>
     pTopic += gstrlen(str);
-
-    // check to be sure, but we should not receive other messages
-//if (strTopic.startsWith(AppSettings.mqttClientId + String("/") + AppSettings.mqttCmdPfx + "/")) {
     g_dwMqttPktRx++;
-
-//  String strObj = gpiodGetValue(strTopic, '/', 3);
-//  Debug.println();
-//  Debug.println();
-//  Debug.println(strObj);
-//  Debug.println(strMsg);
-    //strip leading V_
-//    type.remove(0,2);
 
     // parse object, cmd and optional parms
     if (g_gpiod.ParseCmd(&cmd, pTopic, pMsg, (g_gpiod.GetMode() == CGPIOD_MODE_OUTPUT) ? CGPIOD_OBJ_CLS_OUTPUT : CGPIOD_OBJ_CLS_SHUTTER)) {
-//    g_log.LogPrt(m_dwClsLvl | 0x0020, "%s,error parsing cmd,dropping", pFunc);
-      Debug.println("gpiodOnPublish,ParseCmd() failed");
+      Debug.println("gpiodOnPublish,ParseCmd() failed,dropping");
       dwErr = XERROR_DATA;
       break;
       } // if
 
     cmd.msNow = msNow;
     dwErr = g_gpiod.DoCmd(&cmd);
-/*
-    cmd.dwObj = g_gpiod.ParseObj(strObj);
-    switch (cmd.dwObj & CGPIOD_OBJ_CLS_MASK) {
-//    case CGPIOD_OBJ_CLS_INPUT:
-//      break;
-      case CGPIOD_OBJ_CLS_OUTPUT:  dwErr = g_gpiod.ParseCmdOutput(&cmd, strMsg);
-        break;
-//    case CGPIOD_OBJ_CLS_SHUTTER:
-//      break;
-      case CGPIOD_OBJ_CLS_SYSTEM:  dwErr = g_gpiod.ParseCmdSystem(&cmd, strMsg);
-        break;
-      default:
-        Debug.println("gpiodOnPublish, unknown object " + strObj);
-        dwErr = XERROR_INPUT;
-        break;
-      } // switch
-//  }
-
-*/
     } while (FALSE);
 
   if (pTopic) free(pTopic);
   if (pMsg) free(pMsg);
-//return dwErr;
   } // gpiodOnPublish
 
 //--------------------------------------------------------------------------
@@ -132,8 +101,8 @@ tUint32 CGpiod::OnConfig()
     // configure outputs
     if (m_dwMode == CGPIOD_MODE_OUTPUT)
       _outputOnConfig();
-//  else
-//    _shutterOnConfig();
+    else
+      _shutterOnConfig();
     } while (FALSE);
 
   } // OnConfig
@@ -152,8 +121,8 @@ tUint32 CGpiod::OnInit()
   // initialise outputs
   if (m_dwMode == CGPIOD_MODE_OUTPUT)
     _outputOnInit();
-//else
-//  _shutterOnInit();
+  else
+    _shutterOnInit();
 
   return m_dwError;
   } // OnInit
@@ -178,11 +147,10 @@ void CGpiod::OnRun() {
 
     if (m_dwMode == CGPIOD_MODE_OUTPUT)
       _outputOnRun(msNow);
-//  else
-//    _shutterOnRun(msNow);
+    else
+      _shutterOnRun(msNow);
     } while (FALSE);
 
-//  return m_dwError;
   } // OnRun
 
 //--------------------------------------------------------------------------
@@ -195,8 +163,8 @@ tUint32 CGpiod::OnExit() {
 
   if (m_dwMode == CGPIOD_MODE_OUTPUT)
     _outputOnExit();
-//else
-//  _shutterOnExit();
+  else
+    _shutterOnExit();
 
   _inputOnExit();
 //_systemOnExit();
@@ -219,14 +187,12 @@ tUint32 CGpiod::DumpCmd(tGpiodCmd* pCmd) {
 //--------------------------------------------------------------------------
 tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt) 
 {
-//tCChar  *pFunc = "CGpiod::_DoEvt";
   tUint32 dwObj = pEvt->dwObj & CGPIOD_OBJ_NUM_MASK;
 
 //g_log.LogPrt(m_dwClsLvl | 0x0000, "%s,now=%u,obj=%04X,evt=%u/'%s'", 
 //             pFunc, pEvt->msNow, pEvt->dwObj, pEvt->dwEvt, pEvt->szEvt ? pEvt->szEvt : "");
 
   Debug.println("CGpiod::DoEvt");
-
   switch (pEvt->dwObj & CGPIOD_OBJ_CLS_MASK) {
     case CGPIOD_OBJ_CLS_INPUT:
       if (m_input[dwObj].dwFlags & (0x1 << pEvt->dwEvt))
@@ -236,10 +202,10 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
         if (m_output[dwObj].dwFlags & CGPIOD_OUT_FLG_STANDALONE)
           _outputDoEvt(pEvt);
         } // if
-//    else {
-//      if (m_shutter[dwObj / 2].dwFlags & CGPIOD_UDM_FLG_STANDALONE)
-//        _shutterDoEvt(pEvt);
-//      } // else
+      else {
+        if (m_shutter[dwObj / 2].dwFlags & CGPIOD_UDM_FLG_STANDALONE)
+          _shutterDoEvt(pEvt);
+        } // else
 
       break;
     case CGPIOD_OBJ_CLS_OUTPUT:
@@ -247,11 +213,11 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
         _DoPublish(0, 0, 0, m_output[dwObj].szName, _outputEvt2String(pEvt->dwEvt));
 
       break;
-//  case CGPIOD_OBJ_CLS_SHUTTER:
-//    if (m_shutter[dwObj].dwFlags & (0x1 << pEvt->dwEvt))
-//      _DoPublish(0, 0, 0, m_shutter[dwObj].szName, _shutterEvt2String(pEvt->dwEvt));
+    case CGPIOD_OBJ_CLS_SHUTTER:
+      if (m_shutter[dwObj].dwFlags & (0x1 << pEvt->dwEvt))
+        _DoPublish(0, 0, 0, m_shutter[dwObj].szName, _shutterEvt2String(pEvt->dwEvt));
 
-//    break;
+      break;
 //  case CGPIOD_OBJ_CLS_COUNTER:
 //    if (m_counter[dwObj].dwFlags & (0x1 << pEvt->dwEvt))
 //      _DoPublish(0, 0, 0, m_counter[dwObj].szName, _counterEvt2String(pEvt->dwEvt));
@@ -279,9 +245,6 @@ tUint32 CGpiod::DoCmd(tGpiodCmd* pCmd)
   tUint32 dwErr = XERROR_SUCCESS;
 
   do {
-//  Debug.println("CGpiod::ParseCmdSystem,in=" + strIn);
-//  String strCmd = gpiodGetValue(strIn, '.', 1);
-//  Debug.println("CGpiod::ParseCmdSystem,cmd=" + strCmd);
     Debug.println("CGpiod::DoCmd");
     DumpCmd(pCmd);
 
@@ -290,8 +253,8 @@ tUint32 CGpiod::DoCmd(tGpiodCmd* pCmd)
 //      break;
       case CGPIOD_OBJ_CLS_OUTPUT:  dwErr = _outputDoCmd(pCmd);
         break;
-//    case CGPIOD_OBJ_CLS_SHUTTER: dwErr = _shutterDoCmd(pCmd);
-//      break;
+      case CGPIOD_OBJ_CLS_SHUTTER: dwErr = _shutterDoCmd(pCmd);
+        break;
 //    case CGPIOD_OBJ_CLS_COUNTER: dwErr = _counterDoCmd(pCmd);
 //      break;
 //    case CGPIOD_OBJ_CLS_SYSTEM:  dwErr = _systemDoCmd(pCmd);
@@ -325,31 +288,6 @@ void CGpiod::begin()
   checkTimer.initializeMs(1000, TimerDelegate(&CGpiod::checkConnection, this)).start(true);
   checkTimer.initializeMs(50, TimerDelegate(&CGpiod::OnRun, this)).start(true);
   } // begin
-
-//----------------------------------------------------------------------------
-//
-//----------------------------------------------------------------------------
-void CGpiod::notifyChange(String object, String value)
-{
-  mqttPublishMessage(object, value);
-  } //
-
-//----------------------------------------------------------------------------
-//
-//----------------------------------------------------------------------------
-void CGpiod::registerHttpHandlers(HttpServer &server)
-{
-  mqttRegisterHttpHandlers(server);
-  server.addPath("/gpiod", gpiodOnConfig);
-  } //
-
-//----------------------------------------------------------------------------
-//
-//----------------------------------------------------------------------------
-void CGpiod::registerCommandHandlers()
-{
-  //
-  } //
 
 //----------------------------------------------------------------------------
 //

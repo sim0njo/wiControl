@@ -305,7 +305,10 @@ typedef struct {
   tCChar*            szEvt;                        //
   } tGpiodEvt;
 
-void                 gpiodOnConfig(HttpRequest &request, HttpResponse &response);
+//----------------------------------------------------------------------------
+// callbacks
+//----------------------------------------------------------------------------
+void                 gpiodOnHttpConfig(HttpRequest &request, HttpResponse &response);
 void                 gpiodOnPublish(String topic, String message);
 
 //----------------------------------------------------------------------------
@@ -313,32 +316,36 @@ void                 gpiodOnPublish(String topic, String message);
 //----------------------------------------------------------------------------
 class CGpiod {
  private:
-  unsigned int       m_dwMode;                     //
-  const char*        m_szCmdPfx;                   //
-  const char*        m_szEvtPfx;                   //
-  tUint32            m_dwError;
+  tUint32            m_dwError;                    //
+
+  tUint32            m_dwMode;                     //
+  tCChar*            m_szCmdPfx;                   //
+  tCChar*            m_szEvtPfx;                   //
 
   tGpiodCounter      m_hb[CGPIOD_HB_COUNT];        // heartbeat counters
   tGpiodInput        m_input[CGPIOD_IN_COUNT];     //
   tGpiodOutput       m_output[CGPIOD_OUT_COUNT];   //
   tGpiodShutter      m_shutter[CGPIOD_UDM_COUNT];  // 
   CParse             m_parse;
+  Timer              checkTimer;
+
 
  public:
   //--------------------------------------------------------------------------
-  // constructor/destructor   
-  //--------------------------------------------------------------------------
-//  CGpiod()           {}
-//  ~CGpiod()          {}
-
-  //--------------------------------------------------------------------------
   void               begin();
-  void               notifyChange(String object, String value);
-  void               registerHttpHandlers(HttpServer &server);
-  void               registerCommandHandlers();
+//  void               notifyChange(String object, String value);
+//  void               registerHttpHandlers(HttpServer &server);
+//  void               registerCommandHandlers();
 
   //--------------------------------------------------------------------------
-  // run daemon
+  //
+  //--------------------------------------------------------------------------
+  tUint32            _GetFlags(tUint32* pFlags, tUint32 dwFlags) { return *pFlags &   dwFlags; }
+  tUint32            _SetFlags(tUint32* pFlags, tUint32 dwFlags) { return *pFlags |=  dwFlags; }
+  tUint32            _RstFlags(tUint32* pFlags, tUint32 dwFlags) { return *pFlags &= ~dwFlags; }
+
+  //--------------------------------------------------------------------------
+  // gpiod.cpp
   //--------------------------------------------------------------------------
   tUint32            GetMode()                     { return m_dwMode; }
 
@@ -347,6 +354,12 @@ class CGpiod {
   void               OnRun();
   tUint32            OnExit();
 
+  tUint32            DoCmd(tGpiodCmd* pCmd);
+  tUint32            DoEvt(tGpiodEvt* pEvt);
+  void               _DoPublish(tUint32 fDup, tUint32 fQoS, tUint32 fRetain, tCChar* szObj, tCChar* szMsg);
+
+  //--------------------------------------------------------------------------
+  // gpiod_parse.cpp
   //--------------------------------------------------------------------------
   tUint32            ParseCmd(tGpiodCmd* pOut, tChar* pObj, tChar* pCmd, tUint32 dwMask1);
   tUint32            _parseCmdSystem(tGpiodCmd* pOut);
@@ -354,15 +367,14 @@ class CGpiod {
   tUint32            _parseCmdShutter(tGpiodCmd* pOut);
   tUint32            _parseCmdParams(tGpiodCmd* pOut);
 
-  tUint32            DoCmd(tGpiodCmd* pCmd);
-  tUint32            DoEvt(tGpiodEvt* pEvt);
-  void               _DoPublish(tUint32 fDup, tUint32 fQoS, tUint32 fRetain, tCChar* szObj, tCChar* szMsg);
-
  private:
   void               checkConnection();
 
   tUint32            DumpCmd(tGpiodCmd* pCmd);
   
+  //--------------------------------------------------------------------------
+  // gpiod_input.cpp
+  //--------------------------------------------------------------------------
   tCChar*            _inputEvt2String(tUint32 dwEvt);
   tUint32            _inputOnConfig();
   tUint32            _inputOnInit();
@@ -370,6 +382,9 @@ class CGpiod {
   tUint32            _inputOnExit();
   tUint32            _inputGetPinVal(tGpiodInput* pObj, tUint32 msNow);
 
+  //--------------------------------------------------------------------------
+  // gpiod_output.cpp
+  //--------------------------------------------------------------------------
   tCChar*            _outputEvt2String(tUint32 dwEvt);
   tUint32            _outputOnConfig();
   tUint32            _outputOnInit();
@@ -380,8 +395,18 @@ class CGpiod {
   tUint32            _outputDoCmd(tGpiodCmd* pCmd);
   void               _outputSetState(tGpiodOutput* pObj, tUint32 dwState, tGpiodEvt* pEvt);
 
- private:
-  Timer              checkTimer;
+  //--------------------------------------------------------------------------
+  // gpiod_shutter.cpp
+  //--------------------------------------------------------------------------
+  tCChar*            _shutterEvt2String(tUint32 dwEvt);
+  tUint32            _shutterOnConfig();
+  tUint32            _shutterOnInit();
+  tUint32            _shutterOnRun(tUint32 msNow);
+  tUint32            _shutterOnExit();
+  tUint32            _shutterDoEvt(tGpiodEvt* pEvt);
+  tUint32            _shutterCheckPrio(tGpiodShutter* pObj, tGpiodCmd* pCmd);
+  tUint32            _shutterDoCmd(tGpiodCmd* pCmd);
+  void               _shutterSetState(tGpiodShutter* pObj, tUint32 dwState, tGpiodEvt* pEvt);
 
   }; // CGpiod
 

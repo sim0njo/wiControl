@@ -767,7 +767,9 @@ tUint32 DoOperNum2(tChar* pOut, tUint32 cbOut, tUint32 dwNum)
   tBool    _IsAlphaNum(tChar ch) {
     // adjusted for Sming
 //  if (gisalnum(ch))                                                   return TRUE;
-    if (isAlphaNumeric(ch))                                             return TRUE;
+//    if (isAlphaNumeric(ch))                                             return TRUE;
+    if (isAlpha(ch))                                                    return TRUE;
+    if (isDigit(ch))                                                    return TRUE;
     
     if ((m_dwAlphaNumMask & CPARSE_ALPHANUM_USCORE)    && (ch == '_'))  return TRUE;
 

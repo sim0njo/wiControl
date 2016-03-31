@@ -25,7 +25,7 @@ void apEnable()
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-void networkOnConfig(HttpRequest &request, HttpResponse &response)
+void networkOnHttpConfig(HttpRequest &request, HttpResponse &response)
 {
   if (!g_http.isHttpClientAllowed(request, response))
     return;
@@ -84,7 +84,7 @@ void networkOnConfig(HttpRequest &request, HttpResponse &response)
   vars["gateway"]    = Network.getClientGW().toString();
 
   response.sendTemplate(tmpl); // will be automatically deleted
-  } // networkOnConfig
+  } // networkOnHttpConfig
 
 //----------------------------------------------------------------------------
 //

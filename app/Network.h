@@ -8,7 +8,7 @@
 
 typedef Delegate<void(bool)> NetworkStateChangeDelegate;
 
-void                 networkOnConfig(HttpRequest &request, HttpResponse &response);
+void                 networkOnHttpConfig(HttpRequest &request, HttpResponse &response);
 
 class NetworkClass {
  public:

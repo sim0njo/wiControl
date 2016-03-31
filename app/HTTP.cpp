@@ -157,10 +157,10 @@ void httpOnFile(HttpRequest &request, HttpResponse &response)
 
     // open the file. note that only one file can be open at a time,
     // so you have to close this one before opening another.
-    Debug.printf("REQUEST for %s\n", file.c_str());
+    Debug.printf("httpOnFile,get %s\n", file.c_str());
     response.sendFile(file);
     }
-  } // 
+  } // httpOnFile
 
 //----------------------------------------------------------------------------
 //
@@ -256,7 +256,7 @@ void HTTPClass::addWsCommand(String command, WebSocketMessageDelegate callback)
 //----------------------------------------------------------------------------
 void HTTPClass::notifyWsClients(String message)
 {
-  WebSocketsList &clients = server.getActiveWebSockets();
+  WebSocketsList &clients = m_server.getActiveWebSockets();
   for (int i = 0; i < clients.count(); i++)
     clients[i].sendString(message);
   } //
@@ -266,22 +266,22 @@ void HTTPClass::notifyWsClients(String message)
 //----------------------------------------------------------------------------
 void HTTPClass::begin()
 {
-  server.listen(80);
-  server.enableHeaderProcessing("Authorization");
-  server.addPath("/",        httpOnStatus);
-  server.addPath("/status",  httpOnStatus);
-  server.addPath("/network", networkOnConfig);
-  server.addPath("/tools",   httpOnTools);
+  m_server.listen(80);
+  m_server.enableHeaderProcessing("Authorization");
+  m_server.addPath("/",        httpOnStatus);
+  m_server.addPath("/status",  httpOnStatus);
+  m_server.addPath("/network", networkOnHttpConfig);
+  m_server.addPath("/tools",   httpOnTools);
+  m_server.addPath("/mqtt",    mqttOnHttpConfig);
+  m_server.addPath("/gpiod",   gpiodOnHttpConfig);
 
-//  GW.registerHttpHandlers(server);
-  g_gpiod.registerHttpHandlers(server);
-  server.setDefaultHandler(httpOnFile);
+  m_server.setDefaultHandler(httpOnFile);
 
   // Web Sockets configuration
-  server.enableWebSockets(true);
-  server.setWebSocketConnectionHandler(WebSocketDelegate(&HTTPClass::wsConnected, this));
-  server.setWebSocketMessageHandler(WebSocketMessageDelegate(&HTTPClass::wsMessageReceived, this));
-  server.setWebSocketBinaryHandler(WebSocketBinaryDelegate(&HTTPClass::wsBinaryReceived, this));
-  server.setWebSocketDisconnectionHandler(WebSocketDelegate(&HTTPClass::wsDisconnected, this));
+  m_server.enableWebSockets(true);
+  m_server.setWebSocketConnectionHandler(WebSocketDelegate(&HTTPClass::wsConnected, this));
+  m_server.setWebSocketMessageHandler(WebSocketMessageDelegate(&HTTPClass::wsMessageReceived, this));
+  m_server.setWebSocketBinaryHandler(WebSocketBinaryDelegate(&HTTPClass::wsBinaryReceived, this));
+  m_server.setWebSocketDisconnectionHandler(WebSocketDelegate(&HTTPClass::wsDisconnected, this));
   } //
 

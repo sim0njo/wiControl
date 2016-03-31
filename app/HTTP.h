@@ -22,7 +22,7 @@ class HTTPClass {
   void               wsDisconnected(WebSocket& socket);
 
  private:
-  HttpServer         server;
+  HttpServer         m_server;
   HashMap<String, WebSocketMessageDelegate> wsCommandHandlers;
   }; //
 

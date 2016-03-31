@@ -1,8 +1,9 @@
 
-#include <user_config.h>
+//nclude <user_config.h>
 #include <SmingCore/SmingCore.h>
-#include <AppSettings.h>
-#include <HTTP.h>
+#include <SmingCore/Debug.h>
+//nclude <AppSettings.h>
+//nclude <HTTP.h>
 #include <gpiod.h>
 
 //--------------------------------------------------------------------------

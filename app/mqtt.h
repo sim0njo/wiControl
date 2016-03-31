@@ -5,7 +5,7 @@
 void ICACHE_FLASH_ATTR mqttStartClient();
 void ICACHE_FLASH_ATTR mqttCheckClient();
 void ICACHE_FLASH_ATTR mqttPublishMessage(String topic, String message);
-void ICACHE_FLASH_ATTR mqttRegisterHttpHandlers(HttpServer &server);
+void                   mqttOnHttpConfig(HttpRequest &request, HttpResponse &response);
 
 bool                   mqttIsConfigured();
 bool                   mqttIsConnected();

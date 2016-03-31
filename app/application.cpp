@@ -12,30 +12,14 @@ FTPServer      g_ftp;
 TelnetServer   g_telnet;
 static boolean g_firstTime = TRUE;
 int            g_isNetworkConnected = FALSE;
-Timer          g_heapCheckTimer;
+Timer          g_appTimer;
 
 //----------------------------------------------------------------------------
-//
+// periodic reporting memory usage
 //----------------------------------------------------------------------------
-//int updateSensorStateInt(int node, int sensor, int type, int value)
-//{
-//MyMessage myMsg;
-//myMsg.set(value);
-//GW.sendRoute(GW.build(myMsg, node, sensor, C_SET, type, 0));
-//rfPacketsTx++;
-//  } // 
-
-//int updateSensorState(int node, int sensor, int value)
-//{
-//  updateSensorStateInt(node, sensor, 2 , value);
-//  } //
-
-//----------------------------------------------------------------------------
-//
-//----------------------------------------------------------------------------
-void heapCheckUsage()
+void appReportHeapUsage()
 {
-  g_gpiod.notifyChange("memory", String(system_get_free_heap_size()));    
+  mqttPublishMessage("system/memory", String(system_get_free_heap_size()));
   } //
 
 //----------------------------------------------------------------------------
@@ -47,7 +31,7 @@ void startServers()
   //HTTP must be first so handlers can be registered
   g_http.begin(); 
 
-  g_heapCheckTimer.initializeMs(60000, heapCheckUsage).start(true);
+  g_appTimer.initializeMs(60000, appReportHeapUsage).start(true);
 
   // Start FTP server
   if (!fileExist("index.html"))
@@ -270,27 +254,13 @@ void processAPModeCommand(String commandLine, CommandOutput* pOut)
 //----------------------------------------------------------------------------
 void init()
 {
-  /* Make sure wifi does not start yet! */
+  // Make sure wifi does not start yet! 
   wifi_station_set_auto_connect(0);
 
+  // Make sure all chip enable pins are HIGH 
   g_gpiod.OnInit();
 
-    /* Make sure all chip enable pins are HIGH */
-/*
-#ifdef RADIO_SPI_SS_PIN
-    pinMode(RADIO_SPI_SS_PIN, OUTPUT);
-    digitalWrite(RADIO_SPI_SS_PIN, HIGH);
-#endif
-#ifdef SD_SPI_SS_PIN
-    pinMode(SD_SPI_SS_PIN, OUTPUT);
-    digitalWrite(SD_SPI_SS_PIN, HIGH);
-#endif
-#ifdef ETHERNET_SPI_SS_PIN
-    pinMode(ETHERNET_SPI_SS_PIN, OUTPUT);
-    digitalWrite(ETHERNET_SPI_SS_PIN, HIGH);
-#endif
-*/
-  /* Mount the internal storage */
+  // Mount the internal storage 
   int slot = rboot_get_current_rom();
   if (slot == 0) {
     Debug.printf("trying to mount spiffs at %x, length %d\n", 0x40300000, SPIFF_SIZE);
@@ -351,4 +321,4 @@ void init()
 
   // Run WEB server on system ready
   System.onReady(startServers);
-  } // 
+  } // init

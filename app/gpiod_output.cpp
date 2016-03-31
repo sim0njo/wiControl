@@ -1,8 +1,14 @@
 
-#include <user_config.h>
+//----------------------------------------------------------------------------
+// cgpiod_output.hpp : implementation of 2 outputs
+//
+// Copyright (c) Jo Simons, 2016-2016, All Rights Reserved.
+//----------------------------------------------------------------------------
+//#include <user_config.h>
 #include <SmingCore/SmingCore.h>
-#include <AppSettings.h>
-#include <HTTP.h>
+#include <SmingCore/Debug.h>
+//#include <AppSettings.h>
+//#include <HTTP.h>
 #include <gpiod.h>
 
   //--------------------------------------------------------------------------
@@ -221,11 +227,7 @@
           if (pObj->dwFlags & CGPIOD_OUT_FLG_LOCKED) break;
           pObj->dwCmd    = CGPIOD_OUT_CMD_NONE;
           pObj->dwFlags |= CGPIOD_OUT_FLG_LOCKED;
-          pObj->dwState  = CGPIOD_OUT_STATE_ON;
-//        _hwSetPinVal(pObj->dwPin, pObj->dwState ^ pObj->dwPol);
-
-          evt.dwEvt = pObj->dwState ? CGPIOD_OUT_EVT_ON : CGPIOD_OUT_EVT_OFF;
-          DoEvt(&evt);
+          _outputSetState(pObj, CGPIOD_OUT_STATE_ON, &evt);
           break;
 
         case CGPIOD_OUT_CMD_OFFLOCKED: 
@@ -233,22 +235,14 @@
           if (pObj->dwFlags & CGPIOD_OUT_FLG_LOCKED) break;
           pObj->dwCmd    = CGPIOD_OUT_CMD_NONE;
           pObj->dwFlags |= CGPIOD_OUT_FLG_LOCKED;
-          pObj->dwState  = CGPIOD_OUT_STATE_OFF;
-//        _hwSetPinVal(pObj->dwPin, pObj->dwState ^ pObj->dwPol);
-
-          evt.dwEvt = pObj->dwState ? CGPIOD_OUT_EVT_ON : CGPIOD_OUT_EVT_OFF;
-          DoEvt(&evt);
+          _outputSetState(pObj, CGPIOD_OUT_STATE_OFF, &evt);
           break;
 
         case CGPIOD_OUT_CMD_TOGGLE: 
 //        g_log.LogPrt(m_dwClsLvl | 0x0060, "%s,%s.toggle", pFunc, pObj->szName);
           if (pObj->dwFlags & CGPIOD_OUT_FLG_LOCKED) break;
           pObj->dwCmd    = CGPIOD_OUT_CMD_NONE;
-          pObj->dwState ^= CGPIOD_OUT_STATE_ON;
-//        _hwSetPinVal(pObj->dwPin, pObj->dwState ^ pObj->dwPol);
-
-          evt.dwEvt = pObj->dwState ? CGPIOD_OUT_EVT_ON : CGPIOD_OUT_EVT_OFF;
-          DoEvt(&evt);
+          _outputSetState(pObj, pObj->dwState ^ CGPIOD_OUT_STATE_ON, &evt);
           break;
 
         case CGPIOD_OUT_CMD_UNLOCK: 
@@ -275,11 +269,7 @@
           if (pObj->dwFlags & CGPIOD_OUT_FLG_LOCKED) break;
           pObj->dwCmd   = CGPIOD_OUT_CMD_ONTIMED;
           pObj->dwRun   = pCmd->msNow + pCmd->dwRun;
-          pObj->dwState = CGPIOD_OUT_STATE_ON;
-//        _hwSetPinVal(pObj->dwPin, pObj->dwState ^ pObj->dwPol);
-
-          evt.dwEvt = pObj->dwState ? CGPIOD_OUT_EVT_ON : CGPIOD_OUT_EVT_OFF;
-          DoEvt(&evt);
+          _outputSetState(pObj, CGPIOD_OUT_STATE_ON, &evt);
           break;
 
         case CGPIOD_OUT_CMD_OFFTIMED: 
@@ -287,11 +277,7 @@
           if (pObj->dwFlags & CGPIOD_OUT_FLG_LOCKED) break;
           pObj->dwCmd   = CGPIOD_OUT_CMD_OFFTIMED;
           pObj->dwRun   = pCmd->msNow + pCmd->dwRun;
-          pObj->dwState = CGPIOD_OUT_STATE_OFF;
-//        _hwSetPinVal(pObj->dwPin, pObj->dwState ^ pObj->dwPol);
-
-          evt.dwEvt = pObj->dwState ? CGPIOD_OUT_EVT_ON : CGPIOD_OUT_EVT_OFF;
-          DoEvt(&evt);
+          _outputSetState(pObj, CGPIOD_OUT_STATE_OFF, &evt);
           break;
 
         case CGPIOD_OUT_CMD_TOGGLEDELAYED: 
@@ -306,11 +292,7 @@
           if (pObj->dwFlags & CGPIOD_OUT_FLG_LOCKED) break;
           pObj->dwCmd    = CGPIOD_OUT_CMD_TOGGLETIMED;
           pObj->dwRun    = pCmd->msNow + pCmd->dwRun;
-          pObj->dwState ^= CGPIOD_OUT_STATE_ON;
-//        _hwSetPinVal(pObj->dwPin, pObj->dwState ^ pObj->dwPol);
-
-          evt.dwEvt = pObj->dwState ? CGPIOD_OUT_EVT_ON : CGPIOD_OUT_EVT_OFF;
-          DoEvt(&evt);
+          _outputSetState(pObj, CGPIOD_OUT_STATE_ON, &evt);
           break;
 
         case CGPIOD_OUT_CMD_LOCK: 

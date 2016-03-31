@@ -26,6 +26,7 @@ void ICACHE_FLASH_ATTR mqttPublishMessage(String strTopic, String strMsg)
   if (!g_pMqtt)
     return;
 
+  Debug.println("mqttPublishMessage,topic=" + strTopic + ",msg=" + strMsg);
   g_pMqtt->publish(AppSettings.mqttClientId + String("/") + AppSettings.mqttEvtPfx + String("/") + strTopic, strMsg);
   g_dwMqttPktTx++;
   } // mqttPublishMessage
@@ -35,15 +36,10 @@ void ICACHE_FLASH_ATTR mqttPublishMessage(String strTopic, String strMsg)
 //----------------------------------------------------------------------------
 void ICACHE_FLASH_ATTR mqttPublishVersion()
 {
-  g_pMqtt->publish(AppSettings.mqttClientId + String("/") + AppSettings.mqttEvtPfx + String("/version"), APP_ALIAS);
-  g_dwMqttPktTx++;
+  mqttPublishMessage("system/version", APP_ALIAS);
+//g_pMqtt->publish(AppSettings.mqttClientId + String("/") + AppSettings.mqttEvtPfx + String("/version"), APP_ALIAS);
+//g_dwMqttPktTx++;
   } // mqttPublishVersion
-
-// Callback for messages, arrived from MQTT server
-
-//int updateSensorStateInt(int node, int sensor, int type, int value);
-//int getTypeFromString(String type);
-
 
 //----------------------------------------------------------------------------
 // start MQTT client
@@ -79,7 +75,7 @@ void ICACHE_FLASH_ATTR mqttCheckClient()
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-void mqttOnConfig(HttpRequest &request, HttpResponse &response)
+void mqttOnHttpConfig(HttpRequest &request, HttpResponse &response)
 {
   AppSettings.load();
   g_bMqttIsConfigured = FALSE;
@@ -113,15 +109,7 @@ void mqttOnConfig(HttpRequest &request, HttpResponse &response)
   vars["evtPfx"]   = AppSettings.mqttEvtPfx;
   vars["cmdPfx"]   = AppSettings.mqttCmdPfx;
   response.sendTemplate(tmpl); // will be automatically deleted
-  } // mqttOnConfig
-
-//----------------------------------------------------------------------------
-//
-//----------------------------------------------------------------------------
-void ICACHE_FLASH_ATTR mqttRegisterHttpHandlers(HttpServer &server)
-{
-  server.addPath("/mqtt", mqttOnConfig);
-  } //
+  } // mqttOnHttpConfig
 
 //----------------------------------------------------------------------------
 //
