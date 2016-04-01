@@ -14,14 +14,20 @@
 #include <xerror.h>
 #include <cparse.hpp>
 
+extern tParseRsvd    g_gpiodParseObj[];
+extern tParseRsvd    g_gpiodParseCmdOutput[];
+extern tParseRsvd    g_gpiodParseCmdShutter[];
+extern tParseRsvd    g_gpiodParseCmdSystem[];
+extern tParseRsvd    g_gpiodParseCmdCounter[];
+
 
 #define CGPIOD_VERSION                   "4.0.1.0" //                                   
 
 #define CGPIOD_CMD_PFX                       "cmd" //
 #define CGPIOD_EVT_PFX                       "evt" //
 
-#define CGPIOD_EMUL_OUTPUT                       0 // configured as out0-3
-#define CGPIOD_EMUL_SHUTTER                      1 // configured as udm0-1
+#define CGPIOD_EMUL_OUTPUT                       0 // emulate output0-1
+#define CGPIOD_EMUL_SHUTTER                      1 // emulate shutter0
 
 #define CGPIOD_MODE_STANDALONE                   0 // configured as out0-3
 #define CGPIOD_MODE_INTEGRATED                   1 // configured as udm0-1
@@ -93,7 +99,7 @@ typedef struct {
 #define CGPIOD_IN0_PIN                           0 // D3 
 #define CGPIOD_IN1_PIN                           2 // D4 
 
-#define CGPIOD_IN_TMR_DEBOUNCE                 150 // in ms
+#define CGPIOD_IN_TMR_DEBOUNCE                 100 // in ms
 #define CGPIOD_IN_TMR_INGT1                   1000 //
 #define CGPIOD_IN_TMR_INGT2                   2000 //
 

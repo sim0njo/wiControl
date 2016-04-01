@@ -206,15 +206,15 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
   Debug.println("CGpiod::DoEvt");
   switch (pEvt->dwObj & CGPIOD_OBJ_CLS_MASK) {
     case CGPIOD_OBJ_CLS_INPUT:
-      if (m_input[dwObj].dwFlags & (0x1 << pEvt->dwEvt))
-        _DoPublish(0, 0, 0, m_input[dwObj].szName, _inputEvt2String(pEvt->dwEvt));
-
-      if (m_dwMode == CGPIOD_MODE_STANDALONE) { 
+      if      (m_dwMode == CGPIOD_MODE_STANDALONE) { 
         if (m_dwEmul == CGPIOD_EMUL_OUTPUT) 
           _outputDoEvt(pEvt);
         else 
           _shutterDoEvt(pEvt);
         } // if
+
+      else if (m_input[dwObj].dwFlags & (0x1 << pEvt->dwEvt))
+        _DoPublish(0, 0, 0, m_input[dwObj].szName, _inputEvt2String(pEvt->dwEvt));
 
       break;
     case CGPIOD_OBJ_CLS_OUTPUT:

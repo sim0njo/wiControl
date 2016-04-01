@@ -51,8 +51,6 @@
     for (dwObj = 0; dwObj < CGPIOD_OUT_COUNT; dwObj++, pObj++) {
       digitalWrite(pObj->dwPin, (pObj->dwState ^ pObj->dwPol) ? HIGH : LOW);
       pinMode(pObj->dwPin, OUTPUT);
-//    _hwSetPinVal(pObj->dwPin, pObj->dwState ^ pObj->dwPol);
-//    _hwSetPinDir(pObj->dwPin, COGPIO_DIR_OUTPUT);
       } // for
 
     return m_dwError;
@@ -305,6 +303,7 @@
         case CGPIOD_OUT_CMD_BLINK: 
 //        g_log.LogPrt(m_dwClsLvl | 0x0160, "%s,%s.blink", pFunc, pObj->szName);
           pObj->dwCmd    = CGPIOD_OUT_CMD_BLINK;
+          Debug.println("CGpiod::_outputDoCmd,blink");
           break;
 
         default:
