@@ -7,18 +7,6 @@
 #include <gpiod.h>
 
   //--------------------------------------------------------------------------
-  // convert output event into string
-  //--------------------------------------------------------------------------
-  tCChar* CGpiod::_inputEvt2String(tUint32 dwEvt) 
-  {
-    return (dwEvt == CGPIOD_IN_EVT_INGT0)  ? "ingt0"  :
-           (dwEvt == CGPIOD_IN_EVT_OUTLT1) ? "outlt1" :
-           (dwEvt == CGPIOD_IN_EVT_INGT1)  ? "ingt1"  :
-           (dwEvt == CGPIOD_IN_EVT_OUTGT1) ? "outgt1" :
-           (dwEvt == CGPIOD_IN_EVT_INGT2)  ? "ingt2"  : "out";
-    } // _inputEvt2String
-
-  //--------------------------------------------------------------------------
   // configure
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_inputOnConfig() 
@@ -27,7 +15,7 @@
     tGpiodInput *pObj = m_input; 
 
     // initialise all channels
-    Debug.println("CGpiod::_inputOnConfig");
+//  Debug.println("CGpiod::_inputOnConfig");
     memset(m_input, 0, sizeof(m_input)); 
     for (dwObj = 0; dwObj < CGPIOD_IN_COUNT; dwObj++, pObj++) {
       // initialise defaults
@@ -39,7 +27,6 @@
       pObj->tmrDebounce = CGPIOD_IN_TMR_DEBOUNCE; 
       pObj->msDebounce  = 0; 
       pObj->msState     = 0; 
-      pObj->szName      = (dwObj == 0) ? "input0" : "input1";
       } // for
 
     return m_dwError;
@@ -53,7 +40,7 @@
     tUint32     dwObj;
     tGpiodInput *pObj = m_input; 
 
-    Debug.println("CGpiod::_inputOnInit");
+//  Debug.println("CGpiod::_inputOnInit");
     for (dwObj = 0; dwObj < CGPIOD_IN_COUNT; dwObj++, pObj++) {
       pinMode(pObj->dwPin, INPUT);
 

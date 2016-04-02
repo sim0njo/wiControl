@@ -8,16 +8,11 @@
 //#include <SmingCore/Debug.h>
 #include <gpiod.h>
 
-extern tParseRsvd    g_gpiodParseObj[];
-extern tParseRsvd    g_gpiodParseCmdOutput[];
-extern tParseRsvd    g_gpiodParseCmdShutter[];
-extern tParseRsvd    g_gpiodParseCmdSystem[];
-extern tParseRsvd    g_gpiodParseCmdCounter[];
-
 //--------------------------------------------------------------------------
 //
 //--------------------------------------------------------------------------
-tUint32 CGpiod::ParseCmd(tGpiodCmd* pOut, tChar* pObj, tChar* pCmd, tUint32 dwMask1) {
+tUint32 CGpiod::ParseCmd(tGpiodCmd* pOut, tChar* pObj, tChar* pCmd, tUint32 dwMask1) 
+{
   tUint32 dwErr = XERROR_SUCCESS;
 
   do {
@@ -35,6 +30,8 @@ tUint32 CGpiod::ParseCmd(tGpiodCmd* pOut, tChar* pObj, tChar* pCmd, tUint32 dwMa
     m_parse.SetString(pCmd);
 
     switch (pOut->dwObj & CGPIOD_OBJ_CLS_MASK) {
+      case CGPIOD_OBJ_CLS_INPUT:   dwErr = _parseEvtInput(pOut);
+        break;
       case CGPIOD_OBJ_CLS_OUTPUT:  dwErr = _parseCmdOutput(pOut);
         break;
       case CGPIOD_OBJ_CLS_SHUTTER: dwErr = _parseCmdShutter(pOut);
@@ -55,25 +52,28 @@ tUint32 CGpiod::ParseCmd(tGpiodCmd* pOut, tChar* pObj, tChar* pCmd, tUint32 dwMa
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-tUint32 CGpiod::_parseCmdSystem(tGpiodCmd* pOut) {
+tUint32 CGpiod::_parseEvtInput(tGpiodCmd* pOut) 
+{
   tUint32 dwErr = XERROR_SUCCESS;
 
   do {
-    m_parse.SetReservedIdents(g_gpiodParseCmdSystem);
-    if ((m_parse.NextToken(1, CGPIOD_OBJ_CLS_SYSTEM) != CPARSE_TYPE_LEAF) && (dwErr = XERROR_DATA))
+    Debug.println("CGpiod::_parseEvtInput");
+    m_parse.SetReservedIdents(g_gpiodParseEvtInput);
+    if ((m_parse.NextToken(1, CGPIOD_OBJ_CLS_INPUT) != CPARSE_TYPE_LEAF) && (dwErr = XERROR_DATA))
       break;
 
     pOut->dwCmd = m_parse.TVal();
-    _parseCmdParams(pOut);
+    dwErr = _parseCmdParams(pOut);
     } while (FALSE);
 
   return dwErr; 
-  } // _parseCmdSystem
+  } // _parseEvtInput
 
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-tUint32 CGpiod::_parseCmdOutput(tGpiodCmd* pOut) {
+tUint32 CGpiod::_parseCmdOutput(tGpiodCmd* pOut) 
+{
   tUint32 dwErr = XERROR_SUCCESS;
 
   do {
@@ -92,7 +92,8 @@ tUint32 CGpiod::_parseCmdOutput(tGpiodCmd* pOut) {
 //--------------------------------------------------------------------------
 //
 //--------------------------------------------------------------------------
-tUint32 CGpiod::_parseCmdShutter(tGpiodCmd* pOut) {
+tUint32 CGpiod::_parseCmdShutter(tGpiodCmd* pOut) 
+{
   tUint32 dwErr = XERROR_SUCCESS;
 
   do {
@@ -111,7 +112,27 @@ tUint32 CGpiod::_parseCmdShutter(tGpiodCmd* pOut) {
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-tUint32 CGpiod::_parseCmdParams(tGpiodCmd* pOut) {
+tUint32 CGpiod::_parseCmdSystem(tGpiodCmd* pOut) 
+{
+  tUint32 dwErr = XERROR_SUCCESS;
+
+  do {
+    m_parse.SetReservedIdents(g_gpiodParseCmdSystem);
+    if ((m_parse.NextToken(1, CGPIOD_OBJ_CLS_SYSTEM) != CPARSE_TYPE_LEAF) && (dwErr = XERROR_DATA))
+      break;
+
+    pOut->dwCmd = m_parse.TVal();
+    _parseCmdParams(pOut);
+    } while (FALSE);
+
+  return dwErr; 
+  } // _parseCmdSystem
+
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
+tUint32 CGpiod::_parseCmdParams(tGpiodCmd* pOut) 
+{
   tUint32 dwErr = XERROR_SUCCESS;
 //tUint32 dwParm;
 
@@ -183,8 +204,8 @@ tUint32 CGpiod::_parseCmdParams(tGpiodCmd* pOut) {
 tParseRsvd g_gpiodParseObj[] = {
 //  dwMask0           dwMask1            dwTType           dwTVal            szTVal
 //                    CGPIOD_OBJ_CLS                       0xPPPPMMMM                                   
-//{ 0x00000001      , 0x00000100       , CPARSE_TYPE_NODE, 0x00000100,       "input0",    },
-//{ 0x00000001      , 0x00000100       , CPARSE_TYPE_NODE, 0x00000101,       "input1",    },
+  { 0x00000001      , 0x00000100       , CPARSE_TYPE_NODE, 0x00000100,       "input0",    },
+  { 0x00000001      , 0x00000100       , CPARSE_TYPE_NODE, 0x00000101,       "input1",    },
   { 0x00000001      , 0x00000201       , CPARSE_TYPE_NODE, 0x00000200,       "output0",   },
   { 0x00000001      , 0x00000201       , CPARSE_TYPE_NODE, 0x00000201,       "output1",   },
   { 0x00000001      , 0x00000402       , CPARSE_TYPE_NODE, 0x00000400,       "shutter0",  },
@@ -192,7 +213,7 @@ tParseRsvd g_gpiodParseObj[] = {
 //{ 0x00000001      , 0x00000603       , CPARSE_TYPE_NODE, 0x00000801,       "counter1",  },
 //{ 0x00000001      , 0x00000603       , CPARSE_TYPE_NODE, 0x00000802,       "counter2",  },
 //{ 0x00000001      , 0x00000603       , CPARSE_TYPE_NODE, 0x00000803,       "counter3",  },
-  { 0x00000001      , 0x00000603       , CPARSE_TYPE_NODE, 0x00001000,       "system",    },
+  { 0x00000001      , 0x00000800       , CPARSE_TYPE_NODE, 0x00001000,       "system",    },
                                                                          
   { 0x00000000      , 0x00000000       , 0x00000000      , 0x00000000,       "",          },
   };
@@ -213,22 +234,34 @@ tParseRsvd g_gpiodParseCmdSystem[] = {
   { 0x00000000      , 0x00000000       , 0x00000000      , 0x00000000, "", },
   };
 
-/*  
-tParseRsvd g_gpiodParseInCmd[] = {
-//  COhcObjGrp2Mask   COhcChnGrp2Mask    CPARSE_TYPE_LEAF  0xPPPPSMMM
-//in% imd/imw/tab/uim/utm/bwm/ebs/ebr/ebd                    Parms                     
-//                                                               State,0=opem,1=closed
-//                                                                Mid                  
-  { 0x00000001      , 0x00000100       , CPARSE_TYPE_LEAF, 0x00001002, "ingt0",    },
+tParseRsvd g_gpiodParseEvtInput[] = {
+//  dwMask0           dwMask1            dwTType           dwTVal      szTVal
+//in% wbs/wbr                                                PPPP      params                
+//                          CC                                   EEEE  cmd/evt         
+  { 0x00000001      , 0x00000100       , CPARSE_TYPE_LEAF, 0x00000002, "ingt0",    },
   { 0x00000001      , 0x00000100       , CPARSE_TYPE_LEAF, 0x00000003, "outlt1",   },
-  { 0x00000001      , 0x00000100       , CPARSE_TYPE_LEAF, 0x00001004, "ingt1",    },
+  { 0x00000001      , 0x00000100       , CPARSE_TYPE_LEAF, 0x00000004, "ingt1",    },
   { 0x00000001      , 0x00000100       , CPARSE_TYPE_LEAF, 0x00000005, "outgt1",   },
-  { 0x00000001      , 0x00000100       , CPARSE_TYPE_LEAF, 0x00001006, "ingt2",    },
+  { 0x00000001      , 0x00000100       , CPARSE_TYPE_LEAF, 0x00000006, "ingt2",    },
   { 0x00000001      , 0x00000100       , CPARSE_TYPE_LEAF, 0x00000007, "out",      },
 
-  { CPARSE_MASK_NONE, CPARSE_MASK_NONE , CPARSE_TYPE_NONE, 0x00000000, "",         },
+//fb% wbs                                                    PPPP      params                
+//                                                               EEEE  cmd/evt         
+  { 0x00000001      , 0x00000200       , CPARSE_TYPE_LEAF, 0x00000002, "on",         },
+  { 0x00000001      , 0x00000200       , CPARSE_TYPE_LEAF, 0x00000003, "off",        },
+  { 0x00000001      , 0x00000200       , CPARSE_TYPE_LEAF, 0x00000004, "timerended", },
+
+//fb% wbr                                                    PPPP      params                
+//                                                               EEEE  cmd/evt         
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x00000002, "stop",       },
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x00000003, "upon",       },
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x00000004, "upoff",      },
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x00000005, "downon",     },
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x00000006, "downoff",    },
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x00000007, "timerended", },
+
+  { CPARSE_MASK_NONE, CPARSE_MASK_NONE , CPARSE_TYPE_NONE, 0x00000000, "",           },
   };
-*/
 
 tParseRsvd g_gpiodParseCmdCounter[] = {
 //  ModMask           ChnMask            CPARSE_TYPE_LEAF    PPPPMMMM
@@ -242,7 +275,8 @@ tParseRsvd g_gpiodParseCmdCounter[] = {
 
 tParseRsvd g_gpiodParseCmdOutput[] = {
 //  ModMask           ChnMask            CPARSE_TYPE_LEAF    PPPPMMMM
-//out: omd + ebs             
+//output%: wbs             
+  { 0x00000001      , 0x00000200       , CPARSE_TYPE_LEAF, 0x00000001, "status",        },
   { 0x00000001      , 0x00000200       , CPARSE_TYPE_LEAF, 0x00000002, "on",            },
   { 0x00000001      , 0x00000200       , CPARSE_TYPE_LEAF, 0x00000003, "off",           },
   { 0x00000001      , 0x00000200       , CPARSE_TYPE_LEAF, 0x00000004, "onlocked",      },
@@ -257,38 +291,42 @@ tParseRsvd g_gpiodParseCmdOutput[] = {
   { 0x00000001      , 0x00000200       , CPARSE_TYPE_LEAF, 0x0200000D, "toggletimed",   }, // 1-65535 s
   { 0x00000001      , 0x00000200       , CPARSE_TYPE_LEAF, 0x0000000E, "lock",          },
   { 0x00000001      , 0x00000200       , CPARSE_TYPE_LEAF, 0x0000000F, "locktimed",     },
-  { 0x00000001      , 0x00000200       , CPARSE_TYPE_LEAF, 0x00000010, "blink",         },
+  { 0x00000001      , 0x00000800       , CPARSE_TYPE_LEAF, 0x02000010, "timeset",       }, // 1-65535 s
+  { 0x00000001      , 0x00000800       , CPARSE_TYPE_LEAF, 0x02000011, "timeadd",       }, // 1-65535 s
+  { 0x00000001      , 0x00000800       , CPARSE_TYPE_LEAF, 0x00000012, "timeabort",     },
+  { 0x00000001      , 0x00000200       , CPARSE_TYPE_LEAF, 0x00000013, "blink",         },
 
-  { CPARSE_MASK_NONE, CPARSE_MASK_NONE , CPARSE_TYPE_NONE, 0x00000000, "",         },
+  { CPARSE_MASK_NONE, CPARSE_MASK_NONE , CPARSE_TYPE_NONE, 0x00000000, "",              },
   };
 
 tParseRsvd g_gpiodParseCmdShutter[] = {
 //  ModMask           ChnMask            CPARSE_TYPE_LEAF    PPPPMMMM
-//out: jrm + ebr
-  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x00020002, "stop", },           // 0-5
-  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x04060003, "toggleUp", },       // 0-5/0-1/R1-65535 1/10s
-  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x04060004, "toggleDown", },     // 0-5/0-1/R1-65535 1/10s
-  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x04060005, "up", },             // 0-5/0-1/R1-65535 1/10s
-  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x04060006, "down", },           // 0-5/0-1/R1-65535 1/10s
-  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x04060007, "tipUp", },          // 0-5/0-1/R1-65535 1/10s
-  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x04060008, "tipDown", },        // 0-5/0-1/R1-65535 1/10s
-  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x00010009, "priolock", },       // 0-63
-  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x0001000A, "priounlock", },     // 0-63
-  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x0000000B, "learnon", },
-  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x0000000C, "learnoff", },
-  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x0001000D, "prioset", },        // 0-63
-  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x0001000E, "prioreset", },      // 0-63
-  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x0416000F, "delayedup", },      // 0-5/0-1/D1-65535/R1-65535
-  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x0C160010, "tipdelayedup", },   // 0-5/0-1/D1-65535/R1-65535/T1-65535
-  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x04160011, "delayeddown", },    // 0-5/0-1/D1-65535/R1-65535
-  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x0C160012, "tipdelayeddown", }, // 0-5/0-1/D1-65535/R1-65535/T1-65535
-                                                                                            //         1/10s    1/10s    1/10s
-  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x04000013, "timerondelayed", }, // R1-65535 1/10s
-  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x04000014, "timeroffdelayed", },// R1-65535 1/10s
-  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x04000015, "timerontimed", },   // R1-65535 1/10s
-  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x00000016, "timerAbort", },     //
+//shutter%: wbr
+  { 0x00000001      , 0x00000200       , CPARSE_TYPE_LEAF, 0x00000001, "status",          },
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x00020002, "stop",            }, // 0-5
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x04060003, "toggleUp",        }, // 0-5/0-1/R1-65535 1/10s
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x04060004, "toggleDown",      }, // 0-5/0-1/R1-65535 1/10s
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x04060005, "up",              }, // 0-5/0-1/R1-65535 1/10s
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x04060006, "down",            }, // 0-5/0-1/R1-65535 1/10s
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x04060007, "tipUp",           }, // 0-5/0-1/R1-65535 1/10s
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x04060008, "tipDown",         }, // 0-5/0-1/R1-65535 1/10s
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x00010009, "priolock",        }, // 0-63
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x0001000A, "priounlock",      }, // 0-63
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x0000000B, "learnon",         },
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x0000000C, "learnoff",        },
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x0001000D, "prioset",         }, // 0-63
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x0001000E, "prioreset",       }, // 0-63
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x0416000F, "delayedup",       }, // 0-5/0-1/D1-65535/R1-65535
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x0C160010, "tipdelayedup",    }, // 0-5/0-1/D1-65535/R1-65535/T1-65535
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x04160011, "delayeddown",     }, // 0-5/0-1/D1-65535/R1-65535
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x0C160012, "tipdelayeddown",  }, // 0-5/0-1/D1-65535/R1-65535/T1-65535
+                                                                                             //         1/10s    1/10s    1/10s
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x04000013, "timerondelayed",  }, // R1-65535 1/10s
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x04000014, "timeroffdelayed", }, // R1-65535 1/10s
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x04000015, "timerontimed",    }, // R1-65535 1/10s
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x00000016, "timerAbort",      }, //
 
-  { CPARSE_MASK_NONE, CPARSE_MASK_NONE , CPARSE_TYPE_NONE, 0x00000000, "",             },
+  { CPARSE_MASK_NONE, CPARSE_MASK_NONE , CPARSE_TYPE_NONE, 0x00000000, "",                },
   };
 
 /*

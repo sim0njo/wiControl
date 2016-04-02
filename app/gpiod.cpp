@@ -17,10 +17,10 @@ void gpiodOnHttpConfig(HttpRequest &request, HttpResponse &response)
   // handle new settings
   if (request.getRequestMethod() == RequestMethod::POST) {
     bool bEmulChange =
-     	AppSettings.gpiodEmul != (request.getPostParameter("gpiodEmul") == "1");
+     	AppSettings.gpiodEmul != ((request.getPostParameter("gpiodEmul0") == "1") ? CGPIOD_EMUL_OUTPUT : CGPIOD_EMUL_SHUTTER);
 
-    AppSettings.gpiodEmul = request.getPostParameter("gpiodEmul") == "1";
-    AppSettings.gpiodMode = request.getPostParameter("gpiodMode") == "1";
+    AppSettings.gpiodEmul = (request.getPostParameter("gpiodEmul0") == "1") ? CGPIOD_EMUL_OUTPUT     : CGPIOD_EMUL_SHUTTER;
+    AppSettings.gpiodMode = (request.getPostParameter("gpiodMode0") == "1") ? CGPIOD_MODE_STANDALONE : CGPIOD_MODE_INTEGRATED;
     
     AppSettings.save();
 
@@ -30,18 +30,21 @@ void gpiodOnHttpConfig(HttpRequest &request, HttpResponse &response)
       } // if
     } // if
 
+  Debug.println(AppSettings.gpiodEmul ? "Emul = Shutter"   : "Emul = Output");
+  Debug.println(AppSettings.gpiodMode ? "Mode = Networked" : "Mode = StandAlone");
+
   // send page
   TemplateFileStream *tmpl = new TemplateFileStream("gpiod.html");
   auto &vars = tmpl->variables();
   vars["appAlias"] = APP_ALIAS;
 
-  bool gpiodEmul     = AppSettings.gpiodEmul;
-  vars["gpiodEmul0"] = gpiodEmul ? "" : "checked='checked'";
-  vars["gpiodEmul1"] = gpiodEmul ? "checked='checked'" : "";
+//  bool gpiodEmul     = AppSettings.gpiodEmul;
+  vars["gpiodEmul0"] = AppSettings.gpiodEmul ? "" : "checked='checked'";
+  vars["gpiodEmul1"] = AppSettings.gpiodEmul ? "checked='checked'" : "";
 
-  bool gpiodMode     = AppSettings.gpiodMode;
-  vars["gpiodMode0"] = gpiodMode ? "" : "checked='checked'";
-  vars["gpiodMode1"] = gpiodMode ? "checked='checked'" : "";
+//  bool gpiodMode     = AppSettings.gpiodMode;
+  vars["gpiodMode0"] = AppSettings.gpiodMode ? "" : "checked='checked'";
+  vars["gpiodMode1"] = AppSettings.gpiodMode ? "checked='checked'" : "";
 
   response.sendTemplate(tmpl); // will be automatically deleted
   } // gpiodOnHttpConfig
@@ -72,7 +75,7 @@ void ICACHE_FLASH_ATTR gpiodOnMqttPublish(String strTopic, String strMsg)
     g_dwMqttPktRx++;
 
     // parse object, cmd and optional parms
-    if (g_gpiod.ParseCmd(&cmd, pTopic, pMsg, (g_gpiod.GetEmul() == CGPIOD_EMUL_OUTPUT) ? CGPIOD_OBJ_CLS_OUTPUT : CGPIOD_OBJ_CLS_SHUTTER)) {
+    if (g_gpiod.ParseCmd(&cmd, pTopic, pMsg, (g_gpiod.GetEmul() == CGPIOD_EMUL_OUTPUT) ? CGPIOD_OBJ_CLS_EBS : CGPIOD_OBJ_CLS_EBR)) {
       Debug.println("gpiodOnPublish,ParseCmd() failed,dropping");
       dwErr = XERROR_DATA;
       break;
@@ -98,7 +101,7 @@ tUint32 CGpiod::OnConfig()
     m_dwMode = AppSettings.gpiodMode;
 
     // configure heartbeat timers
-    Debug.println("CGpiod::OnConfig");
+//  Debug.println("CGpiod::OnConfig");
     memset(m_hb, 0, sizeof(m_hb));
     for (dwObj = 0; dwObj < CGPIOD_HB_COUNT; dwObj++) {
       m_hb[dwObj].dwFlags  = CGPIOD_CNT_FLG_CNTR;
@@ -124,7 +127,7 @@ tUint32 CGpiod::OnConfig()
 tUint32 CGpiod::OnInit() 
 {
 
-  Debug.println("CGpiod::OnInit");
+//Debug.println("CGpiod::OnInit");
 
   // initialise inputs
   _inputOnInit();
@@ -168,9 +171,7 @@ void CGpiod::OnRun() {
 // exit daemon
 //--------------------------------------------------------------------------
 tUint32 CGpiod::OnExit() {
-//  tChar szTopic[64];
-
-//  gsprintf(szTopic, "%s/%s/#", g_mqttcd.GetStrAttr("mqttcd.clientid"), m_szCmdPfx);
+//Debug.println("CGpiod::OnExit");
 
   if (m_dwEmul == CGPIOD_EMUL_OUTPUT)
     _outputOnExit();
@@ -181,29 +182,16 @@ tUint32 CGpiod::OnExit() {
 //_systemOnExit();
   } // OnExit
 
-//----------------------------------------------------------------------------
-//
-//----------------------------------------------------------------------------
-tUint32 CGpiod::DumpCmd(tGpiodCmd* pCmd) {
-  tChar     str[64];
-
-  sprintf(str, "%08X", pCmd->dwObj);
-  Debug.println("CGpiod::DumpCmd,obj=" + String(str));
-  sprintf(str, "%08X", pCmd->dwCmd);
-  Debug.println("CGpiod::DumpCmd,cmd=" + String(str));
-  } // DumpCmd
-
 //--------------------------------------------------------------------------
 // handle event, dwObj = 0x----TTOO, dwEvt = 0|1-n, szEvt = 0 | "str"
 //--------------------------------------------------------------------------
 tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt) 
 {
   tUint32 dwObj = pEvt->dwObj & CGPIOD_OBJ_NUM_MASK;
+  tChar   str1[32], str2[32];
 
-//g_log.LogPrt(m_dwClsLvl | 0x0000, "%s,now=%u,obj=%04X,evt=%u/'%s'", 
-//             pFunc, pEvt->msNow, pEvt->dwObj, pEvt->dwEvt, pEvt->szEvt ? pEvt->szEvt : "");
+  PrintEvt(pEvt);
 
-  Debug.println("CGpiod::DoEvt");
   switch (pEvt->dwObj & CGPIOD_OBJ_CLS_MASK) {
     case CGPIOD_OBJ_CLS_INPUT:
       if      (m_dwMode == CGPIOD_MODE_STANDALONE) { 
@@ -214,17 +202,17 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
         } // if
 
       else if (m_input[dwObj].dwFlags & (0x1 << pEvt->dwEvt))
-        _DoPublish(0, 0, 0, m_input[dwObj].szName, _inputEvt2String(pEvt->dwEvt));
+        _DoPublish(0, 0, 0, _printObj2String(str1, pEvt->dwObj), _printObjEvt2String(str2, pEvt->dwObj, pEvt->dwEvt));
 
       break;
     case CGPIOD_OBJ_CLS_OUTPUT:
       if (m_output[dwObj].dwFlags & (0x1 << pEvt->dwEvt))
-        _DoPublish(0, 0, 0, m_output[dwObj].szName, _outputEvt2String(pEvt->dwEvt));
+        _DoPublish(0, 0, 0, _printObj2String(str1, pEvt->dwObj), _printObjEvt2String(str2, pEvt->dwObj, pEvt->dwEvt));
 
       break;
     case CGPIOD_OBJ_CLS_SHUTTER:
       if (m_shutter[dwObj].dwFlags & (0x1 << pEvt->dwEvt))
-        _DoPublish(0, 0, 0, m_shutter[dwObj].szName, _shutterEvt2String(pEvt->dwEvt));
+        _DoPublish(0, 0, 0, _printObj2String(str1, pEvt->dwObj), _printObjEvt2String(str2, pEvt->dwObj, pEvt->dwEvt));
 
       break;
 //  case CGPIOD_OBJ_CLS_COUNTER:
@@ -251,28 +239,28 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
 //----------------------------------------------------------------------------
 tUint32 CGpiod::DoCmd(tGpiodCmd* pCmd) 
 {
-  tUint32 dwErr = XERROR_SUCCESS;
+  tUint32   dwErr = XERROR_SUCCESS;
+  tGpiodEvt evt = { 0, 0, 0, 0 };
 
-  do {
-    Debug.println("CGpiod::DoCmd");
-    DumpCmd(pCmd);
+  PrintCmd(pCmd);
 
-    switch (pCmd->dwObj & CGPIOD_OBJ_CLS_MASK) {
-//    case CGPIOD_OBJ_CLS_INPUT:
-//      break;
-      case CGPIOD_OBJ_CLS_OUTPUT:  dwErr = _outputDoCmd(pCmd);
-        break;
-      case CGPIOD_OBJ_CLS_SHUTTER: dwErr = _shutterDoCmd(pCmd);
-        break;
-//    case CGPIOD_OBJ_CLS_COUNTER: dwErr = _counterDoCmd(pCmd);
-//      break;
-//    case CGPIOD_OBJ_CLS_SYSTEM:  dwErr = _systemDoCmd(pCmd);
-//      break;
-      default:                     dwErr = XERROR_INPUT;
-        break;
-      } // switch
-
-    } while (FALSE);
+  switch (pCmd->dwObj & CGPIOD_OBJ_CLS_MASK) {
+    case CGPIOD_OBJ_CLS_INPUT:   evt.dwObj = pCmd->dwObj;
+                                 evt.dwEvt = pCmd->dwCmd;
+                                 evt.msNow = pCmd->msNow;
+                                 dwErr = DoEvt(&evt);
+      break;
+    case CGPIOD_OBJ_CLS_OUTPUT:  dwErr = _outputDoCmd(pCmd);
+      break;
+    case CGPIOD_OBJ_CLS_SHUTTER: dwErr = _shutterDoCmd(pCmd);
+      break;
+//  case CGPIOD_OBJ_CLS_COUNTER: dwErr = _counterDoCmd(pCmd);
+//    break;
+//  case CGPIOD_OBJ_CLS_SYSTEM:  dwErr = _systemDoCmd(pCmd);
+//    break;
+    default:                     dwErr = XERROR_INPUT;
+      break;
+    } // switch
 
   return dwErr;
   } // DoCmd
