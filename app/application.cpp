@@ -75,7 +75,7 @@ void processInfoCommand(String commandLine, CommandOutput* pOut)
   pOut->printf("Version            : %s\r\n", build_git_sha);
   pOut->printf("Sming Version      : %s\r\n", SMING_VERSION);
   pOut->printf("ESP SDK version    : %s\r\n", system_get_sdk_version());
-  pOut->printf("Gpoiod version     : %s\r\n", CGPIOD_VERSION);
+  pOut->printf("Gpiod version      : %s\r\n", CGPIOD_VERSION);
   pOut->printf("\r\n");
 
   pOut->printf("Station SSID       : %s\r\n", AppSettings.ssid.c_str());
@@ -94,8 +94,10 @@ void processInfoCommand(String commandLine, CommandOutput* pOut)
   pOut->printf("Access Point Mode  : %s\r\n", apModeStr.c_str());
   pOut->printf("\r\n");
 
-  pOut->printf("Gpiod emulation    : %s\r\n", AppSettings.gpiodEmul ? "shutter" : "output");
-  pOut->printf("Gpiod mode         : %s\r\n", AppSettings.gpiodMode ? "integrated" : "standalone");
+  pOut->printf("Gpiod emulation    : %s\r\n", (g_gpiod.GetEmul() == CGPIOD_EMUL_OUTPUT)     ? "output"     : "shutter");
+  pOut->printf("Gpiod mode         : %s\r\n", (g_gpiod.GetMode() == CGPIOD_MODE_STANDALONE) ? "standalone" :
+                                              (g_gpiod.GetMode() == CGPIOD_MODE_MQTT)       ? "MQTT"       : "both");
+  pOut->printf("Gpiod event format : %s\r\n", (g_gpiod.GetEfmt() == CGPIOD_EFMT_NUMERICAL)  ? "numerical"  : "textual");
   pOut->printf("\r\n");
 
   pOut->printf("System Time        : ");

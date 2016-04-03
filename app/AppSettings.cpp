@@ -63,8 +63,9 @@ void ApplicationSettingsStorage::load()
       }
 
     JsonObject& gpiod = root["gpiod"];
-    gpiodEmul = gpiod["gpiodEmul"];
-    gpiodMode = gpiod["gpiodMode"];
+    gpiodEmul = gpiod["emul"];
+    gpiodMode = gpiod["mode"];
+    gpiodEfmt = gpiod["efmt"];
 
     cpuBoost = root["cpuBoost"];
     useOwnBaseAddress = root["useOwnBaseAddress"];
@@ -121,6 +122,7 @@ void ApplicationSettingsStorage::save()
   root["gpiod"] = gpiod;
   gpiod["emul"] = gpiodEmul;
   gpiod["mode"] = gpiodMode;
+  gpiod["efmt"] = gpiodEfmt;
 
   root["cpuBoost"] = cpuBoost;
   root["useOwnBaseAddress"] = useOwnBaseAddress;

@@ -56,7 +56,8 @@ class ApplicationSettingsStorage
   String             webOtaBaseUrl;
 
   int                gpiodEmul = 0;
-  int                gpiodMode = 0;
+  int                gpiodMode = 1;
+  int                gpiodEfmt = 0;
 
   void               load();
   void               save();

@@ -19,10 +19,10 @@ extern tParseRsvd    g_gpiodParseEvtInput[];
 extern tParseRsvd    g_gpiodParseCmdOutput[];
 extern tParseRsvd    g_gpiodParseCmdShutter[];
 extern tParseRsvd    g_gpiodParseCmdSystem[];
-extern tParseRsvd    g_gpiodParseCmdCounter[];
 
 
 #define CGPIOD_VERSION                   "4.0.1.0" //                                   
+#define CGPIOD_DATE                       __DATE__ //
 
 #define CGPIOD_CMD_PFX                       "cmd" //
 #define CGPIOD_EVT_PFX                       "evt" //
@@ -30,22 +30,27 @@ extern tParseRsvd    g_gpiodParseCmdCounter[];
 #define CGPIOD_EMUL_OUTPUT                       0 // emulate output0-1
 #define CGPIOD_EMUL_SHUTTER                      1 // emulate shutter0
 
-#define CGPIOD_MODE_STANDALONE                   0 // configured as out0-3
-#define CGPIOD_MODE_INTEGRATED                   1 // configured as udm0-1
+#define CGPIOD_MODE_STANDALONE                   1 // handle events locally
+#define CGPIOD_MODE_MQTT                         2 // publish events
+#define CGPIOD_MODE_BOTH                         3 // do both
 
-//                                      0x0000CCNN //
+#define CGPIOD_EFMT_NUMERICAL                    0 // 
+#define CGPIOD_EFMT_TEXTUAL                      1 // 
+
+//                                      0xPPPPCCNN //
 #define CGPIOD_OBJ_EVT_MASK             0x0000FFFF //
 #define CGPIOD_OBJ_CMD_MASK             0x0000FFFF //
 #define CGPIOD_OBJ_PRM_MASK             0xFFFF0000 //
 
 #define CGPIOD_OBJ_NUM_MASK             0x000000FF //
 #define CGPIOD_OBJ_CLS_MASK             0x0000FF00 //
-#define CGPIOD_OBJ_CLS_EBS              0x00000B00 // EBS
-#define CGPIOD_OBJ_CLS_EBR              0x00000D00 // EBR
+#define CGPIOD_OBJ_CLS_WBS              0x00001B00 // WBS = input + output + system
+#define CGPIOD_OBJ_CLS_WBR              0x00001D00 // WBR = input + shutter + system
 #define CGPIOD_OBJ_CLS_INPUT            0x00000100 // input
 #define CGPIOD_OBJ_CLS_OUTPUT           0x00000200 // output
 #define CGPIOD_OBJ_CLS_SHUTTER          0x00000400 // shutter
-#define CGPIOD_OBJ_CLS_SYSTEM           0x00000800 // system
+#define CGPIOD_OBJ_CLS_HBEAT            0x00000800 // heartbeat
+#define CGPIOD_OBJ_CLS_SYSTEM           0x00001000 // system
 
 #define CGPIOD_OBJ_NONE                 0x00000000 //
 #define CGPIOD_OBJ_INPUT0               0x00000100 //
@@ -53,7 +58,15 @@ extern tParseRsvd    g_gpiodParseCmdCounter[];
 #define CGPIOD_OBJ_OUTPUT0              0x00000200 //
 #define CGPIOD_OBJ_OUTPUT1              0x00000201 //
 #define CGPIOD_OBJ_SHUTTER0             0x00000400 //
-#define CGPIOD_OBJ_SYSTEM               0x00000800 //
+#define CGPIOD_OBJ_SYSTEM               0x00001000 //
+#define CGPIOD_OBJ_SYSVERSION           0x00001000 //
+#define CGPIOD_OBJ_SYSMEMORY            0x00001001 //
+#define CGPIOD_OBJ_SYSEMUL              0x00011002 //
+#define CGPIOD_OBJ_SYSMODE              0x00021003 //
+#define CGPIOD_OBJ_SYSEFMT              0x00041004 //
+#define CGPIOD_OBJ_SYSDISABLE           0x00081005 //
+#define CGPIOD_OBJ_SYSENABLE            0x00081006 //
+#define CGPIOD_OBJ_SYSREBOOT            0x00081007 //
 
 //----------------------------------------------------------------------------
 // system=getemul
@@ -61,30 +74,15 @@ extern tParseRsvd    g_gpiodParseCmdCounter[];
 // system/emul=0.ack
 //----------------------------------------------------------------------------
 #define CGPIOD_SYS_CMD_NONE                      0 // 
-#define CGPIOD_SYS_CMD_GETEMUL                   1 // WBS/WBR
-#define CGPIOD_SYS_CMD_SETEMUL                   2 // setemul.0|1.ack
-#define CGPIOD_SYS_CMD_GETMODE                   3 // standalone/networked/both
-#define CGPIOD_SYS_CMD_SETMODE                   4 // setmode.0|1|2.ack
-#define CGPIOD_SYS_CMD_GETEFMT                   5 // event fmt: text or numerical
-#define CGPIOD_SYS_CMD_SETEFMT                   6 // setefmt.0|1.ack
-#define CGPIOD_SYS_CMD_UPTIME                    7 // 
-#define CGPIOD_SYS_CMD_VERSION                   8 // 
-#define CGPIOD_SYS_CMD_MEMORY                    9 // 
-#define CGPIOD_SYS_CMD_REBOOT                   10 // reboot.ack
-
-//----------------------------------------------------------------------------
-// counter definitions
-//----------------------------------------------------------------------------
-#define CGPIOD_CNT_COUNT                         1 //
-
-#define CGPIOD_CNT_CMD_SET                       1 // 
-#define CGPIOD_CNT_CMD_ADD                       2 // 
-#define CGPIOD_CNT_CMD_ABORT                     3 // 
-
-#define CGPIOD_CNT_EVT_TICK                      2 // 
-
-#define CGPIOD_CNT_FLG_NONE             0x00000000 // 
-#define CGPIOD_CNT_FLG_CNTR             0x00000001 // counter timer
+#define CGPIOD_SYS_CMD_VERSION                   1 // 
+#define CGPIOD_SYS_CMD_MEMORY                    2 // 
+#define CGPIOD_SYS_CMD_UPTIME                    3 // 
+#define CGPIOD_SYS_CMD_EMUL                      4 // WBS/WBR
+#define CGPIOD_SYS_CMD_MODE                      5 // standalone/networked/both
+#define CGPIOD_SYS_CMD_EFMT                      6 // setefmt.0|1.ack
+#define CGPIOD_SYS_CMD_DISABLE                   7 // 
+#define CGPIOD_SYS_CMD_ENABLE                    8 // 
+#define CGPIOD_SYS_CMD_REBOOT                    9 // reboot.ack
 
 //----------------------------------------------------------------------------
 // heartbeat definitions
@@ -97,14 +95,16 @@ extern tParseRsvd    g_gpiodParseCmdCounter[];
 #define CGPIOD_HB2                               2 // 2.0s heartbeat
 #define CGPIOD_HB2_PERIOD                     2000 // 
 
+#define CGPIOD_HB_EVT_EVEN                       0 // 
+#define CGPIOD_HB_EVT_ODD                        1 // 
+
 typedef struct {
-  tUint32            dwFlags;                      //
   tUint32            msStart;                      // start time in ms
   tUint32            msPeriod;                     // period in ms
   tUint32            dwRepeat;                     // repeat times, 0=forever
   tUint32            dwCntr;                       // counter value
   tCChar*            szName;                       //
-  } tGpiodCounter;
+  } tGpiodHbeat;
 
 //----------------------------------------------------------------------------
 // input definitions
@@ -296,7 +296,10 @@ typedef struct {
   } tGpiodShutter;
 
 //----------------------------------------------------------------------------
-//
+// obj / parm [0]             [1]            [2] [3]
+// output                     delay          run
+// shutter    lock plvl pmask delay          run tip
+// system     ack             emul mode efmt 
 //----------------------------------------------------------------------------
 typedef struct {
   tUint32            msNow;                        // 
@@ -308,6 +311,9 @@ typedef struct {
   tUint32            dwDelay;                      //
   tUint32            dwRun;                        //
   tUint32            dwTip;                        //
+  tUint32            dwEmul;                       //
+  tUint32            dwMode;                       //
+  tUint32            dwEfmt;                       //
   } tGpiodCmd;
 
 typedef struct {
@@ -332,10 +338,11 @@ class CGpiod {
 
   tUint32            m_dwEmul;                     //
   tUint32            m_dwMode;                     //
+  tUint32            m_dwEfmt;                     //
   tCChar*            m_szCmdPfx;                   //
   tCChar*            m_szEvtPfx;                   //
 
-  tGpiodCounter      m_hb[CGPIOD_HB_COUNT];        // heartbeat counters
+  tGpiodHbeat        m_hbeat[CGPIOD_HB_COUNT];     // heartbeat counters
   tGpiodInput        m_input[CGPIOD_IN_COUNT];     //
   tGpiodOutput       m_output[CGPIOD_OUT_COUNT];   //
   tGpiodShutter      m_shutter[CGPIOD_UDM_COUNT];  // 
@@ -363,7 +370,8 @@ class CGpiod {
   // gpiod.cpp
   //--------------------------------------------------------------------------
   tUint32            GetEmul()                     { return m_dwEmul; }
-//tUint32            GetMode()                     { return m_dwMode; }
+  tUint32            GetMode()                     { return m_dwMode; }
+  tUint32            GetEfmt()                     { return m_dwEfmt; }
 
   tUint32            OnConfig();
   tUint32            OnInit();
@@ -411,8 +419,8 @@ class CGpiod {
   tUint32            _outputOnConfig();
   tUint32            _outputOnInit();
   tUint32            _outputOnRun(tUint32 msNow);
-  tUint32            _outputOnHbTick(tUint32 dwHb, tUint32 dwCntr);
   tUint32            _outputOnExit();
+//  tUint32            _outputOnHbTick(tGpiodEvt* pEvt);
   tUint32            _outputDoEvt(tGpiodEvt* pEvt);
   tUint32            _outputDoCmd(tGpiodCmd* pCmd);
   void               _outputSetState(tGpiodOutput* pObj, tUint32 dwState, tGpiodEvt* pEvt);
@@ -428,6 +436,15 @@ class CGpiod {
   tUint32            _shutterCheckPrio(tGpiodShutter* pObj, tGpiodCmd* pCmd);
   tUint32            _shutterDoCmd(tGpiodCmd* pCmd);
   void               _shutterSetState(tGpiodShutter* pObj, tUint32 dwState, tGpiodEvt* pEvt);
+
+  //--------------------------------------------------------------------------
+  // gpiod_system.cpp
+  //--------------------------------------------------------------------------
+  tUint32            _systemOnConfig();
+  tUint32            _systemOnInit();
+  tUint32            _systemOnRun(tUint32 msNow);
+  tUint32            _systemOnExit();
+  tUint32            _systemDoCmd(tGpiodCmd* pCmd);
 
   }; // CGpiod
 

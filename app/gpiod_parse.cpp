@@ -57,7 +57,7 @@ tUint32 CGpiod::_parseEvtInput(tGpiodCmd* pOut)
   tUint32 dwErr = XERROR_SUCCESS;
 
   do {
-    Debug.println("CGpiod::_parseEvtInput");
+//  Debug.println("CGpiod::_parseEvtInput");
     m_parse.SetReservedIdents(g_gpiodParseEvtInput);
     if ((m_parse.NextToken(1, CGPIOD_OBJ_CLS_INPUT) != CPARSE_TYPE_LEAF) && (dwErr = XERROR_DATA))
       break;
@@ -77,7 +77,7 @@ tUint32 CGpiod::_parseCmdOutput(tGpiodCmd* pOut)
   tUint32 dwErr = XERROR_SUCCESS;
 
   do {
-    Debug.println("CGpiod::_parseCmdOutput");
+//  Debug.println("CGpiod::_parseCmdOutput");
     m_parse.SetReservedIdents(g_gpiodParseCmdOutput);
     if ((m_parse.NextToken(1, CGPIOD_OBJ_CLS_OUTPUT) != CPARSE_TYPE_LEAF) && (dwErr = XERROR_DATA))
       break;
@@ -97,7 +97,7 @@ tUint32 CGpiod::_parseCmdShutter(tGpiodCmd* pOut)
   tUint32 dwErr = XERROR_SUCCESS;
 
   do {
-    Debug.println("CGpiod::_parseCmdShutter");
+//  Debug.println("CGpiod::_parseCmdShutter");
     m_parse.SetReservedIdents(g_gpiodParseCmdShutter);
     if ((m_parse.NextToken(1, CGPIOD_OBJ_CLS_SHUTTER) != CPARSE_TYPE_LEAF) && (dwErr = XERROR_DATA))
       break;
@@ -117,12 +117,18 @@ tUint32 CGpiod::_parseCmdSystem(tGpiodCmd* pOut)
   tUint32 dwErr = XERROR_SUCCESS;
 
   do {
+    // parse command
     m_parse.SetReservedIdents(g_gpiodParseCmdSystem);
     if ((m_parse.NextToken(1, CGPIOD_OBJ_CLS_SYSTEM) != CPARSE_TYPE_LEAF) && (dwErr = XERROR_DATA))
       break;
 
     pOut->dwCmd = m_parse.TVal();
-    _parseCmdParams(pOut);
+
+    // if more then parse parms for set 
+    if (m_parse.NextToken(0, 0) == CPARSE_TYPE_PERIOD) {
+      _parseCmdParams(pOut);
+      } // if
+
     } while (FALSE);
 
   return dwErr; 
@@ -182,8 +188,21 @@ tUint32 CGpiod::_parseCmdParams(tGpiodCmd* pOut)
       if (dwErr = m_parse.GetNumber(&pOut->dwTip, 1, 65535)) break;
 //    g_log.LogPrt(m_dwClsLvl | 0x0010, "%s,tip=%u", pFunc, pOut->dwTip);
       } // if
+
+    if (pOut->dwCmd & 0x10000000) { // <emul> 0|1
+      if (dwErr = m_parse.GetNumber(&pOut->dwEmul, 1, 65535)) break;
+      } // if
+
+    if (pOut->dwCmd & 0x20000000) { // <mode> 1|2|3
+      if (dwErr = m_parse.GetNumber(&pOut->dwMode, 1, 65535)) break;
+      } // if
+
+    if (pOut->dwCmd & 0x40000000) { // <efmt> 0|1
+      if (dwErr = m_parse.GetNumber(&pOut->dwEfmt, 1, 65535)) break;
+      } // if
+
 /*
-    if (pOut->dwCmd & COHCCMD_PARM_MOD_ACK) { // ack
+    if (pOut->dwCmd & 0x80000000) { // ack
       m_parse.SetReservedIdents(g_ohcCmdParseParms);
       m_parse.SkipSeparator(CPARSE_TYPE_PERIOD, FALSE);
 
@@ -202,36 +221,16 @@ tUint32 CGpiod::_parseCmdParams(tGpiodCmd* pOut)
     } // _parseCmdParams
 
 tParseRsvd g_gpiodParseObj[] = {
-//  dwMask0           dwMask1            dwTType           dwTVal            szTVal
-//                    CGPIOD_OBJ_CLS                       0xPPPPMMMM                                   
-  { 0x00000001      , 0x00000100       , CPARSE_TYPE_NODE, 0x00000100,       "input0",    },
-  { 0x00000001      , 0x00000100       , CPARSE_TYPE_NODE, 0x00000101,       "input1",    },
-  { 0x00000001      , 0x00000201       , CPARSE_TYPE_NODE, 0x00000200,       "output0",   },
-  { 0x00000001      , 0x00000201       , CPARSE_TYPE_NODE, 0x00000201,       "output1",   },
-  { 0x00000001      , 0x00000402       , CPARSE_TYPE_NODE, 0x00000400,       "shutter0",  },
-//{ 0x00000001      , 0x00000603       , CPARSE_TYPE_NODE, 0x00000800,       "counter0",  },
-//{ 0x00000001      , 0x00000603       , CPARSE_TYPE_NODE, 0x00000801,       "counter1",  },
-//{ 0x00000001      , 0x00000603       , CPARSE_TYPE_NODE, 0x00000802,       "counter2",  },
-//{ 0x00000001      , 0x00000603       , CPARSE_TYPE_NODE, 0x00000803,       "counter3",  },
-  { 0x00000001      , 0x00000800       , CPARSE_TYPE_NODE, 0x00001000,       "system",    },
-                                                                         
-  { 0x00000000      , 0x00000000       , 0x00000000      , 0x00000000,       "",          },
-  };
-
-tParseRsvd g_gpiodParseCmdSystem[] = {
 //  dwMask0           dwMask1            dwTType           dwTVal      szTVal
 //                    CGPIOD_OBJ_CLS                       0xPPPPMMMM                                   
-  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x00000000, "ping",      },
-  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x00000001, "mode",      },
-  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x00000002, "date",      },
-  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x00000003, "time",      },
-  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x00000004, "version",   },
-  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x00000005, "enable",    },
-  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x00000006, "disable",   } ,
-  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x00000007, "por",       },
-  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x000000FF, "boot",      },
-
-  { 0x00000000      , 0x00000000       , 0x00000000      , 0x00000000, "", },
+  { 0x00000001      , 0x00000100       , CPARSE_TYPE_NODE, 0x00000100, "input0",    },
+  { 0x00000001      , 0x00000100       , CPARSE_TYPE_NODE, 0x00000101, "input1",    },
+  { 0x00000001      , 0x00000201       , CPARSE_TYPE_NODE, 0x00000200, "output0",   },
+  { 0x00000001      , 0x00000201       , CPARSE_TYPE_NODE, 0x00000201, "output1",   },
+  { 0x00000001      , 0x00000402       , CPARSE_TYPE_NODE, 0x00000400, "shutter0",  },
+  { 0x00000001      , 0x00001000       , CPARSE_TYPE_NODE, 0x00001000, "system",    },
+                                                                         
+  { 0x00000000      , 0x00000000       , 0x00000000      , 0x00000000, "",          },
   };
 
 tParseRsvd g_gpiodParseEvtInput[] = {
@@ -261,16 +260,6 @@ tParseRsvd g_gpiodParseEvtInput[] = {
   { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x00000007, "timerended", },
 
   { CPARSE_MASK_NONE, CPARSE_MASK_NONE , CPARSE_TYPE_NONE, 0x00000000, "",           },
-  };
-
-tParseRsvd g_gpiodParseCmdCounter[] = {
-//  ModMask           ChnMask            CPARSE_TYPE_LEAF    PPPPMMMM
-//led%: imd, imw, tab, utm
-  { 0x00000001      , 0x00000800       , CPARSE_TYPE_LEAF, 0x02000002, "set",       }, // 1-65535 s
-  { 0x00000001      , 0x00000800       , CPARSE_TYPE_LEAF, 0x02000003, "add",       }, // 1-65535 s
-  { 0x00000001      , 0x00000800       , CPARSE_TYPE_LEAF, 0x00000004, "abort",     },
-
-  { CPARSE_MASK_NONE, CPARSE_MASK_NONE , CPARSE_TYPE_NONE, 0x00000000, "",         },
   };
 
 tParseRsvd g_gpiodParseCmdOutput[] = {
@@ -329,26 +318,27 @@ tParseRsvd g_gpiodParseCmdShutter[] = {
   { CPARSE_MASK_NONE, CPARSE_MASK_NONE , CPARSE_TYPE_NONE, 0x00000000, "",                },
   };
 
-/*
-tParseRsvd g_ohcCmdParseModChnFb[] = {
-//  ModMask           ChnMask            CPARSE_TYPE_LEAF    PPPPMMMM
-//fb: out
-  { 0x00000006      , 0x00008000       , CPARSE_TYPE_LEAF, 0x00000009, "on",         },
-  { 0x00000006      , 0x00008000       , CPARSE_TYPE_LEAF, 0x0000000A, "off",        },
+tParseRsvd g_gpiodParseCmdSystem[] = {
+//  dwMask0           dwMask1            dwTType           dwTVal      szTVal
+//                                                         0xPPPPMMMM                                   
+  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x00001001, "version",   },
+  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x00001002, "memory",    },
+  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x00001003, "uptime",    },
+  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x80001004, "emul",      }, // <emul>.ack
+  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x80001005, "mode",      }, // <mode>.ack
+  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x80001006, "efmt",      }, // <efmt>.ack
+  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x80001007, "disable",   }, // ack
+  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x80001008, "enable",    }, // ack
+  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x80001009, "reboot",    }, // ack
+//{ 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x00000000, "output",    },
+//{ 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x00000001, "shutter",   },
+//{ 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x00000001, "standalone",},
+//{ 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x00000002, "networked", },
+//{ 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x00000003, "both",      },
+//{ 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x00000000, "numerical", },
+//{ 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x00000001, "textual",   } ,
+//{ 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x00000001, "ack",       },
 
-  { 0x00006940      , 0x00008000       , CPARSE_TYPE_LEAF, 0x00000002, "on",         },
-  { 0x00006940      , 0x00008000       , CPARSE_TYPE_LEAF, 0x00000003, "off",        },
-  { 0x00000006      , 0x00008000       , CPARSE_TYPE_LEAF, 0x0000000B, "blink",      },
-
-//fb: udm
-  { 0x00001080      , 0x00008000       , CPARSE_TYPE_LEAF, 0x00000002, "upon",       },
-  { 0x00001080      , 0x00008000       , CPARSE_TYPE_LEAF, 0x00000003, "downon",     },
-  { 0x00001080      , 0x00008000       , CPARSE_TYPE_LEAF, 0x00000004, "upoff",      },
-  { 0x00001080      , 0x00008000       , CPARSE_TYPE_LEAF, 0x00000005, "downoff",    },
-
-//fb: tmr
-  { 0x00001080      , 0x00008000       , CPARSE_TYPE_LEAF, 0x00000002, "tick",       },
-
-  { CPARSE_MASK_NONE, CPARSE_MASK_NONE , CPARSE_TYPE_NONE, 0x00000000, "",           },
+  { 0x00000000      , 0x00000000       , 0x00000000      , 0x00000000, "", },
   };
-*/
+

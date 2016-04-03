@@ -103,31 +103,6 @@
     } // CGpiod::_outputOnRun
 
   //--------------------------------------------------------------------------
-  // handle periodic 1s heartbeat timer tick
-  //--------------------------------------------------------------------------
-  tUint32 CGpiod::_outputOnHbTick(tUint32 dwHb, tUint32 dwCntr) 
-  {
-    tUint32      dwObj;
-    tGpiodOutput *pObj = m_output; 
-    tGpiodEvt    evt = { 0, 0, 0, 0 };
-
-    do {
-      if (dwHb != CGPIOD_HB1) break;
-
-      // handle each output object that requires a tick
-      for (dwObj = 0; dwObj < CGPIOD_OUT_COUNT; dwObj++, pObj++) {
-        evt.dwObj = CGPIOD_OBJ_CLS_OUTPUT | dwObj;
-
-        if (pObj->dwCmd == CGPIOD_OUT_CMD_BLINK)
-          _outputSetState(pObj, (dwCntr & 0x1) ? CGPIOD_OUT_STATE_ON : CGPIOD_OUT_STATE_OFF, &evt);
-        } // for
-
-      } while (FALSE);
-
-    return m_dwError;
-    } // CGpiod::_outputOnHbTick
-
-  //--------------------------------------------------------------------------
   // leave outputs in decent state
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_outputOnExit() 
@@ -149,28 +124,75 @@
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_outputDoEvt(tGpiodEvt* pEvt) 
   { 
-    tGpiodCmd cmd = { pEvt->msNow, 0, 0, 0, 0, 0, 0 };
+    tUint32      dwObj;
+    tGpiodCmd    cmd = { pEvt->msNow, 0, 0, 0, 0, 0, 0 };
+    tGpiodEvt    evt = { pEvt->msNow, 0, 0, 0 };
+    tGpiodOutput *pObj = m_output; 
 
-    switch (pEvt->dwEvt) {
-      case CGPIOD_IN_EVT_OUTLT1:
-        cmd.dwObj = CGPIOD_OBJ_CLS_OUTPUT | (pEvt->dwObj & CGPIOD_OBJ_NUM_MASK);
-        cmd.dwCmd = CGPIOD_OUT_CMD_TOGGLE;
-        _outputDoCmd(&cmd);
-        break;
+    if      ((pEvt->dwObj & CGPIOD_OBJ_CLS_MASK) == CGPIOD_OBJ_CLS_INPUT) {
+      switch (pEvt->dwEvt) {
+        case CGPIOD_IN_EVT_OUTLT1:
+          cmd.dwObj = CGPIOD_OBJ_CLS_OUTPUT | (pEvt->dwObj & CGPIOD_OBJ_NUM_MASK);
+          cmd.dwCmd = CGPIOD_OUT_CMD_TOGGLE;
+          _outputDoCmd(&cmd);
+          break;
 
-      case CGPIOD_IN_EVT_INGT2:
-        cmd.dwObj = CGPIOD_OBJ_CLS_OUTPUT | (pEvt->dwObj & CGPIOD_OBJ_NUM_MASK);
-        cmd.dwCmd = CGPIOD_OUT_CMD_BLINK;
-        _outputDoCmd(&cmd);
-        break;
+        case CGPIOD_IN_EVT_INGT2:
+          cmd.dwObj = CGPIOD_OBJ_CLS_OUTPUT | (pEvt->dwObj & CGPIOD_OBJ_NUM_MASK);
+          cmd.dwCmd = CGPIOD_OUT_CMD_BLINK;
+          _outputDoCmd(&cmd);
+          break;
 
-      default:
-        break;
-      } // switch
+        default:
+          break;
+        } // switch
+      } // if 
+
+    else if ((pEvt->dwObj & CGPIOD_OBJ_CLS_MASK) == CGPIOD_OBJ_CLS_HBEAT) {
+      
+      if ((pEvt->dwObj & CGPIOD_OBJ_NUM_MASK) == CGPIOD_HB1) {
+
+        // handle each output object that requires a tick
+        for (dwObj = 0; dwObj < CGPIOD_OUT_COUNT; dwObj++, pObj++) {
+          evt.dwObj = CGPIOD_OBJ_CLS_OUTPUT | dwObj;
+
+          if (pObj->dwCmd == CGPIOD_OUT_CMD_BLINK)
+            _outputSetState(pObj, (pEvt->dwEvt == CGPIOD_HB_EVT_ODD) ? CGPIOD_OUT_STATE_ON : CGPIOD_OUT_STATE_OFF, &evt);
+          } // for
+
+        } // if
+
+      } // else if
 
     return m_dwError;
     } // CGpiod::_outputDoEvt
 
+  //--------------------------------------------------------------------------
+  // handle periodic 1s heartbeat timer tick
+  //--------------------------------------------------------------------------
+/*
+  tUint32 CGpiod::_outputOnHbTick(tGpiodEvt* pEvt) 
+  {
+    tUint32      dwObj;
+    tGpiodOutput *pObj = m_output; 
+    tGpiodEvt    evt = { 0, 0, 0, 0 };
+
+    do {
+      if (dwHb != CGPIOD_HB1) break;
+
+      // handle each output object that requires a tick
+      for (dwObj = 0; dwObj < CGPIOD_OUT_COUNT; dwObj++, pObj++) {
+        evt.dwObj = CGPIOD_OBJ_CLS_OUTPUT | dwObj;
+
+        if (pObj->dwCmd == CGPIOD_OUT_CMD_BLINK)
+          _outputSetState(pObj, (dwCntr & 0x1) ? CGPIOD_OUT_STATE_ON : CGPIOD_OUT_STATE_OFF, &evt);
+        } // for
+
+      } while (FALSE);
+
+    return m_dwError;
+    } // CGpiod::_outputOnHbTick
+*/
   //--------------------------------------------------------------------------
   // execute command for outputs, called by _DoCmd()
   //--------------------------------------------------------------------------

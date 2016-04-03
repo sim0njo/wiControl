@@ -73,16 +73,34 @@
         <div class="col-lg-6 col-md-offset-3">
             <form method="post" action="">
                 <fieldset>
-			        <legend>Emul</legend>
+                    <legend>Emulation</legend>
                     <div class="col-md-offset-2">
                         <div class="form-group">
-                            <label>gpiodEmul</label>
                             <div class="checkbox">
                                 <label>
-                                    <input type="radio" value="1" name="gpiodEmul0" {gpiodEmul0}> Output x2
+                                    <input type="radio" value="0" name="gpiodEmul" {gpiodEmul0}> Output x2
                                 </label>
                                 <label>
-                                    <input type="radio" value="0" name="gpiodEmul1" {gpiodEmul1}> Shutter x1
+                                    <input type="radio" value="1" name="gpiodEmul" {gpiodEmul1}> Shutter x1
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Mode</legend>
+                    <div class="col-md-offset-2">
+                        <div class="form-group">
+                            <div class="checkbox">
+                                <label>
+                                    <input type="radio" value="1" name="gpiodMode" {gpiodMode1}> Standalone
+                                </label>
+                                <label>
+                                    <input type="radio" value="2" name="gpiodMode" {gpiodMode2}> MQTT 
+                                </label>
+                                <label>
+                                    <input type="radio" value="3" name="gpiodMode" {gpiodMode3}> Both 
                                 </label>
                             </div>
                         </div>
@@ -90,16 +108,15 @@
 			    </fieldset>
 
                 <fieldset>
-                    <legend>Mode</legend>
+                    <legend>MQTT Event Format</legend>
                     <div class="col-md-offset-2">
                         <div class="form-group">
-                            <label>gpiodMode</label>
                             <div class="checkbox">
                                 <label>
-                                    <input type="radio" value="1" name="gpiodMode0" {gpiodMode0}> Standalone
+                                    <input type="radio" value="0" name="gpiodEfmt" {gpiodEfmt0}> Numerical
                                 </label>
                                 <label>
-                                    <input type="radio" value="0" name="gpiodMode1" {gpiodMode1}> Networked 
+                                    <input type="radio" value="1" name="gpiodEfmt" {gpiodEfmt1}> Textual
                                 </label>
                             </div>
                         </div>
