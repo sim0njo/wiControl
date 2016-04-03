@@ -59,14 +59,6 @@ extern tParseRsvd    g_gpiodParseCmdSystem[];
 #define CGPIOD_OBJ_OUTPUT1              0x00000201 //
 #define CGPIOD_OBJ_SHUTTER0             0x00000400 //
 #define CGPIOD_OBJ_SYSTEM               0x00001000 //
-#define CGPIOD_OBJ_SYSVERSION           0x00001000 //
-#define CGPIOD_OBJ_SYSMEMORY            0x00001001 //
-#define CGPIOD_OBJ_SYSEMUL              0x00011002 //
-#define CGPIOD_OBJ_SYSMODE              0x00021003 //
-#define CGPIOD_OBJ_SYSEFMT              0x00041004 //
-#define CGPIOD_OBJ_SYSDISABLE           0x00081005 //
-#define CGPIOD_OBJ_SYSENABLE            0x00081006 //
-#define CGPIOD_OBJ_SYSREBOOT            0x00081007 //
 
 //----------------------------------------------------------------------------
 // system=getemul
@@ -103,7 +95,6 @@ typedef struct {
   tUint32            msPeriod;                     // period in ms
   tUint32            dwRepeat;                     // repeat times, 0=forever
   tUint32            dwCntr;                       // counter value
-  tCChar*            szName;                       //
   } tGpiodHbeat;
 
 //----------------------------------------------------------------------------
@@ -136,17 +127,7 @@ typedef struct {
 #define CGPIOD_IN_EVT_INGT2                      6 // 
 #define CGPIOD_IN_EVT_OUT                        7 // 
 
-#define CGPIOD_IN_FLG_NONE              0x00000000 // 
-#define CGPIOD_IN_FLG_MQTT_INGT0        0x00000004 // send event to MQTT broker
-#define CGPIOD_IN_FLG_MQTT_OUTLT1       0x00000008 // send event to MQTT broker
-#define CGPIOD_IN_FLG_MQTT_INGT1        0x00000010 // send event to MQTT broker
-#define CGPIOD_IN_FLG_MQTT_OUTGT1       0x00000020 // send event to MQTT broker
-#define CGPIOD_IN_FLG_MQTT_INGT2        0x00000040 // send event to MQTT broker
-#define CGPIOD_IN_FLG_MQTT_OUT          0x00000080 // send event to MQTT broker
-#define CGPIOD_IN_FLG_MQTT_ALL          0x000000FC // send all events to MQTT broker
-
 typedef struct {
-  tUint32            dwFlags;                      // evt routing flags
   tUint32            dwState;                      // input state
   tUint32            dwPin;                        // GPIO pin number
   tUint32            dwPol;                        // polarity 0=normal, 1=invert
@@ -196,10 +177,6 @@ typedef struct {
 #define CGPIOD_OUT_EVT_TIMEXP                 0xFD // time expired
 
 #define CGPIOD_OUT_FLG_NONE             0x00000000 //
-#define CGPIOD_OUT_FLG_MQTT_ON          0x00000004 //
-#define CGPIOD_OUT_FLG_MQTT_OFF         0x00000008 //
-#define CGPIOD_OUT_FLG_MQTT_TIMEXP      0x00000010 //
-#define CGPIOD_OUT_FLG_MQTT_ALL         0x0000001C //
 #define CGPIOD_OUT_FLG_LOCKED           0x40000000 //
 
 typedef struct {
@@ -271,13 +248,6 @@ typedef struct {
 #define CGPIOD_UDM_EVT_TIMEXP                    6 // timer expired
 
 #define CGPIOD_UDM_FLG_NONE             0x00000000 //
-#define CGPIOD_UDM_FLG_MQTT_STOP        0x00000002 //
-#define CGPIOD_UDM_FLG_MQTT_UPON        0x00000004 //
-#define CGPIOD_UDM_FLG_MQTT_DOWNON      0x00000008 //
-#define CGPIOD_UDM_FLG_MQTT_UPOFF       0x00000010 //
-#define CGPIOD_UDM_FLG_MQTT_DOWNOFF     0x00000020 //
-#define CGPIOD_UDM_FLG_MQTT_TIMEXP      0x00000040 //
-#define CGPIOD_UDM_FLG_MQTT_ALL         0x0000007C //
 #define CGPIOD_UDM_FLG_LOCKED           0x40000000 //
 
 typedef struct {
@@ -355,9 +325,6 @@ class CGpiod {
   //--------------------------------------------------------------------------
   void               begin();
   void               checkConnection();
-//  void               notifyChange(String object, String value);
-//  void               registerHttpHandlers(HttpServer &server);
-//  void               registerCommandHandlers();
 
   //--------------------------------------------------------------------------
   //
@@ -420,7 +387,6 @@ class CGpiod {
   tUint32            _outputOnInit();
   tUint32            _outputOnRun(tUint32 msNow);
   tUint32            _outputOnExit();
-//  tUint32            _outputOnHbTick(tGpiodEvt* pEvt);
   tUint32            _outputDoEvt(tGpiodEvt* pEvt);
   tUint32            _outputDoCmd(tGpiodCmd* pCmd);
   void               _outputSetState(tGpiodOutput* pObj, tUint32 dwState, tGpiodEvt* pEvt);
@@ -433,8 +399,8 @@ class CGpiod {
   tUint32            _shutterOnRun(tUint32 msNow);
   tUint32            _shutterOnExit();
   tUint32            _shutterDoEvt(tGpiodEvt* pEvt);
-  tUint32            _shutterCheckPrio(tGpiodShutter* pObj, tGpiodCmd* pCmd);
   tUint32            _shutterDoCmd(tGpiodCmd* pCmd);
+  tUint32            _shutterCheckPrio(tGpiodShutter* pObj, tGpiodCmd* pCmd);
   void               _shutterSetState(tGpiodShutter* pObj, tUint32 dwState, tGpiodEvt* pEvt);
 
   //--------------------------------------------------------------------------

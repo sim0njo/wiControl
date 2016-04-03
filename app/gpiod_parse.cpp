@@ -321,15 +321,15 @@ tParseRsvd g_gpiodParseCmdShutter[] = {
 tParseRsvd g_gpiodParseCmdSystem[] = {
 //  dwMask0           dwMask1            dwTType           dwTVal      szTVal
 //                                                         0xPPPPMMMM                                   
-  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x00001001, "version",   },
-  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x00001002, "memory",    },
-  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x00001003, "uptime",    },
-  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x80001004, "emul",      }, // <emul>.ack
-  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x80001005, "mode",      }, // <mode>.ack
-  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x80001006, "efmt",      }, // <efmt>.ack
-  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x80001007, "disable",   }, // ack
-  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x80001008, "enable",    }, // ack
-  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x80001009, "reboot",    }, // ack
+  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x00000001, "version",   },
+  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x00000002, "memory",    },
+  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x00000003, "uptime",    },
+  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x80000004, "emul",      }, // <emul>.ack
+  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x80000005, "mode",      }, // <mode>.ack
+  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x80000006, "efmt",      }, // <efmt>.ack
+  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x80000007, "disable",   }, // ack
+  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x80000008, "enable",    }, // ack
+  { 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x80000009, "reboot",    }, // ack
 //{ 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x00000000, "output",    },
 //{ 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x00000001, "shutter",   },
 //{ 0x00000001      , 0x00001000       , CPARSE_TYPE_LEAF, 0x00000001, "standalone",},

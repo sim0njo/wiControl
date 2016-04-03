@@ -16,9 +16,6 @@ void gpiodOnHttpConfig(HttpRequest &request, HttpResponse &response)
 
   // handle new settings
   if (request.getRequestMethod() == RequestMethod::POST) {
-//  bool bEmulChange =
-//   	AppSettings.gpiodEmul != ((request.getPostParameter("gpiodEmul") == "0") ? CGPIOD_EMUL_OUTPUT : CGPIOD_EMUL_SHUTTER);
-
     AppSettings.gpiodEmul = (request.getPostParameter("gpiodEmul") == "0") ? CGPIOD_EMUL_OUTPUT     : CGPIOD_EMUL_SHUTTER;
     AppSettings.gpiodMode = (request.getPostParameter("gpiodMode") == "1") ? CGPIOD_MODE_STANDALONE : 
                             (request.getPostParameter("gpiodMode") == "2") ? CGPIOD_MODE_MQTT       : CGPIOD_MODE_BOTH;
@@ -26,14 +23,9 @@ void gpiodOnHttpConfig(HttpRequest &request, HttpResponse &response)
     
     AppSettings.save();
 
-//  if (bEmulChange) {
-      g_gpiod.OnConfig();
-      g_gpiod.OnInit();
-//    } // if
+    g_gpiod.OnConfig();
+    g_gpiod.OnInit();
     } // if
-
-//Debug.println(AppSettings.gpiodEmul ? "Emul = Shutter"   : "Emul = Output");
-//Debug.println(AppSettings.gpiodMode ? "Mode = Networked" : "Mode = StandAlone");
 
   // send page
   TemplateFileStream *tmpl = new TemplateFileStream("gpiod.html");
@@ -194,7 +186,6 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
           _shutterDoEvt(pEvt);
         } // if
 
-//    if ((m_dwMode & CGPIOD_MODE_MQTT) && (m_input[dwObj].dwFlags & (0x1 << pEvt->dwEvt)))
       if (m_dwMode & CGPIOD_MODE_MQTT) {
         if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
           _DoPublish(0, 0, 0, _printObj2String(str1, pEvt->dwObj), _printVal2String(str2, pEvt->dwEvt));
@@ -203,10 +194,10 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
         } // if
 
       break;
+
     case CGPIOD_OBJ_CLS_OUTPUT:
       PrintEvt(pEvt);
 
-//    if ((m_dwMode & CGPIOD_MODE_MQTT) && (m_output[dwObj].dwFlags & (0x1 << pEvt->dwEvt)))
       if (m_dwMode & CGPIOD_MODE_MQTT) {
         if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
           _DoPublish(0, 0, 0, _printObj2String(str1, pEvt->dwObj), _printVal2String(str2, pEvt->dwEvt));
@@ -215,10 +206,10 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
         } // if
 
       break;
+
     case CGPIOD_OBJ_CLS_SHUTTER:
       PrintEvt(pEvt);
 
-//    if ((m_dwMode & CGPIOD_MODE_MQTT) && (m_shutter[dwObj].dwFlags & (0x1 << pEvt->dwEvt)))
       if (m_dwMode & CGPIOD_MODE_MQTT) {
         if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
           _DoPublish(0, 0, 0, _printObj2String(str1, pEvt->dwObj), _printVal2String(str2, pEvt->dwEvt));
@@ -227,10 +218,11 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
         } // if
 
       break;
+
     case CGPIOD_OBJ_CLS_HBEAT:
       _outputDoEvt(pEvt);
-//      _outputOnHbTick(pEvt);
       break;
+
     case CGPIOD_OBJ_CLS_SYSTEM:
       PrintEvt(pEvt);
 

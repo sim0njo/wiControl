@@ -19,7 +19,6 @@
     memset(m_output, 0, sizeof(m_output)); 
     for (dwObj = 0; dwObj < CGPIOD_OUT_COUNT; dwObj++, pObj++) {
       // initialise defaults
-      pObj->dwFlags  = CGPIOD_OUT_FLG_MQTT_ALL;
       pObj->dwPin    = (dwObj == 0) ? CGPIOD_OUT0_PIN : CGPIOD_OUT1_PIN; 
       pObj->dwPol    = CGPIOD_OUT_POL_NORMAL; 
       pObj->dwState  = CGPIOD_OUT_STATE_OFF; 
@@ -168,32 +167,6 @@
     } // CGpiod::_outputDoEvt
 
   //--------------------------------------------------------------------------
-  // handle periodic 1s heartbeat timer tick
-  //--------------------------------------------------------------------------
-/*
-  tUint32 CGpiod::_outputOnHbTick(tGpiodEvt* pEvt) 
-  {
-    tUint32      dwObj;
-    tGpiodOutput *pObj = m_output; 
-    tGpiodEvt    evt = { 0, 0, 0, 0 };
-
-    do {
-      if (dwHb != CGPIOD_HB1) break;
-
-      // handle each output object that requires a tick
-      for (dwObj = 0; dwObj < CGPIOD_OUT_COUNT; dwObj++, pObj++) {
-        evt.dwObj = CGPIOD_OBJ_CLS_OUTPUT | dwObj;
-
-        if (pObj->dwCmd == CGPIOD_OUT_CMD_BLINK)
-          _outputSetState(pObj, (dwCntr & 0x1) ? CGPIOD_OUT_STATE_ON : CGPIOD_OUT_STATE_OFF, &evt);
-        } // for
-
-      } while (FALSE);
-
-    return m_dwError;
-    } // CGpiod::_outputOnHbTick
-*/
-  //--------------------------------------------------------------------------
   // execute command for outputs, called by _DoCmd()
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_outputDoCmd(tGpiodCmd* pCmd) 
@@ -273,14 +246,16 @@
 
         case CGPIOD_OUT_CMD_TOGGLEDELAYED: 
           if (pObj->dwFlags & CGPIOD_OUT_FLG_LOCKED) break;
-          pObj->dwCmd = CGPIOD_OUT_CMD_TOGGLEDELAYED;
-          pObj->dwRun = pCmd->msNow + pCmd->dwDelay;
+          pObj->dwCmd    = CGPIOD_OUT_CMD_TOGGLEDELAYED;
+          pObj->dwRun    = pCmd->msNow + pCmd->dwDelay;
+          pObj->dwFlags |= CGPIOD_OUT_FLG_LOCKED;
           break;
 
         case CGPIOD_OUT_CMD_TOGGLETIMED: 
           if (pObj->dwFlags & CGPIOD_OUT_FLG_LOCKED) break;
           pObj->dwCmd    = CGPIOD_OUT_CMD_TOGGLETIMED;
           pObj->dwRun    = pCmd->msNow + pCmd->dwRun;
+          pObj->dwFlags |= CGPIOD_OUT_FLG_LOCKED;
           _outputSetState(pObj, CGPIOD_OUT_STATE_ON, &evt);
           break;
 
@@ -295,12 +270,17 @@
           break;
 
         case CGPIOD_OUT_CMD_TIMEADD:
+          if (pObj->dwRun) 
+            pObj->dwRun += pCmd->dwRun;
           break;
 
         case CGPIOD_OUT_CMD_TIMESET:
+          if (pObj->dwRun) 
+            pObj->dwRun  = pCmd->msNow + pCmd->dwRun;
           break;
 
         case CGPIOD_OUT_CMD_TIMEABORT:
+          pObj->dwRun = 0;
           break;
 
         case CGPIOD_OUT_CMD_BLINK: 
@@ -335,13 +315,11 @@
       case CGPIOD_OUT_STATE_OFF:
         digitalWrite(pObj->dwPin, (CGPIOD_OUT_STATE_OFF ^ pObj->dwPol) ? HIGH : LOW);
         if (pEvt) pEvt->dwEvt = CGPIOD_OUT_EVT_OFF;
-//      Debug.println("CGpiod::_outputSetState,off");
         break;
 
       case CGPIOD_OUT_STATE_ON:
         digitalWrite(pObj->dwPin, (CGPIOD_OUT_STATE_ON  ^ pObj->dwPol) ? HIGH : LOW);
         if (pEvt) pEvt->dwEvt = CGPIOD_OUT_EVT_ON;
-//      Debug.println("CGpiod::_outputSetState,on");
         break;
       } // switch
 

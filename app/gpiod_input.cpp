@@ -19,7 +19,6 @@
     memset(m_input, 0, sizeof(m_input)); 
     for (dwObj = 0; dwObj < CGPIOD_IN_COUNT; dwObj++, pObj++) {
       // initialise defaults
-      pObj->dwFlags     = CGPIOD_IN_FLG_MQTT_ALL; // all events to MQTT
       pObj->dwState     = CGPIOD_IN_STATE_OUT; 
       pObj->dwPin       = (dwObj == 0) ? CGPIOD_IN0_PIN : CGPIOD_IN1_PIN; 
       pObj->dwPol       = CGPIOD_IN_POL_INVERT;  

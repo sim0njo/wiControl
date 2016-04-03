@@ -56,10 +56,9 @@
 
       if (msNow > (pObj->msStart + pObj->msPeriod)) {
         pObj->dwCntr++;
+        pObj->msStart = msNow;
         evt.dwEvt = (pObj->dwCntr & 1) ? CGPIOD_HB_EVT_ODD : CGPIOD_HB_EVT_EVEN;
         DoEvt(&evt);
-//      _outputOnHbTick(dwObj, m_hb[dwObj].dwCntr);
-        pObj->msStart = msNow;
         } // if
       } // for
 
@@ -79,29 +78,44 @@
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_systemDoCmd(tGpiodCmd* pCmd) 
   { 
+    tChar     str[32];
     tGpiodEvt evt = { pCmd->msNow, pCmd->dwObj, 0, 0 };
 
     do {
       Debug.println("CGpiod::_systemDoCmd");
       switch (pCmd->dwCmd & CGPIOD_OBJ_CMD_MASK) {
         case CGPIOD_SYS_CMD_VERSION: 
-//          evt.dwEvt = pObj->dwState ? CGPIOD_OUT_EVT_ON : CGPIOD_OUT_EVT_OFF;
+          gsprintf(str, "version=%s", CGPIOD_VERSION);
+          evt.szEvt = str;
           DoEvt(&evt);
           break;
 
         case CGPIOD_SYS_CMD_MEMORY: 
+          gsprintf(str, "memory=%u", system_get_free_heap_size());
+          evt.szEvt = str;
+          DoEvt(&evt);
           break;
 
         case CGPIOD_SYS_CMD_UPTIME: 
           break;
 
-        case CGPIOD_SYS_CMD_EMUL: 
+        case CGPIOD_SYS_CMD_EMUL:
+          gsprintf(str, "emul=%s", (m_dwEmul == CGPIOD_EMUL_OUTPUT) ? "output" : "shutter");
+          evt.szEvt = str;
+          DoEvt(&evt);
           break;
 
         case CGPIOD_SYS_CMD_MODE: 
+          gsprintf(str, "mode=%s", (m_dwMode == CGPIOD_MODE_STANDALONE) ? "standalone" :
+                                   (m_dwMode == CGPIOD_MODE_MQTT)       ? "MQTT"       : "both");
+          evt.szEvt = str;
+          DoEvt(&evt);
           break;
 
         case CGPIOD_SYS_CMD_EFMT: 
+          gsprintf(str, "efmt=%s", (m_dwEfmt == CGPIOD_EFMT_NUMERICAL) ? "numerical" : "textual");
+          evt.szEvt = str;
+          DoEvt(&evt);
           break;
 
         case CGPIOD_SYS_CMD_DISABLE: 

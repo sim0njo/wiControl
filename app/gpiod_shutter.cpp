@@ -19,7 +19,6 @@
     memset(m_shutter, 0, sizeof(m_shutter)); 
     for (dwObj = 0; dwObj < CGPIOD_UDM_COUNT; dwObj++, pObj++) {
       // initialise defaults
-      pObj->dwFlags    = CGPIOD_UDM_FLG_MQTT_ALL;
       pObj->dwPinUp    = CGPIOD_UDM0_PIN_UP;
       pObj->dwPinDown  = CGPIOD_UDM0_PIN_DOWN;
       pObj->dwPol      = CGPIOD_IN_POL_NORMAL; 
@@ -413,19 +412,16 @@
         digitalWrite(pObj->dwPinDown, (CGPIOD_OUT_STATE_OFF ^ pObj->dwPol) ? HIGH : LOW);
         digitalWrite(pObj->dwPinUp,   (CGPIOD_OUT_STATE_ON  ^ pObj->dwPol) ? HIGH : LOW);
         if (pEvt) pEvt->dwEvt = CGPIOD_UDM_EVT_UPON;
-//      Debug.println("CGpiod::_shutterSetState,up");
         break;
       case CGPIOD_UDM_STATE_DOWN:
         digitalWrite(pObj->dwPinUp,   (CGPIOD_OUT_STATE_OFF ^ pObj->dwPol) ? HIGH : LOW);
         digitalWrite(pObj->dwPinDown, (CGPIOD_OUT_STATE_ON  ^ pObj->dwPol) ? HIGH : LOW);
         if (pEvt) pEvt->dwEvt = CGPIOD_UDM_EVT_DOWNON;
-//      Debug.println("CGpiod::_shutterSetState,down");
         break;
       default:
         digitalWrite(pObj->dwPinUp,   (CGPIOD_OUT_STATE_OFF ^ pObj->dwPol) ? HIGH : LOW);
         digitalWrite(pObj->dwPinDown, (CGPIOD_OUT_STATE_OFF ^ pObj->dwPol) ? HIGH : LOW);
         if (pEvt) pEvt->dwEvt = (pObj->dwState == CGPIOD_UDM_STATE_UP  ) ? CGPIOD_UDM_EVT_UPOFF : CGPIOD_UDM_EVT_DOWNOFF;
-//      Debug.println("CGpiod::_shutterSetState,stop");
         break;
       } // switch
 

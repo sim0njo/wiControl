@@ -553,10 +553,6 @@ tUint32 DoOperNum(tUint32* pdwNum)
 //----------------------------------------------------------------------------
 tUint32 DoOper(tUint32* pdwVal1, tUint32 dwOper, tUint32 dwVal2)
 {
-  tCChar  *pFunc = "CParse6::DoOper";
-
-//g_log.LogPrt(CPARSE_CLSLVL_DBG | 0x0000, "%s,val1=%u,oper=%u,val2=%u", pFunc, *pdwVal1, dwOper, dwVal2);
-  
   switch (dwOper) {
     case CPARSE_TYPE_OPER_MUL:    *pdwVal1  *= dwVal2;
       break;
@@ -565,14 +561,14 @@ tUint32 DoOper(tUint32* pdwVal1, tUint32 dwOper, tUint32 dwVal2)
       if (dwVal2)
         *pdwVal1 /= dwVal2;
 //    else
-//      g_log.LogPrt(CPARSE_CLSLVL_DBG | 0x9999, "%s,divide by zero", pFunc);
+//      divide by zero !!!
       break;
             
     case CPARSE_TYPE_OPER_MOD: // use %%   %25
       if (dwVal2)
         *pdwVal1 %= dwVal2;
 //    else
-//      g_log.LogPrt(CPARSE_CLSLVL_DBG | 0x9999, "%s,modulus by zero", pFunc);
+//      modulus by zero !!!
       break;
             
     case CPARSE_TYPE_OPER_ADD:    *pdwVal1  += dwVal2; // use %2b
@@ -622,7 +618,6 @@ tUint32 DoOper(tUint32* pdwVal1, tUint32 dwOper, tUint32 dwVal2)
            
     } // switch
 
-//  g_log.LogPrt(CPARSE_CLSLVL_DBG | 0x9999, "%s,dwNum=%u,err=%u", pFunc, *pdwNum, dwErr);
   return XERROR_SUCCESS;
   } // DoOper
 

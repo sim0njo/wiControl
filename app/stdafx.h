@@ -1,6 +1,6 @@
 
 //--------------------------------------------------------------------
-// stdafx.h : standard include file
+// xstdafx.h : standard include file
 //
 // Copyright (c) Jo Simons, 2005-2016, All Rights Reserved.
 //
@@ -10,8 +10,8 @@
 //                    +--------> indicates new xDvpt framework used
 //
 //------------------------------------------------------------------------------
-#ifndef __stdafx_h__
-#define __stdafx_h__
+#ifndef __xstdafx_h__
+#define __xstdafx_h__
 
 #ifdef LINUX
   #include  <sys/types.h>
@@ -161,7 +161,7 @@ typedef unsigned long long                tUint64; //
 #define gislower    islower
 #define gatoi       atoi
 
-#endif // __stdafx_h__ 
+#endif // __xstdafx_h__ 
 
 /******************************************************************************/
 
