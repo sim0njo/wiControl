@@ -8,7 +8,6 @@
 #include <globals.h>
 #include <gpiod.h>
 
-// Forward declarations
 
 // MQTT client
 MqttClient*          g_pMqtt = NULL;
@@ -26,35 +25,36 @@ void ICACHE_FLASH_ATTR mqttPublishMessage(String strTopic, String strMsg)
   if (!g_pMqtt)
     return;
 
-  Debug.println("mqttPublishMessage,topic=" + strTopic + ",msg=" + strMsg);
+  Debug.println("mqttPublishMessage,topic=" + AppSettings.mqttClientId + String("/") + AppSettings.mqttEvtPfx + String("/") + strTopic + ",msg=" + strMsg);
   g_pMqtt->publish(AppSettings.mqttClientId + String("/") + AppSettings.mqttEvtPfx + String("/") + strTopic, strMsg);
   g_dwMqttPktTx++;
   } // mqttPublishMessage
-
-//----------------------------------------------------------------------------
-//
-//----------------------------------------------------------------------------
-void ICACHE_FLASH_ATTR mqttPublishVersion()
-{
-  mqttPublishMessage("system/version", APP_ALIAS);
-  } // mqttPublishVersion
 
 //----------------------------------------------------------------------------
 // start MQTT client
 //----------------------------------------------------------------------------
 void ICACHE_FLASH_ATTR mqttStartClient()
 {
+  tChar str[32];
+
   // delete existing instance
   if (g_pMqtt)
     delete g_pMqtt;
 
+  Debug.println("mqttStartClient");
   AppSettings.load();
   if (!AppSettings.mqttServer.equals(String("")) && AppSettings.mqttPort != 0) {
     g_pMqtt = new MqttClient(AppSettings.mqttServer, AppSettings.mqttPort, gpiodOnMqttPublish);
     g_bMqttIsConnected = g_pMqtt->connect(AppSettings.mqttClientId, AppSettings.mqttUser, AppSettings.mqttPass);
 
+    Debug.println("mqttStartClient,subscribe=" + AppSettings.mqttClientId + String("/") + AppSettings.mqttCmdPfx + String("/#"));
+
     g_pMqtt->subscribe(AppSettings.mqttClientId + String("/") + AppSettings.mqttCmdPfx + String("/#"));
-    mqttPublishVersion();
+
+    sprintf(str, "%s/%s", APP_ALIAS, APP_TOPOLOGY);
+    mqttPublishMessage("platform", str);
+    mqttPublishMessage("version", APP_VERSION);
+//    mqttPublishVersion();
     g_bMqttIsConfigured = TRUE;
     }
   } // mqttStartClient

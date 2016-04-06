@@ -16,9 +16,12 @@
 
     // initialise all channels
 //  Debug.println("CGpiod::_inputOnConfig");
+    g_log.LogPrt(CGPIOD_CLSLVL_INPUT | 0x0000, "CGpiod::_inputOnConfig");
+    
     memset(m_input, 0, sizeof(m_input)); 
     for (dwObj = 0; dwObj < CGPIOD_IN_COUNT; dwObj++, pObj++) {
       // initialise defaults
+      pObj->dwFlags     = CGPIOD_IN_FLG_MQTT_ALL; // all events to MQTT
       pObj->dwState     = CGPIOD_IN_STATE_OUT; 
       pObj->dwPin       = (dwObj == 0) ? CGPIOD_IN0_PIN : CGPIOD_IN1_PIN; 
       pObj->dwPol       = CGPIOD_IN_POL_INVERT;  
@@ -40,13 +43,16 @@
     tGpiodInput *pObj = m_input; 
 
 //  Debug.println("CGpiod::_inputOnInit");
+    g_log.LogPrt(CGPIOD_CLSLVL_INPUT | 0x0000, "CGpiod::_inputOnInit");
     for (dwObj = 0; dwObj < CGPIOD_IN_COUNT; dwObj++, pObj++) {
-      pinMode(pObj->dwPin, INPUT);
+      _ioSetPinDir(pObj->dwPin, CGPIOD_PIN_DIR_INPUT);
+//    pinMode(pObj->dwPin, INPUT);
 
-      if (pObj->dwPol = CGPIOD_IN_POL_INVERT)
-        pullup(pObj->dwPin);
-      else
-        noPullup(pObj->dwPin);
+      _ioSetPinPullup(pObj->dwPin, (pObj->dwPol == CGPIOD_IN_POL_INVERT) ? 1 : 0);
+//    if (pObj->dwPol = CGPIOD_IN_POL_INVERT)
+//      pullup(pObj->dwPin);
+//    else
+//      noPullup(pObj->dwPin);
       } // for
 
     return m_dwError;
@@ -59,7 +65,7 @@
   {
     tUint32     dwObj, dwVal;
     tGpiodInput *pObj = m_input; 
-    tGpiodEvt   evt = { msNow, 0, 0, 0 };
+    tGpiodEvt   evt = { msNow, 0, 0, 0, 0 };
 
     // loop all inputs
     for (dwObj = 0; dwObj < CGPIOD_IN_COUNT; dwObj++, pObj++) {
@@ -77,7 +83,7 @@
             pObj->dwState = CGPIOD_IN_STATE_INGT0;
             evt.dwEvt     = CGPIOD_IN_EVT_INGT0;
             DoEvt(&evt);
-            Debug.println("CGpiod::_inputOnRun,ingt0");
+//            Debug.println("CGpiod::_inputOnRun,ingt0");
             } // if
           break;
 
@@ -89,7 +95,7 @@
             pObj->dwState = CGPIOD_IN_STATE_OUT;
             evt.dwEvt     = CGPIOD_IN_EVT_OUTLT1;
             DoEvt(&evt);
-            Debug.println("CGpiod::_inputOnRun,outlt1");
+//            Debug.println("CGpiod::_inputOnRun,outlt1");
             } 
           else {
             // input still closed
@@ -98,7 +104,7 @@
             pObj->dwState = CGPIOD_IN_STATE_INGT1;
             evt.dwEvt     = CGPIOD_IN_EVT_INGT1;
             DoEvt(&evt);
-            Debug.println("CGpiod::_inputOnRun,ingt1");
+//            Debug.println("CGpiod::_inputOnRun,ingt1");
             } // else
           break;
 
@@ -110,7 +116,7 @@
             pObj->dwState = CGPIOD_IN_STATE_OUT;
             evt.dwEvt     = CGPIOD_IN_EVT_OUTGT1;
             DoEvt(&evt);
-            Debug.println("CGpiod::_inputOnRun,outgt1");
+//            Debug.println("CGpiod::_inputOnRun,outgt1");
             } 
           else {
             // input still closed
@@ -119,7 +125,7 @@
             pObj->dwState = CGPIOD_IN_STATE_INGT2;
             evt.dwEvt     = CGPIOD_IN_EVT_INGT2;
             DoEvt(&evt);
-            Debug.println("CGpiod::_inputOnRun,ingt2");
+//            Debug.println("CGpiod::_inputOnRun,ingt2");
             } // else
           break;
 
@@ -153,7 +159,8 @@
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_inputGetPinVal(tGpiodInput* pObj, tUint32 msNow) 
   {
-    tUint32 dwVal = digitalRead(pObj->dwPin) ^ pObj->dwPol;
+//  tUint32 dwVal = digitalRead(pObj->dwPin) ^ pObj->dwPol;
+    tUint32 dwVal = _ioGetPinVal(pObj->dwPin) ^ pObj->dwPol;
 
     if (pObj->dwVal != dwVal) {
       // set debounce timer on start of change

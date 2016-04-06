@@ -7,19 +7,27 @@
 #include <Network.h>
 #include <HTTP.h>
 #include <gpiod.h>
+#include <cparse.hpp>
+#include <clogwriter.hpp>
 
 FTPServer      g_ftp;
 TelnetServer   g_telnet;
 static boolean g_firstTime = TRUE;
 int            g_isNetworkConnected = FALSE;
 Timer          g_appTimer;
+CLogWriter     g_log;
 
 //----------------------------------------------------------------------------
 // periodic reporting memory usage
 //----------------------------------------------------------------------------
 void appReportHeapUsage()
 {
-  mqttPublishMessage("system/memory", String(system_get_free_heap_size()));
+  tGpiodCmd cmd = { 0 };
+
+  cmd.dwObj = CGPIOD_OBJ_SYSTEM;
+  cmd.dwCmd = CGPIOD_SYS_CMD_MEMORY;
+  g_gpiod.DoCmd(&cmd);
+//  mqttPublishMessage("memory", String(system_get_free_heap_size()));
   } //
 
 //----------------------------------------------------------------------------
@@ -255,8 +263,36 @@ void processAPModeCommand(String commandLine, CommandOutput* pOut)
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
+void processLogLevelCommand(String commandLine, CommandOutput* pOut)
+{
+  Vector<String> commandToken;
+  int            numToken = splitString(commandLine, ' ' , commandToken);
+  CParse         parse;
+  tChar*         pStr = 0;
+
+    if (numToken > 1) {
+      // commandToken[1] is loglevel
+      pStr = xstrdup(commandToken[1].c_str());
+      parse.SetString(pStr);
+      if (parse.NextToken(0, 0) == CPARSE_TYPE_NUMBER) {
+//        AppSettings.dwLogLevel = parse.TVal();
+        g_log.SetClsLevels(CLOG_CLS_0, parse.TVal());
+        } // 
+      } // if
+
+  pOut->printf("Loglevel = 0x%08X\r\n\r\n", g_log.GetClsLevels(CLOG_CLS_0));
+  if (pStr) free(pStr);
+//AppSettings.save();
+//System.restart();
+  } // processLogLevelCommand
+
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 void init()
 {
+  char str[32];
+
   // Make sure wifi does not start yet! 
   wifi_station_set_auto_connect(0);
 
@@ -280,9 +316,14 @@ void init()
   Debug.start();
 
   // set prompt
-  commandHandler.setCommandPrompt("WifiEbsEbr> ");
+  sprintf(str, "%s/%s> ", APP_ALIAS, APP_TOPOLOGY); 
+  commandHandler.setCommandPrompt(str);
 
   // add new commands
+  commandHandler.registerCommand(CommandDelegate("loglevel",
+                                                 "Set logging levels",
+                                                 "System",
+                                                 processLogLevelCommand));
   commandHandler.registerCommand(CommandDelegate("info",
                                                  "Show system information",
                                                  "System",

@@ -9,7 +9,7 @@
 #ifndef __cparse6_hpp__
 #define __cparse6_hpp__
 
-#include "stdafx.h"
+#include "xstdafx.h"
 #include "xerror.h"
 #include "xstrlib.h"
 #include <SmingCore/SmingCore.h>

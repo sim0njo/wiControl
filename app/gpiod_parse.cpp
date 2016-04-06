@@ -1,11 +1,9 @@
 
 //----------------------------------------------------------------------------
-// cgpiod_parse.hpp : command parser
+// cgpiod_parse.cpp : command parser
 //
 // Copyright (c) Jo Simons, 2016-2016, All Rights Reserved.
 //----------------------------------------------------------------------------
-//#include <SmingCore/SmingCore.h>
-//#include <SmingCore/Debug.h>
 #include <gpiod.h>
 
 //--------------------------------------------------------------------------
@@ -36,8 +34,6 @@ tUint32 CGpiod::ParseCmd(tGpiodCmd* pOut, tChar* pObj, tChar* pCmd, tUint32 dwMa
         break;
       case CGPIOD_OBJ_CLS_SHUTTER: dwErr = _parseCmdShutter(pOut);
         break;
-//      case CGPIOD_OBJ_CLS_COUNTER: dwErr = _parseCmdCounter(pOut);
-//        break;
       case CGPIOD_OBJ_CLS_SYSTEM:  dwErr = _parseCmdSystem(pOut);
         break;
       default:

@@ -7,7 +7,7 @@
 #ifndef __xstrlib_h__
 #define __xstrlib_h__
 
-#include "stdafx.h"
+#include "xstdafx.h"
 
 tInt32   xstrfmta(tChar** pp, tInt32 nLen, tChar* pFmt, ...);
 tChar*   xstrndup(tCChar* pStr, tUint32 cbStr);

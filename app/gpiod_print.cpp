@@ -4,8 +4,6 @@
 //
 // Copyright (c) Jo Simons, 2016-2016, All Rights Reserved.
 //----------------------------------------------------------------------------
-//#include <SmingCore/SmingCore.h>
-//#include <SmingCore/Debug.h>
 #include <gpiod.h>
 
 //--------------------------------------------------------------------------
@@ -13,10 +11,15 @@
 //--------------------------------------------------------------------------
 void CGpiod::PrintEvt(tGpiodEvt* pEvt) 
 {
-  tChar str[64], str1[32], str2[32];
+  tChar  str[64], str1[32], str2[32];
+  tCChar *szTopic = pEvt->szTopic ? pEvt->szTopic : "system";
 
-  if (pEvt->szEvt)
+  if      (pEvt->dwObj == CGPIOD_OBJ_SYSTEM)
+    gsprintf(str, "CGpiod::PrintEvt,%s.%s", szTopic, pEvt->szEvt);
+
+  else if (pEvt->szEvt)
     gsprintf(str, "CGpiod::PrintEvt,%s.%s", _printObj2String(str1, pEvt->dwObj), pEvt->szEvt);
+
   else 
     gsprintf(str, "CGpiod::PrintEvt,%s.%s", _printObj2String(str1, pEvt->dwObj), _printObjEvt2String(str2, pEvt->dwObj, pEvt->dwEvt));
 

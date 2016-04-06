@@ -151,12 +151,11 @@ void NetworkClass::softApEnable()
     sprintf(id, "%x", system_get_chip_id());
     if (AppSettings.apPassword.equals(""))
     {
-        WifiAccessPoint.config((String)"MySensors gateway " + id,
-                               "", AUTH_OPEN);
+        WifiAccessPoint.config((String)"WifiIoNode-" + id, "", AUTH_OPEN);
     }
     else
     {
-        WifiAccessPoint.config((String)"MySensors gateway " + id,
+        WifiAccessPoint.config((String)"WifiIoNode-" + id,
                                AppSettings.apPassword, AUTH_WPA_WPA2_PSK);
     }
 
@@ -187,7 +186,7 @@ void NetworkClass::handleEvent(System_Event_t *e)
 
   if (event == EVENT_STAMODE_GOT_IP)
   {
-    Debug.printf("Got IP\n");
+    Debug.printf("NetworkClass::handleEvent,got ip-address\n");
         if (!haveIp && changeDlg)
         {
             changeDlg(true);
@@ -227,7 +226,7 @@ void NetworkClass::handleEvent(System_Event_t *e)
     }
     else if (event == EVENT_STAMODE_CONNECTED)
     {
-	if (!connected)
+      if (!connected)
         {
             connected = true;
             Debug.printf("Wifi client got connected\n");

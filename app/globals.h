@@ -3,13 +3,14 @@
 #define GLOBALS_H_
 
 
-
 extern const char* build_time;
 extern const char* build_git_sha;
 extern int         g_isNetworkConnected;
 /* why is type bool not known ?*/
 
-#define APP_ALIAS           "Wifi IO Node" //
+#define APP_ALIAS              "wiControl" //
+#define APP_TOPOLOGY                 "U02" // unterputz, 2 channels
+#define APP_VERSION              "4.0.0.0" //
 
 #define PLATFORM_TYPE_GENERIC            1 //
 #define PLATFORM_TYPE_SDSHIELD           2 //

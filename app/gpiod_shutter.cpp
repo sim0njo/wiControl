@@ -16,9 +16,12 @@
 
     // initialise all channels
 //  Debug.println("CGpiod::_shutterOnConfig");
+    g_log.LogPrt(CGPIOD_CLSLVL_SHUTTER | 0x0000, "CGpiod::_shutterOnConfig");
+
     memset(m_shutter, 0, sizeof(m_shutter)); 
     for (dwObj = 0; dwObj < CGPIOD_UDM_COUNT; dwObj++, pObj++) {
       // initialise defaults
+      pObj->dwFlags    = CGPIOD_UDM_FLG_MQTT_ALL;
       pObj->dwPinUp    = CGPIOD_UDM0_PIN_UP;
       pObj->dwPinDown  = CGPIOD_UDM0_PIN_DOWN;
       pObj->dwPol      = CGPIOD_IN_POL_NORMAL; 
@@ -41,11 +44,16 @@
     tGpiodShutter *pObj = m_shutter; 
 
 //  Debug.println("CGpiod::_shutterOnInit");
+    g_log.LogPrt(CGPIOD_CLSLVL_SHUTTER | 0x0000, "CGpiod::_shutterOnInit");
     for (dwObj = 0; dwObj < CGPIOD_UDM_COUNT; dwObj++, pObj++) {
-      digitalWrite(pObj->dwPinUp,   (((pObj->dwState >> 0) & CGPIOD_OUT_STATE_ON) ^ pObj->dwPol) ? HIGH : LOW);
-      digitalWrite(pObj->dwPinDown, (((pObj->dwState >> 1) & CGPIOD_OUT_STATE_ON) ^ pObj->dwPol) ? HIGH : LOW);
-      pinMode(pObj->dwPinUp,   OUTPUT);
-      pinMode(pObj->dwPinDown, OUTPUT);
+      _ioSetPinVal(pObj->dwPinUp,   ((pObj->dwState >> 0) & CGPIOD_OUT_STATE_ON) ^ pObj->dwPol);
+      _ioSetPinVal(pObj->dwPinDown, ((pObj->dwState >> 1) & CGPIOD_OUT_STATE_ON) ^ pObj->dwPol);
+//    digitalWrite(pObj->dwPinUp,   (((pObj->dwState >> 0) & CGPIOD_OUT_STATE_ON) ^ pObj->dwPol) ? HIGH : LOW);
+//    digitalWrite(pObj->dwPinDown, (((pObj->dwState >> 1) & CGPIOD_OUT_STATE_ON) ^ pObj->dwPol) ? HIGH : LOW);
+      _ioSetPinDir(pObj->dwPinUp,   CGPIOD_PIN_DIR_OUTPUT);
+      _ioSetPinDir(pObj->dwPinDown, CGPIOD_PIN_DIR_OUTPUT);
+//    pinMode(pObj->dwPinUp,   OUTPUT);
+//    pinMode(pObj->dwPinDown, OUTPUT);
       } // for
 
     return m_dwError;
@@ -58,7 +66,7 @@
   {
     tUint32       dwObj;
     tGpiodShutter *pObj = m_shutter; 
-    tGpiodEvt     evt = { msNow, 0, 0, 0 };
+    tGpiodEvt     evt = { msNow, 0, 0, 0, 0 };
 
     for (dwObj = 0; dwObj < CGPIOD_UDM_COUNT; dwObj++, pObj++) {
       evt.dwObj = CGPIOD_OBJ_CLS_SHUTTER + dwObj;
@@ -158,8 +166,10 @@
 
     // set outputs to off and switch to input
     for (dwObj = 0; dwObj < CGPIOD_UDM_COUNT; dwObj++, pObj++) {
-      digitalWrite(pObj->dwPinUp,   (CGPIOD_OUT_STATE_OFF ^ pObj->dwPol) ? HIGH : LOW);
-      digitalWrite(pObj->dwPinDown, (CGPIOD_OUT_STATE_OFF ^ pObj->dwPol) ? HIGH : LOW);
+      _ioSetPinVal(pObj->dwPinUp,    CGPIOD_OUT_STATE_OFF ^ pObj->dwPol);
+      _ioSetPinVal(pObj->dwPinDown,  CGPIOD_OUT_STATE_OFF ^ pObj->dwPol);
+//    digitalWrite(pObj->dwPinUp,   (CGPIOD_OUT_STATE_OFF ^ pObj->dwPol) ? HIGH : LOW);
+//    digitalWrite(pObj->dwPinDown, (CGPIOD_OUT_STATE_OFF ^ pObj->dwPol) ? HIGH : LOW);
       pinMode(pObj->dwPinUp,   INPUT);
       pinMode(pObj->dwPinDown, INPUT);
       } // for
@@ -186,7 +196,7 @@
       case CGPIOD_IN_EVT_INGT1:
         // start shutter up/down
         cmd.dwObj = CGPIOD_OBJ_CLS_SHUTTER | ((pEvt->dwObj & CGPIOD_OBJ_NUM_MASK) / 2);
-        cmd.dwRun = m_shutter[(pEvt->dwObj & CGPIOD_OBJ_NUM_MASK) / 2].dwRunDef; // 30000;
+        cmd.dwRun = m_shutter[(pEvt->dwObj & CGPIOD_OBJ_NUM_MASK) / 2].dwRunDef; 
 
         if (pEvt->dwObj & 0x1)
           // in1, in3
@@ -231,7 +241,7 @@
   tUint32 CGpiod::_shutterDoCmd(tGpiodCmd* pCmd) 
   { 
     tGpiodShutter *pObj  = &m_shutter[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK]; 
-    tGpiodEvt     evt    = { pCmd->msNow, pCmd->dwObj, 0, 0 };
+    tGpiodEvt     evt    = { pCmd->msNow, pCmd->dwObj, 0, 0, 0 };
 
     do {
       Debug.println("CGpiod::_shutterDoCmd");
@@ -409,18 +419,24 @@
     // down          up      not allowed
     switch (dwState) {
       case CGPIOD_UDM_STATE_UP:
-        digitalWrite(pObj->dwPinDown, (CGPIOD_OUT_STATE_OFF ^ pObj->dwPol) ? HIGH : LOW);
-        digitalWrite(pObj->dwPinUp,   (CGPIOD_OUT_STATE_ON  ^ pObj->dwPol) ? HIGH : LOW);
+        _ioSetPinVal(pObj->dwPinDown,  CGPIOD_OUT_STATE_OFF ^ pObj->dwPol);
+        _ioSetPinVal(pObj->dwPinUp,    CGPIOD_OUT_STATE_ON  ^ pObj->dwPol);
+//      digitalWrite(pObj->dwPinDown, (CGPIOD_OUT_STATE_OFF ^ pObj->dwPol) ? HIGH : LOW);
+//      digitalWrite(pObj->dwPinUp,   (CGPIOD_OUT_STATE_ON  ^ pObj->dwPol) ? HIGH : LOW);
         if (pEvt) pEvt->dwEvt = CGPIOD_UDM_EVT_UPON;
         break;
       case CGPIOD_UDM_STATE_DOWN:
-        digitalWrite(pObj->dwPinUp,   (CGPIOD_OUT_STATE_OFF ^ pObj->dwPol) ? HIGH : LOW);
-        digitalWrite(pObj->dwPinDown, (CGPIOD_OUT_STATE_ON  ^ pObj->dwPol) ? HIGH : LOW);
+        _ioSetPinVal(pObj->dwPinUp,    CGPIOD_OUT_STATE_OFF ^ pObj->dwPol);
+        _ioSetPinVal(pObj->dwPinDown,  CGPIOD_OUT_STATE_ON  ^ pObj->dwPol);
+//      digitalWrite(pObj->dwPinUp,   (CGPIOD_OUT_STATE_OFF ^ pObj->dwPol) ? HIGH : LOW);
+//      digitalWrite(pObj->dwPinDown, (CGPIOD_OUT_STATE_ON  ^ pObj->dwPol) ? HIGH : LOW);
         if (pEvt) pEvt->dwEvt = CGPIOD_UDM_EVT_DOWNON;
         break;
       default:
-        digitalWrite(pObj->dwPinUp,   (CGPIOD_OUT_STATE_OFF ^ pObj->dwPol) ? HIGH : LOW);
-        digitalWrite(pObj->dwPinDown, (CGPIOD_OUT_STATE_OFF ^ pObj->dwPol) ? HIGH : LOW);
+        _ioSetPinVal(pObj->dwPinUp,    CGPIOD_OUT_STATE_OFF ^ pObj->dwPol);
+        _ioSetPinVal(pObj->dwPinDown,  CGPIOD_OUT_STATE_OFF ^ pObj->dwPol);
+//      digitalWrite(pObj->dwPinUp,   (CGPIOD_OUT_STATE_OFF ^ pObj->dwPol) ? HIGH : LOW);
+//      digitalWrite(pObj->dwPinDown, (CGPIOD_OUT_STATE_OFF ^ pObj->dwPol) ? HIGH : LOW);
         if (pEvt) pEvt->dwEvt = (pObj->dwState == CGPIOD_UDM_STATE_UP  ) ? CGPIOD_UDM_EVT_UPOFF : CGPIOD_UDM_EVT_DOWNOFF;
         break;
       } // switch

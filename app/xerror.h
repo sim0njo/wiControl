@@ -11,7 +11,7 @@
 #ifndef __xerror_h__
 #define __xerror_h__
 
-#include "stdafx.h"
+#include "xstdafx.h"
 
 tCChar* xError2String(tUint32 dwError);
 

@@ -16,9 +16,12 @@
 
     // initialise all channels
 //  Debug.println("CGpiod::_outputOnConfig");
+    g_log.LogPrt(CGPIOD_CLSLVL_OUTPUT | 0x0000, "CGpiod::_outputOnConfig");
+
     memset(m_output, 0, sizeof(m_output)); 
     for (dwObj = 0; dwObj < CGPIOD_OUT_COUNT; dwObj++, pObj++) {
       // initialise defaults
+      pObj->dwFlags  = CGPIOD_OUT_FLG_MQTT_ALL;
       pObj->dwPin    = (dwObj == 0) ? CGPIOD_OUT0_PIN : CGPIOD_OUT1_PIN; 
       pObj->dwPol    = CGPIOD_OUT_POL_NORMAL; 
       pObj->dwState  = CGPIOD_OUT_STATE_OFF; 
@@ -37,9 +40,13 @@
     tGpiodOutput *pObj = m_output; 
 
 //  Debug.println("CGpiod::_outputOnInit");
+    g_log.LogPrt(CGPIOD_CLSLVL_OUTPUT | 0x0000, "CGpiod::_outputOnInit");
     for (dwObj = 0; dwObj < CGPIOD_OUT_COUNT; dwObj++, pObj++) {
-      digitalWrite(pObj->dwPin, (pObj->dwState ^ pObj->dwPol) ? HIGH : LOW);
-      pinMode(pObj->dwPin, OUTPUT);
+//    digitalWrite(pObj->dwPin, (pObj->dwState ^ pObj->dwPol) ? HIGH : LOW);
+      _ioSetPinVal(pObj->dwPin, pObj->dwState ^ pObj->dwPol);
+
+//    pinMode(pObj->dwPin, OUTPUT);
+      _ioSetPinDir(pObj->dwPin, CGPIOD_PIN_DIR_OUTPUT);
       } // for
 
     return m_dwError;
@@ -52,7 +59,7 @@
   {
     tUint32      dwObj;
     tGpiodOutput *pObj = m_output; 
-    tGpiodEvt    evt = { msNow, 0, 0, 0 };
+    tGpiodEvt    evt = { msNow, 0, 0, 0, 0 };
 
     for (dwObj = 0; dwObj < CGPIOD_OUT_COUNT; dwObj++, pObj++) {
       evt.dwObj = CGPIOD_OBJ_CLS_OUTPUT + dwObj;
@@ -90,7 +97,7 @@
           break;
 
         case CGPIOD_OUT_CMD_BLINK:
-          // handled by _outputOnHbTick() for multi-channel in phase operation
+          // handled by _outputDoEvt() for multi-channel in phase operation
           break;
 
         default:
@@ -125,7 +132,7 @@
   { 
     tUint32      dwObj;
     tGpiodCmd    cmd = { pEvt->msNow, 0, 0, 0, 0, 0, 0 };
-    tGpiodEvt    evt = { pEvt->msNow, 0, 0, 0 };
+    tGpiodEvt    evt = { pEvt->msNow, 0, 0, 0, 0 };
     tGpiodOutput *pObj = m_output; 
 
     if      ((pEvt->dwObj & CGPIOD_OBJ_CLS_MASK) == CGPIOD_OBJ_CLS_INPUT) {
@@ -313,12 +320,14 @@
     // on            off     off
     switch (pObj->dwState = dwState) {
       case CGPIOD_OUT_STATE_OFF:
-        digitalWrite(pObj->dwPin, (CGPIOD_OUT_STATE_OFF ^ pObj->dwPol) ? HIGH : LOW);
+        _ioSetPinVal(pObj->dwPin, CGPIOD_OUT_STATE_OFF ^ pObj->dwPol);
+//      digitalWrite(pObj->dwPin, (CGPIOD_OUT_STATE_OFF ^ pObj->dwPol) ? HIGH : LOW);
         if (pEvt) pEvt->dwEvt = CGPIOD_OUT_EVT_OFF;
         break;
 
       case CGPIOD_OUT_STATE_ON:
-        digitalWrite(pObj->dwPin, (CGPIOD_OUT_STATE_ON  ^ pObj->dwPol) ? HIGH : LOW);
+        _ioSetPinVal(pObj->dwPin, CGPIOD_OUT_STATE_ON ^ pObj->dwPol);
+//      digitalWrite(pObj->dwPin, (CGPIOD_OUT_STATE_ON  ^ pObj->dwPol) ? HIGH : LOW);
         if (pEvt) pEvt->dwEvt = CGPIOD_OUT_EVT_ON;
         break;
       } // switch

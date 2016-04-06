@@ -274,6 +274,7 @@ void HTTPClass::begin()
   m_server.addPath("/tools",   httpOnTools);
   m_server.addPath("/mqtt",    mqttOnHttpConfig);
   m_server.addPath("/gpiod",   gpiodOnHttpConfig);
+  m_server.addPath("/ats",     atsOnHttpQuery);
 
   m_server.setDefaultHandler(httpOnFile);
 

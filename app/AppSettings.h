@@ -59,6 +59,8 @@ class ApplicationSettingsStorage
   int                gpiodMode = 1;
   int                gpiodEfmt = 0;
 
+  unsigned int       dwLogLevel = 0;
+
   void               load();
   void               save();
   bool               exist() { return fileExist(APP_SETTINGS_FILE); }

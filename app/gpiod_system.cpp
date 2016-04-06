@@ -16,6 +16,7 @@
     tUint32 dwObj;
 
 //  Debug.println("CGpiod::_systemOnConfig");
+    g_log.LogPrt(CGPIOD_CLSLVL_SYSTEM | 0x0000, "CGpiod::_systemOnConfig");
     m_dwEmul = AppSettings.gpiodEmul;
     Debug.println("CGpiod::_systemOnConfig,emul=" + String(_printVal2String(str, m_dwEmul)));
     m_dwMode = AppSettings.gpiodMode;
@@ -48,7 +49,7 @@
   {
     tUint32     dwObj;
     tGpiodHbeat *pObj = m_hbeat; 
-    tGpiodEvt   evt = { msNow, 0, 0, 0 };
+    tGpiodEvt   evt = { msNow, 0, 0, 0, 0 };
 
     // handle heartbeat timers
     for (dwObj = 0; dwObj < CGPIOD_HB_COUNT; dwObj++, pObj++) {
@@ -79,20 +80,22 @@
   tUint32 CGpiod::_systemDoCmd(tGpiodCmd* pCmd) 
   { 
     tChar     str[32];
-    tGpiodEvt evt = { pCmd->msNow, pCmd->dwObj, 0, 0 };
+    tGpiodEvt evt = { pCmd->msNow, pCmd->dwObj, 0, 0, 0 };
 
     do {
       Debug.println("CGpiod::_systemDoCmd");
       switch (pCmd->dwCmd & CGPIOD_OBJ_CMD_MASK) {
         case CGPIOD_SYS_CMD_VERSION: 
-          gsprintf(str, "version=%s", CGPIOD_VERSION);
-          evt.szEvt = str;
+//          gsprintf(str, "version=%s", CGPIOD_VERSION);
+          evt.szTopic = "version";
+          evt.szEvt   = CGPIOD_VERSION;
           DoEvt(&evt);
           break;
 
         case CGPIOD_SYS_CMD_MEMORY: 
-          gsprintf(str, "memory=%u", system_get_free_heap_size());
-          evt.szEvt = str;
+          gsprintf(str, "%u", system_get_free_heap_size());
+          evt.szTopic = "memory";
+          evt.szEvt   = str;
           DoEvt(&evt);
           break;
 
@@ -100,21 +103,24 @@
           break;
 
         case CGPIOD_SYS_CMD_EMUL:
-          gsprintf(str, "emul=%s", (m_dwEmul == CGPIOD_EMUL_OUTPUT) ? "output" : "shutter");
-          evt.szEvt = str;
+          gsprintf(str, "%s", (m_dwEmul == CGPIOD_EMUL_OUTPUT) ? "output" : "shutter");
+          evt.szTopic = "emul";
+          evt.szEvt   = str;
           DoEvt(&evt);
           break;
 
         case CGPIOD_SYS_CMD_MODE: 
-          gsprintf(str, "mode=%s", (m_dwMode == CGPIOD_MODE_STANDALONE) ? "standalone" :
-                                   (m_dwMode == CGPIOD_MODE_MQTT)       ? "MQTT"       : "both");
-          evt.szEvt = str;
+          gsprintf(str, "%s", (m_dwMode == CGPIOD_MODE_STANDALONE) ? "standalone" :
+                              (m_dwMode == CGPIOD_MODE_MQTT)       ? "MQTT"       : "both");
+          evt.szTopic = "mode";
+          evt.szEvt   = str;
           DoEvt(&evt);
           break;
 
         case CGPIOD_SYS_CMD_EFMT: 
-          gsprintf(str, "efmt=%s", (m_dwEfmt == CGPIOD_EFMT_NUMERICAL) ? "numerical" : "textual");
-          evt.szEvt = str;
+          gsprintf(str, "%s", (m_dwEfmt == CGPIOD_EFMT_NUMERICAL) ? "numerical" : "textual");
+          evt.szTopic = "efmt";
+          evt.szEvt   = str;
           DoEvt(&evt);
           break;
 

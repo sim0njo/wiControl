@@ -10,9 +10,10 @@
 #include <SmingCore/SmingCore.h>
 #include <SmingCore/Debug.h>
 #include <mqtt.h>
-#include <stdafx.h>
+#include <xstdafx.h>
 #include <xerror.h>
 #include <cparse.hpp>
+#include <clogwriter.hpp>
 
 extern tParseRsvd    g_gpiodParseObj[];
 extern tParseRsvd    g_gpiodParseEvtInput[];
@@ -20,6 +21,11 @@ extern tParseRsvd    g_gpiodParseCmdOutput[];
 extern tParseRsvd    g_gpiodParseCmdShutter[];
 extern tParseRsvd    g_gpiodParseCmdSystem[];
 
+#define CGPIOD_CLSLVL                  CLOG_LVL_04 //
+#define CGPIOD_CLSLVL_INPUT            CLOG_LVL_05 //
+#define CGPIOD_CLSLVL_OUTPUT           CLOG_LVL_06 //
+#define CGPIOD_CLSLVL_SHUTTER          CLOG_LVL_07 //
+#define CGPIOD_CLSLVL_SYSTEM           CLOG_LVL_08 //
 
 #define CGPIOD_VERSION                   "4.0.1.0" //                                   
 #define CGPIOD_DATE                       __DATE__ //
@@ -36,6 +42,9 @@ extern tParseRsvd    g_gpiodParseCmdSystem[];
 
 #define CGPIOD_EFMT_NUMERICAL                    0 // 
 #define CGPIOD_EFMT_TEXTUAL                      1 // 
+
+#define CGPIOD_PIN_DIR_INPUT                     0 // 
+#define CGPIOD_PIN_DIR_OUTPUT                    1 // 
 
 //                                      0xPPPPCCNN //
 #define CGPIOD_OBJ_EVT_MASK             0x0000FFFF //
@@ -127,7 +136,17 @@ typedef struct {
 #define CGPIOD_IN_EVT_INGT2                      6 // 
 #define CGPIOD_IN_EVT_OUT                        7 // 
 
+#define CGPIOD_IN_FLG_NONE              0x00000000 // 
+#define CGPIOD_IN_FLG_MQTT_INGT0        0x00000004 // send event to MQTT broker
+#define CGPIOD_IN_FLG_MQTT_OUTLT1       0x00000008 // send event to MQTT broker
+#define CGPIOD_IN_FLG_MQTT_INGT1        0x00000010 // send event to MQTT broker
+#define CGPIOD_IN_FLG_MQTT_OUTGT1       0x00000020 // send event to MQTT broker
+#define CGPIOD_IN_FLG_MQTT_INGT2        0x00000040 // send event to MQTT broker
+#define CGPIOD_IN_FLG_MQTT_OUT          0x00000080 // send event to MQTT broker
+#define CGPIOD_IN_FLG_MQTT_ALL          0x000000FC // send all events to MQTT broker
+
 typedef struct {
+  tUint32            dwFlags;                      // evt MQTT routing flags
   tUint32            dwState;                      // input state
   tUint32            dwPin;                        // GPIO pin number
   tUint32            dwPol;                        // polarity 0=normal, 1=invert
@@ -177,6 +196,10 @@ typedef struct {
 #define CGPIOD_OUT_EVT_TIMEXP                 0xFD // time expired
 
 #define CGPIOD_OUT_FLG_NONE             0x00000000 //
+#define CGPIOD_OUT_FLG_MQTT_ON          0x00000004 //
+#define CGPIOD_OUT_FLG_MQTT_OFF         0x00000008 //
+#define CGPIOD_OUT_FLG_MQTT_TIMER       0x00000010 //
+#define CGPIOD_OUT_FLG_MQTT_ALL         0x0000001C //
 #define CGPIOD_OUT_FLG_LOCKED           0x40000000 //
 
 typedef struct {
@@ -248,6 +271,13 @@ typedef struct {
 #define CGPIOD_UDM_EVT_TIMEXP                    6 // timer expired
 
 #define CGPIOD_UDM_FLG_NONE             0x00000000 //
+#define CGPIOD_UDM_FLG_MQTT_STOP        0x00000002 //
+#define CGPIOD_UDM_FLG_MQTT_UPON        0x00000004 //
+#define CGPIOD_UDM_FLG_MQTT_DOWNON      0x00000008 //
+#define CGPIOD_UDM_FLG_MQTT_UPOFF       0x00000010 //
+#define CGPIOD_UDM_FLG_MQTT_DOWNOFF     0x00000020 //
+#define CGPIOD_UDM_FLG_MQTT_TIMEXP      0x00000040 //
+#define CGPIOD_UDM_FLG_MQTT_ALL         0x0000007C //
 #define CGPIOD_UDM_FLG_LOCKED           0x40000000 //
 
 typedef struct {
@@ -289,6 +319,7 @@ typedef struct {
 typedef struct {
   tUint32            msNow;                        // 
   tUint32            dwObj;                        // 
+  tCChar*            szTopic;                      //
   tUint32            dwEvt;                        // 
   tCChar*            szEvt;                        //
   } tGpiodEvt;
@@ -297,6 +328,7 @@ typedef struct {
 // callbacks
 //----------------------------------------------------------------------------
 void                 gpiodOnHttpConfig(HttpRequest &request, HttpResponse &response);
+void                 atsOnHttpQuery(HttpRequest &request, HttpResponse &response);
 void                 gpiodOnMqttPublish(String topic, String message);
 
 //----------------------------------------------------------------------------
@@ -411,6 +443,14 @@ class CGpiod {
   tUint32            _systemOnRun(tUint32 msNow);
   tUint32            _systemOnExit();
   tUint32            _systemDoCmd(tGpiodCmd* pCmd);
+
+  //--------------------------------------------------------------------------
+  // gpiod_io.cpp
+  //--------------------------------------------------------------------------
+  void               _ioSetPinDir(tInt32 pinNum, tUint32 pinDir);
+  void               _ioSetPinPullup(tInt32 pinNum, tUint32 bPullup);
+  void               _ioSetPinVal(tUint32 pinNum, tUint32 pinVal);
+  tUint32            _ioGetPinVal(tUint32 pinNum);
 
   }; // CGpiod
 

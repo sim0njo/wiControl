@@ -9,7 +9,37 @@ CGpiod               g_gpiod;
 //----------------------------------------------------------------------------
 // HTTP config callback
 //----------------------------------------------------------------------------
-void gpiodOnHttpConfig(HttpRequest &request, HttpResponse &response)
+void                 atsOnHttpQuery(HttpRequest &request, HttpResponse &response)
+{
+  String str;
+
+  if (!g_http.isHttpClientAllowed(request, response))
+    return;
+
+  // handle new settings
+  if (request.getRequestMethod() == RequestMethod::POST) {
+    if (request.getPostParameter("terse")) 
+      g_log.LogPrt(CLOG_CLS_0 | 0x0100, "gpiodOnHttpQuery,terse posted");
+    } // if
+  else {
+    if (request.getQueryParameter("terse")) 
+      g_log.LogPrt(CLOG_CLS_0 | 0x0200, "gpiodOnHttpQuery,terse in query");
+    
+    str = request.getQueryParameter(String("ccmd"));
+    g_log.LogPrt(CLOG_CLS_0 | 0x0210, "gpiodOnHttpQuery,ccmd=%s", str.c_str());
+
+    str = request.getPostParameter(String("ccmd"));
+    g_log.LogPrt(CLOG_CLS_0 | 0x0220, "gpiodOnHttpQuery,ccmd=%s", str.c_str());
+    } // else
+
+  // send page
+  response.sendString("0");
+  } // atsOnHttpQuery
+
+//----------------------------------------------------------------------------
+// HTTP config callback
+//----------------------------------------------------------------------------
+void                 gpiodOnHttpConfig(HttpRequest &request, HttpResponse &response)
 {
   if (!g_http.isHttpClientAllowed(request, response))
     return;
@@ -70,7 +100,8 @@ void ICACHE_FLASH_ATTR gpiodOnMqttPublish(String strTopic, String strMsg)
   tGpiodCmd cmd = { 0 };
 
   do {
-    Debug.println("gpiodOnPublish,topic=" + strTopic + ",msg=" + strMsg);
+    g_log.LogPrt(CLOG_CLS_0 | 0x0000, "gpiodOnPublish,topic=%s,msg=%s", strTopic.c_str(), strMsg.c_str());
+//    Debug.println("gpiodOnPublish,topic=" + strTopic + ",msg=" + strMsg);
   
     // check to be sure, but we should not receive other messages
     gsprintf(str, "%s/%s/", AppSettings.mqttClientId.c_str(), AppSettings.mqttCmdPfx.c_str());
@@ -163,7 +194,6 @@ tUint32 CGpiod::OnExit() {
     _shutterOnExit();
 
   _inputOnExit();
-
   _systemOnExit();
   } // OnExit
 
@@ -174,6 +204,7 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
 {
   tUint32 dwObj = pEvt->dwObj & CGPIOD_OBJ_NUM_MASK;
   tChar   str1[32], str2[32];
+  tCChar  *szTopic;
 
   switch (pEvt->dwObj & CGPIOD_OBJ_CLS_MASK) {
     case CGPIOD_OBJ_CLS_INPUT:
@@ -186,7 +217,7 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
           _shutterDoEvt(pEvt);
         } // if
 
-      if (m_dwMode & CGPIOD_MODE_MQTT) {
+      if ((m_dwMode & CGPIOD_MODE_MQTT) && (m_input[dwObj].dwFlags & (0x1 << pEvt->dwEvt))) {
         if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
           _DoPublish(0, 0, 0, _printObj2String(str1, pEvt->dwObj), _printVal2String(str2, pEvt->dwEvt));
         else
@@ -198,7 +229,7 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
     case CGPIOD_OBJ_CLS_OUTPUT:
       PrintEvt(pEvt);
 
-      if (m_dwMode & CGPIOD_MODE_MQTT) {
+      if ((m_dwMode & CGPIOD_MODE_MQTT) && (m_output[dwObj].dwFlags & (0x1 << pEvt->dwEvt))) {
         if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
           _DoPublish(0, 0, 0, _printObj2String(str1, pEvt->dwObj), _printVal2String(str2, pEvt->dwEvt));
         else
@@ -210,7 +241,7 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
     case CGPIOD_OBJ_CLS_SHUTTER:
       PrintEvt(pEvt);
 
-      if (m_dwMode & CGPIOD_MODE_MQTT) {
+      if ((m_dwMode & CGPIOD_MODE_MQTT) && (m_shutter[dwObj].dwFlags & (0x1 << pEvt->dwEvt))) {
         if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
           _DoPublish(0, 0, 0, _printObj2String(str1, pEvt->dwObj), _printVal2String(str2, pEvt->dwEvt));
         else
@@ -225,9 +256,10 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
 
     case CGPIOD_OBJ_CLS_SYSTEM:
       PrintEvt(pEvt);
+      szTopic = pEvt->szTopic ? pEvt->szTopic : "system";
 
       if (pEvt->szEvt)
-        _DoPublish(0, 0, 0, "system", pEvt->szEvt);
+        _DoPublish(0, 0, 0, szTopic, pEvt->szEvt);
 
       break;
     } // switch
@@ -241,7 +273,7 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
 tUint32 CGpiod::DoCmd(tGpiodCmd* pCmd) 
 {
   tUint32   dwErr = XERROR_SUCCESS;
-  tGpiodEvt evt = { 0, 0, 0, 0 };
+  tGpiodEvt evt = { 0, 0, 0, 0, 0 };
 
   PrintCmd(pCmd);
 
