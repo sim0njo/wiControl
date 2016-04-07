@@ -15,7 +15,6 @@ TelnetServer   g_telnet;
 static boolean g_firstTime = TRUE;
 int            g_isNetworkConnected = FALSE;
 Timer          g_appTimer;
-CLogWriter     g_log;
 
 //----------------------------------------------------------------------------
 // periodic reporting memory usage

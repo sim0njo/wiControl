@@ -1,11 +1,15 @@
 
 //----------------------------------------------------------------------------
-// clogwriter.hpp : version wrapper
+// clogwriter.hpp : generic logger module
 //
 // Copyright (c) Jo Simons, 2005-2016, All Rights Reserved.
 //----------------------------------------------------------------------------
 #ifndef __clogwriter_hpp__
 #define __clogwriter_hpp__
+
+#include <SmingCore/SmingCore.h>
+#include "xstdafx.h"
+#include "xstrlib.h"
 
 #define CLogLvl2Mask(dwLvl)          ((tUint32)0x01 << (((tUint32)dwLvl >> 16) &  31))
 
@@ -62,21 +66,71 @@
 #define CLOG_LVL_ERROR                  0x001E0000 // 30 1E
 #define CLOG_LVL_CRIT                   0x001F0000 // 31 1F
 
-#define CLOG_FMT_TSTAMP_MILLI           0x00000001 // YYYY-MM-DD,HH:MM:SS.mmm
-#define CLOG_FMT_TSTAMP                 0x00000002 // YYYY-MM-DD,HH:MM:SS
-#define CLOG_FMT_MSGID                  0x00000004 //
-#define CLOG_FMT_CRLF                   0x00000008 //
-#define CLOG_FMT_BINASC                 0x00000010 //
-//#define CLOG_FMT_CONSOLE                0x00000020 //
-#define CLOG_FMT_MASK                   0x0000001F //
+#define CLOG_FMT_MSGID                  0x00000001 //
+#define CLOG_FMT_CRLF                   0x00000002 //
+#define CLOG_FMT_BINASC                 0x00000004 //
+#define CLOG_FMT_MASK                   0x00000007 //
 
-#include "clogwriter6.hpp"
+// internal defines
+#define _CLOG_CLS_MAX                    0x10000000 //
+#define _CLOG_CLS_NBR                            16 //
+#define _CLOG_LVL_MASK                           31 //
+#define _CLOG_CLS_LVL_MASK               0xF0E00000 //
+#define _CLOG_MAX_BUF                           512 //
 
-class CLogWriter : public CLogWriter6 {
+class CLogWriter {
+ private:
+  tUint32            m_dwFormat;                   // format flags
+  tUint32            m_dwLvl[_CLOG_CLS_NBR];       //
+  tChar              m_str[_CLOG_MAX_BUF];         // for LogPrt method
 
  public:
-                     CLogWriter()                  { };
-                    ~CLogWriter()                  { };
+  //----------------------------------------------------------------------------
+  // constructor & destructor
+  //----------------------------------------------------------------------------
+  CLogWriter();
+  ~CLogWriter();
+
+  //----------------------------------------------------------------------------
+  // get/set output format
+  //----------------------------------------------------------------------------
+  tUint32            GetFormat();
+  tUint32            SetFormat(tUint32 dwFormat);
+
+  //----------------------------------------------------------------------------
+  // get/set class levels
+  //----------------------------------------------------------------------------
+  tUint32            GetClsLevels(tUint32 dwCls);
+  tUint32            SetClsLevels(tUint32 dwCls, tUint32 dwLvls);
+  tUint32            HasClsLevels();
+
+  //----------------------------------------------------------------------------
+  // log textual data
+  //----------------------------------------------------------------------------
+  void               LogPrt(tUint32 dwMsg, tCChar* pFmt, ...);
+
+  //----------------------------------------------------------------------------
+  // log binary data
+  //----------------------------------------------------------------------------
+  void               LogBin(tUint32 dwMsg, tUint32 dwIndent, const void *pBin, tUint32 cbBin, tCChar* pFmt, ...);
+
+ private:
+  //----------------------------------------------------------------------------
+  // support functions
+  //----------------------------------------------------------------------------
+  void               _NibbleToHex(tUint8 byNibble, tChar **ppHex);
+  void               _ByteToHex(tUint8 byByte, tChar **ppHex);
+  void               _ByteToAsc(tUint8 byByte, tChar **ppAsc);
+
+  //----------------------------------------------------------------------------
+  // build logline leader <pri> date_time msgid
+  //----------------------------------------------------------------------------
+  tChar*             _Leader(tChar *pOut, tUint32 dwMsg);
+
+  //----------------------------------------------------------------------------
+  // write msg to output streams
+  //----------------------------------------------------------------------------
+  void               _Write(tChar* pStr);
 
   }; // CLogWriter
 
