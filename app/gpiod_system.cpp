@@ -15,14 +15,14 @@
     tChar   str[32];
     tUint32 dwObj;
 
-//  Debug.println("CGpiod::_systemOnConfig");
-    g_log.LogPrt(CGPIOD_CLSLVL_SYSTEM | 0x0000, "CGpiod::_systemOnConfig");
     m_dwEmul = AppSettings.gpiodEmul;
-    Debug.println("CGpiod::_systemOnConfig,emul=" + String(_printVal2String(str, m_dwEmul)));
+    g_log.LogPrt(CGPIOD_CLSLVL_SYSTEM | 0x0010, "CGpiod::_systemOnConfig,emul=%s", _printVal2String(str, m_dwEmul));
+
     m_dwMode = AppSettings.gpiodMode;
-    Debug.println("CGpiod::_systemOnConfig,mode=" + String(_printVal2String(str, m_dwMode)));
+    g_log.LogPrt(CGPIOD_CLSLVL_SYSTEM | 0x0020, "CGpiod::_systemOnConfig,mode=%s", _printVal2String(str, m_dwMode));
+
     m_dwEfmt = AppSettings.gpiodEfmt;
-    Debug.println("CGpiod::_systemOnConfig,efmt=" + String(_printVal2String(str, m_dwEfmt)));
+    g_log.LogPrt(CGPIOD_CLSLVL_SYSTEM | 0x0030, "CGpiod::_systemOnConfig,efmt=%s", _printVal2String(str, m_dwEfmt));
 
     // configure heartbeat timers
     memset(m_hbeat, 0, sizeof(m_hbeat));
@@ -71,6 +71,7 @@
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_systemOnExit() 
   {
+    g_log.LogPrt(CGPIOD_CLSLVL_SYSTEM | 0x0000, "CGpiod::_systemOnExit");
     return m_dwError;
     } // CGpiod::_systemOnExit
 
@@ -82,63 +83,59 @@
     tChar     str[32];
     tGpiodEvt evt = { pCmd->msNow, pCmd->dwObj, 0, 0, 0 };
 
-    do {
-      Debug.println("CGpiod::_systemDoCmd");
-      switch (pCmd->dwCmd & CGPIOD_OBJ_CMD_MASK) {
-        case CGPIOD_SYS_CMD_VERSION: 
-//          gsprintf(str, "version=%s", CGPIOD_VERSION);
-          evt.szTopic = "version";
-          evt.szEvt   = CGPIOD_VERSION;
-          DoEvt(&evt);
-          break;
+    PrintCmd(pCmd, CGPIOD_CLSLVL_SYSTEM | 0x0000, "CGpiod::_systemDoCmd");
+    switch (pCmd->dwCmd & CGPIOD_OBJ_CMD_MASK) {
+      case CGPIOD_SYS_CMD_VERSION: 
+        evt.szTopic = "version";
+        evt.szEvt   = CGPIOD_VERSION;
+        DoEvt(&evt);
+        break;
 
-        case CGPIOD_SYS_CMD_MEMORY: 
-          gsprintf(str, "%u", system_get_free_heap_size());
-          evt.szTopic = "memory";
-          evt.szEvt   = str;
-          DoEvt(&evt);
-          break;
+      case CGPIOD_SYS_CMD_MEMORY: 
+        gsprintf(str, "%u", system_get_free_heap_size());
+        evt.szTopic = "memory";
+        evt.szEvt   = str;
+        DoEvt(&evt);
+        break;
 
-        case CGPIOD_SYS_CMD_UPTIME: 
-          break;
+      case CGPIOD_SYS_CMD_UPTIME: 
+        break;
 
-        case CGPIOD_SYS_CMD_EMUL:
-          gsprintf(str, "%s", (m_dwEmul == CGPIOD_EMUL_OUTPUT) ? "output" : "shutter");
-          evt.szTopic = "emul";
-          evt.szEvt   = str;
-          DoEvt(&evt);
-          break;
+      case CGPIOD_SYS_CMD_EMUL:
+        gsprintf(str, "%s", (m_dwEmul == CGPIOD_EMUL_OUTPUT) ? "output" : "shutter");
+        evt.szTopic = "emul";
+        evt.szEvt   = str;
+        DoEvt(&evt);
+        break;
 
-        case CGPIOD_SYS_CMD_MODE: 
-          gsprintf(str, "%s", (m_dwMode == CGPIOD_MODE_STANDALONE) ? "standalone" :
-                              (m_dwMode == CGPIOD_MODE_MQTT)       ? "MQTT"       : "both");
-          evt.szTopic = "mode";
-          evt.szEvt   = str;
-          DoEvt(&evt);
-          break;
+      case CGPIOD_SYS_CMD_MODE: 
+        gsprintf(str, "%s", (m_dwMode == CGPIOD_MODE_STANDALONE) ? "standalone" :
+                            (m_dwMode == CGPIOD_MODE_MQTT)       ? "MQTT"       : "both");
+        evt.szTopic = "mode";
+        evt.szEvt   = str;
+        DoEvt(&evt);
+        break;
 
-        case CGPIOD_SYS_CMD_EFMT: 
-          gsprintf(str, "%s", (m_dwEfmt == CGPIOD_EFMT_NUMERICAL) ? "numerical" : "textual");
-          evt.szTopic = "efmt";
-          evt.szEvt   = str;
-          DoEvt(&evt);
-          break;
+      case CGPIOD_SYS_CMD_EFMT: 
+        gsprintf(str, "%s", (m_dwEfmt == CGPIOD_EFMT_NUMERICAL) ? "numerical" : "textual");
+        evt.szTopic = "efmt";
+        evt.szEvt   = str;
+        DoEvt(&evt);
+        break;
 
-        case CGPIOD_SYS_CMD_DISABLE: 
-          break;
+      case CGPIOD_SYS_CMD_DISABLE: 
+        break;
 
-        case CGPIOD_SYS_CMD_ENABLE: 
-          break;
+      case CGPIOD_SYS_CMD_ENABLE: 
+        break;
 
-        case CGPIOD_SYS_CMD_REBOOT: 
-          break;
+      case CGPIOD_SYS_CMD_REBOOT: 
+        break;
 
-        default:
-//        g_log.LogPrt(m_dwClsLvl | 0x0099, "%s,dropping unknown cmd %u", pFunc, pCmd->dwCmd);
-          break;
-        } // switch
-
-      } while (FALSE);
+      default:
+        g_log.LogPrt(CGPIOD_CLSLVL_SYSTEM | 0x9999, "CGpiod::_systemDoCmd,unknown cmd %u", pCmd->dwCmd);
+        break;
+      } // switch
 
     return XERROR_SUCCESS; 
     } // _systemDoCmd

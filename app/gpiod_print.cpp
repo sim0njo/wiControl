@@ -9,34 +9,32 @@
 //--------------------------------------------------------------------------
 // print event for debug purposes
 //--------------------------------------------------------------------------
-void CGpiod::PrintEvt(tGpiodEvt* pEvt) 
+void CGpiod::PrintEvt(tGpiodEvt* pEvt, tUint32 dwClsLvl, tCChar* szPfx) 
 {
-  tChar  str[64], str1[32], str2[32];
+  tChar  str1[32], str2[32];
   tCChar *szTopic = pEvt->szTopic ? pEvt->szTopic : "system";
 
   if      (pEvt->dwObj == CGPIOD_OBJ_SYSTEM)
-    gsprintf(str, "CGpiod::PrintEvt,%s.%s", szTopic, pEvt->szEvt);
+    g_log.LogPrt(dwClsLvl, "CGpiod::PrintEvt,%s.%s", szTopic, pEvt->szEvt);
 
   else if (pEvt->szEvt)
-    gsprintf(str, "CGpiod::PrintEvt,%s.%s", _printObj2String(str1, pEvt->dwObj), pEvt->szEvt);
+    g_log.LogPrt(dwClsLvl, "CGpiod::PrintEvt,%s.%s", _printObj2String(str1, pEvt->dwObj), pEvt->szEvt);
 
   else 
-    gsprintf(str, "CGpiod::PrintEvt,%s.%s", _printObj2String(str1, pEvt->dwObj), _printObjEvt2String(str2, pEvt->dwObj, pEvt->dwEvt));
+    g_log.LogPrt(dwClsLvl, "CGpiod::PrintEvt,%s.%s", _printObj2String(str1, pEvt->dwObj), _printObjEvt2String(str2, pEvt->dwObj, pEvt->dwEvt));
 
-  Debug.println(str);
   } // PrintEvt
 
 //--------------------------------------------------------------------------
 // print command for debug purposes
 //--------------------------------------------------------------------------
-void CGpiod::PrintCmd(tGpiodCmd* pCmd) 
+void CGpiod::PrintCmd(tGpiodCmd* pCmd, tUint32 dwClsLvl, tCChar* szPfx) 
 {
-  tChar     str[64], str1[32], str2[32], str3[32];
+  tChar        str1[16], str2[16], str3[32];
 
-  gsprintf(str, "CGpiod::PrintCmd,%s.%s%s", _printObj2String(str1, pCmd->dwObj), 
-           _printObjCmd2String(str2, pCmd->dwObj, pCmd->dwCmd), _printCmdParamVals(str3, sizeof(str2), pCmd));
-  Debug.println(str);
-  } // ParseCmd
+  g_log.LogPrt(dwClsLvl, "%s,%s.%s%s", szPfx, _printObj2String(str1, pCmd->dwObj),
+               _printObjCmd2String(str2, pCmd->dwObj, pCmd->dwCmd), _printCmdParamVals(str3, sizeof(str2), pCmd));
+  } // PrintCmd
 
 //----------------------------------------------------------------------------
 // print obj name or obj-id in hex if not found

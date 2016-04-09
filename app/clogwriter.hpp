@@ -7,14 +7,12 @@
 #ifndef __clogwriter_hpp__
 #define __clogwriter_hpp__
 
-#include <SmingCore/SmingCore.h>
 #include "xstdafx.h"
-#include "xstrlib.h"
 
+// internal defines
 #define CLogLvl2Mask(dwLvl)          ((tUint32)0x01 << (((tUint32)dwLvl >> 16) &  31))
 
 #define CLOG_CLSLVL_NONE                0xFFFF0000 // 0
-#define CLOG_CLSLVL_SYS                 0xF0000000 // INFO|WARN|ERROR|CRIT
 
 #define CLOG_CLS_0                      0x00000000 // 0
 #define CLOG_CLS_1                      0x01000000 // 1
@@ -32,6 +30,8 @@
 #define CLOG_CLS_D                      0x0D000000 // 13
 #define CLOG_CLS_E                      0x0E000000 // 14
 #define CLOG_CLS_F                      0x0F000000 // 15 used for xxlibs components
+#define CLOG_CLS_MAX                    0x10000000 //
+#define CLOG_CLS_NBR                            16 //
 
 #define CLOG_LVL_00                     0x00000000 // 0
 #define CLOG_LVL_01                     0x00010000 // 1
@@ -71,18 +71,14 @@
 #define CLOG_FMT_BINASC                 0x00000004 //
 #define CLOG_FMT_MASK                   0x00000007 //
 
-// internal defines
-#define _CLOG_CLS_MAX                    0x10000000 //
-#define _CLOG_CLS_NBR                            16 //
-#define _CLOG_LVL_MASK                           31 //
-#define _CLOG_CLS_LVL_MASK               0xF0E00000 //
-#define _CLOG_MAX_BUF                           512 //
+#define CLOG_MAX_BUF                           512 //
+
 
 class CLogWriter {
  private:
   tUint32            m_dwFormat;                   // format flags
-  tUint32            m_dwLvl[_CLOG_CLS_NBR];       //
-  tChar              m_str[_CLOG_MAX_BUF];         // for LogPrt method
+  tUint32            m_dwLvl[CLOG_CLS_NBR];        //
+  tChar              m_str[CLOG_MAX_BUF];          // for LogPrt method
 
  public:
   //----------------------------------------------------------------------------

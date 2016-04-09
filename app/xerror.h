@@ -5,8 +5,9 @@
 // Copyright (c) Jo Simons, 2005-2016, All Rights Reserved.
 //
 // dwError = 0xMMEEEEEE
-//   MM = 00 : system
+//   MM = 00 : generic
 //        01 : SNMP
+//        02 : HTTP
 //------------------------------------------------------------------------------
 #ifndef __xerror_h__
 #define __xerror_h__
@@ -15,43 +16,36 @@
 
 tCChar* xError2String(tUint32 dwError);
 
-#define XERROR_MOD_SYS                  0x00000000 //
-//#define XERROR_MOD_SYS_MAX                      22 //
 
+#define XERROR_                         0x00000000 //
 #define XERROR_SUCCESS                           0 // success
 #define XERROR_INTERNAL                          1 // internal error cannot be resolved by user
-
 #define XERROR_MEMORY                            2 // out of memory or buffer too small
 #define XERROR_CREATE                            3 // error creating file or socket
 #define XERROR_OPEN                              4 // error opening file or socket
 #define XERROR_WRITE                             5 // error writing file or socket
 #define XERROR_READ                              6 // error reading file or socket
 #define XERROR_SEEK                              7 // error reading file or socket
-
 #define XERROR_STATE                             8 // invalid state
 #define XERROR_INPUT                             9 // invalid input
 #define XERROR_DATA                             10 // invalid (response) data
-
 #define XERROR_RESOURCES                        11 // no resources to complete operation
 #define XERROR_NOT_FOUND                        12 // resource not found
 #define XERROR_LICENSE                          13 // resource not licensed
 #define XERROR_ACCESS                           14 // resource not accessible
 #define XERROR_DISABLED                         15 // resource disabled                 
 #define XERROR_BUSY                             16 // resource busy
-
 #define XERROR_PENDING                          17 // request  pending
 #define XERROR_TIMEOUT                          18 // request  timed out
 #define XERROR_ABORTED                          19 // request  aborted
-
 #define XERROR_NO_DATA                          20 // internal only
 #define XERROR_CLOSED                           21 // file, socket or connection closed
+//#define XERROR_MOD_SYS_MAX                      22 //
 
 // -----------------------------------------------------------------
 // SNMP Error Codes
 // -----------------------------------------------------------------
-#define XERROR_MOD_SNMP                 0x01000000 //
-//#define XERROR_MOD_SNMP_MAX                     19 //
-
+#define XERROR_SNMP_                    0x01000000 //
 #define XERROR_SNMP_SUCCESS             0x00000000 //
 #define XERROR_SNMP_TOO_BIG             0x01000001 //
 #define XERROR_SNMP_NO_SUCH_NAME        0x01000002 //
@@ -71,46 +65,49 @@ tCChar* xError2String(tUint32 dwError);
 #define XERROR_SNMP_AUTHORIZATION       0x01000010 //
 #define XERROR_SNMP_NOT_WRITABLE        0x01000011 //
 #define XERROR_SNMP_INCONSIST_NAME      0x01000012 //
+//#define XERROR_MOD_SNMP_MAX                     19 //
 
 
-/*
-#define E000_SUCCESS                       0 //
-#define E100_TRYING                      100 //
-#define E182_QUEUED                      182 //
-#define E183_SESSION_PROGRESS            183 //
-#define E200_OK                          200 //
-#define E400_BAD_REQUEST                 400 //
-#define E401_UNAUTHORIZED                401 //
-#define E402_PAYMENT_REQUIRED            402 //
-#define E403_FORBIDDEN                   403 //
-#define E404_NOT_FOUND                   404 //
-#define E405_METHOD_NOT_ALLOWED          405 //
-#define E406_NOT_ACCEPTABLE              406 //
-#define E407_PROXY_AUTH_REQUIRED         407 //
-#define E408_REQ_TIMEOUT                 408 //
-#define E414_REQ_URI_TOO_LONG            414 //
-#define E416_UNSUP_URI_SCHEME            416 //
-#define E480_TEMP_UNAVAILABLE            480 //
-#define E483_TOO_MANY_HOPS               483 //
-#define E484_ADDR_INCOMPLETE             484 //
-#define E485_AMBIGUOUS                   485 //
-#define E486_BUSY_HERE                   486 //
-#define E487_REQ_TERMINATED              487 //
-#define E488_NOT_ACCEPTABLE_HERE         488 //
-#define E491_REQ_PENDING                 491 //
-#define E493_UNDECIPHERABLE              493 //
-#define E500_SERVER_INT_ERROR            500 //
-#define E501_NOT_IMPLEMENTED             501 //
-#define E502_BAD_GATEWAY                 502 //
-#define E503_SERVICE_UNAVAILABLE         503 //
-#define E504_SERVER_TIMEOUT              504 //
-#define E505_VERSION_NOT_SUPPORTED       505 //
-#define E513_MSG_TOO_LARGE               513 //
-#define E600_BUSY_EVERYWHERE             600 //
-#define E603_DECLINE                     603 //
-#define E604_DOES_NOT_EXIST              604 //
-#define E606_NOT_ACCEPTABLE              606 //
-*/
+// -----------------------------------------------------------------
+// HTTP Error Codes
+// -----------------------------------------------------------------
+#define XERROR_HTTP_                    0x02000000 //
+#define XERROR_HTTP_SUCCESS             0x02000000 // 0
+#define XERROR_HTTP_TRYING              0x02000064 // 100 
+#define XERROR_HTTP_QUEUED              0x020000B6 // 182 
+#define XERROR_HTTP_SESSION_PROGRESS    0x020000B7 // 183 
+#define XERROR_HTTP_OK                  0x020000C8 // 200 
+#define XERROR_HTTP_BAD_REQUEST         0x02000190 // 400 
+#define XERROR_HTTP_UNAUTHORIZED        0x02000191 // 401 
+#define XERROR_HTTP_PAYMENT_REQUIRED    0x02000192 // 402 
+#define XERROR_HTTP_FORBIDDEN           0x02000193 // 403 
+#define XERROR_HTTP_NOT_FOUND           0x02000194 // 404 
+#define XERROR_HTTP_METHOD_NOT_ALLOWED  0x02000195 // 405 
+#define XERROR_HTTP_NOT_ACCEPTABLE      0x02000196 // 406 
+#define XERROR_HTTP_PROXY_AUTH_REQUIRED 0x02000197 // 407 
+#define XERROR_HTTP_REQ_TIMEOUT         0x02000198 // 408 
+#define XERROR_HTTP_REQ_URI_TOO_LONG    0x0200019E // 414 
+#define XERROR_HTTP_UNSUP_URI_SCHEME    0x020001A0 // 416 
+#define XERROR_HTTP_TEMP_UNAVAILABLE    0x020001E0 // 480 
+#define XERROR_HTTP_TOO_MANY_HOPS       0x020001E3 // 483 
+#define XERROR_HTTP_ADDR_INCOMPLETE     0x020001E4 // 484 
+#define XERROR_HTTP_AMBIGUOUS           0x020001E5 // 485 
+#define XERROR_HTTP_BUSY_HERE           0x020001E6 // 486 
+#define XERROR_HTTP_REQ_TERMINATED      0x020001E7 // 487 
+#define XERROR_HTTP_NOT_ACCEPTABLE_HERE 0x020001E8 // 488 
+#define XERROR_HTTP_REQ_PENDING         0x020001EB // 491 
+#define XERROR_HTTP_UNDECIPHERABLE      0x020001ED // 493 
+#define XERROR_HTTP_SERVER_INT_ERROR    0x020001F4 // 500 
+#define XERROR_HTTP_NOT_IMPLEMENTED     0x020001F5 // 501 
+#define XERROR_HTTP_BAD_GATEWAY         0x020001F6 // 502 
+#define XERROR_HTTP_SERVICE_UNAVAILABLE 0x020001F7 // 503 
+#define XERROR_HTTP_SERVER_TIMEOUT      0x020001F8 // 504 
+#define XERROR_HTTP_VERSION_NOT_SUPP    0x020001F9 // 505 
+#define XERROR_HTTP_MSG_TOO_LARGE       0x02000201 // 513 
+//#define XERROR_HTTP_BUSY_EVERYWHERE     0x02000258 // 600 
+//#define XERROR_HTTP_DECLINE             0x0200025B // 603 
+//#define XERROR_HTTP_DOES_NOT_EXIST      0x0200025C // 604 
+//#define XERROR_HTTP_NOT_ACCEPTABLE      0x0200025E // 606 
 
 #endif // __xerror_h__
 

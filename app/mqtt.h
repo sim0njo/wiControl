@@ -1,6 +1,7 @@
 
 #ifndef MY_SENSORS_GW_MQTT_H
 #define MY_SENSORS_GW_MQTT_H
+#include <SmingCore/SmingCore.h>
 
 void ICACHE_FLASH_ATTR mqttStartClient();
 void ICACHE_FLASH_ATTR mqttCheckClient();

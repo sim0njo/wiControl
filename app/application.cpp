@@ -111,6 +111,7 @@ void processInfoCommand(String commandLine, CommandOutput* pOut)
   pOut->printf(SystemClock.getSystemTimeString().c_str());
   pOut->printf("\r\n");
 
+  pOut->printf("Loglevel           : 0x%08X\r\n", g_log.GetClsLevels(CLOG_CLS_0));
   pOut->printf("Free Heap          : %d\r\n", system_get_free_heap_size());
   pOut->printf("CPU Frequency      : %d MHz\r\n", system_get_cpu_freq());
   pOut->printf("System Chip ID     : %x\r\n", system_get_chip_id());

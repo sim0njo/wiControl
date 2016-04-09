@@ -4,7 +4,7 @@
 //
 // Copyright (c) Jo Simons, 2005-2015, All Rights Reserved.
 // ---------------------------------------------------------------------------
-#include <SmingCore/SmingCore.h>
+//#include <SmingCore/SmingCore.h>
 #include "xstrlib.h"
 #include "xerror.h"
 
@@ -57,7 +57,7 @@ tInt32 xstrfmta(tChar** ppStr, tInt32 nLen, tChar* pFmt, ...)
 	va_start(argList, pFmt);
 
 	if ((pStr = (tChar*) malloc(nLen)))
-    nRet = vsprintf(pStr, pFmt, argList);
+    nRet = gvsnprintf(pStr, nLen, pFmt, argList);
 
 	va_end(argList);
 	if (ppStr)
@@ -74,7 +74,7 @@ tChar* xstrndup(tCChar* pStr, tUint32 cbStr)
 	tChar	 *pstr = 0;
 
 	if (pStr && cbStr && (pstr = (tChar*) malloc(cbStr + 1))) {
-		memcpy(pstr, pStr, cbStr);
+		gmemcpy(pstr, pStr, cbStr);
     *(pstr + cbStr) = '\0';
     } // if
 

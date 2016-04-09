@@ -15,7 +15,6 @@ tUint32 CGpiod::ParseCmd(tGpiodCmd* pOut, tChar* pObj, tChar* pCmd, tUint32 dwMa
 
   do {
     // parse object
-    Debug.println("CGpiod::ParseCmd");
     m_parse.SetReservedIdents(g_gpiodParseObj);
     m_parse.SetString(pObj);
     if ((m_parse.NextToken(1, dwMask1) != CPARSE_TYPE_NODE) && (dwErr = XERROR_DATA))
@@ -53,7 +52,6 @@ tUint32 CGpiod::_parseEvtInput(tGpiodCmd* pOut)
   tUint32 dwErr = XERROR_SUCCESS;
 
   do {
-//  Debug.println("CGpiod::_parseEvtInput");
     m_parse.SetReservedIdents(g_gpiodParseEvtInput);
     if ((m_parse.NextToken(1, CGPIOD_OBJ_CLS_INPUT) != CPARSE_TYPE_LEAF) && (dwErr = XERROR_DATA))
       break;
@@ -73,7 +71,6 @@ tUint32 CGpiod::_parseCmdOutput(tGpiodCmd* pOut)
   tUint32 dwErr = XERROR_SUCCESS;
 
   do {
-//  Debug.println("CGpiod::_parseCmdOutput");
     m_parse.SetReservedIdents(g_gpiodParseCmdOutput);
     if ((m_parse.NextToken(1, CGPIOD_OBJ_CLS_OUTPUT) != CPARSE_TYPE_LEAF) && (dwErr = XERROR_DATA))
       break;
@@ -93,7 +90,6 @@ tUint32 CGpiod::_parseCmdShutter(tGpiodCmd* pOut)
   tUint32 dwErr = XERROR_SUCCESS;
 
   do {
-//  Debug.println("CGpiod::_parseCmdShutter");
     m_parse.SetReservedIdents(g_gpiodParseCmdShutter);
     if ((m_parse.NextToken(1, CGPIOD_OBJ_CLS_SHUTTER) != CPARSE_TYPE_LEAF) && (dwErr = XERROR_DATA))
       break;
@@ -139,8 +135,6 @@ tUint32 CGpiod::_parseCmdParams(tGpiodCmd* pOut)
 //tUint32 dwParm;
 
   do {
-    Debug.println("CGpiod::_parseCmdParams");
-
 //  g_log.LogPrt(m_dwClsLvl | 0x0000, "%s,mask=0x%08X", pFunc, pOut->dwCmd & 0xFFFF0000);
     if ((pOut->dwCmd & 0xFFFF0000) == 0)
       break;
@@ -186,15 +180,15 @@ tUint32 CGpiod::_parseCmdParams(tGpiodCmd* pOut)
       } // if
 
     if (pOut->dwCmd & 0x10000000) { // <emul> 0|1
-      if (dwErr = m_parse.GetNumber(&pOut->dwEmul, 1, 65535)) break;
+      if (dwErr = m_parse.GetNumber(&pOut->dwEmul, 0, 1)) break;
       } // if
 
     if (pOut->dwCmd & 0x20000000) { // <mode> 1|2|3
-      if (dwErr = m_parse.GetNumber(&pOut->dwMode, 1, 65535)) break;
+      if (dwErr = m_parse.GetNumber(&pOut->dwMode, 1, 3)) break;
       } // if
 
     if (pOut->dwCmd & 0x40000000) { // <efmt> 0|1
-      if (dwErr = m_parse.GetNumber(&pOut->dwEfmt, 1, 65535)) break;
+      if (dwErr = m_parse.GetNumber(&pOut->dwEfmt, 0, 1)) break;
       } // if
 
 /*

@@ -13,6 +13,9 @@
 #ifndef __xstdafx_h__
 #define __xstdafx_h__
 
+// set platform type for compiling
+#define SMING
+
 #ifdef LINUX
   #include  <sys/types.h>
   #include  <sys/timeb.h>
@@ -38,7 +41,11 @@
   #include  <errno.h>
   #include  <dirent.h>
   #include  <sys/ioctl.h>
-#endif /* LINUX */
+#endif //
+
+#ifdef SMING
+  #include <SmingCore/SmingCore.h>
+#endif //
 
 /********************************** Includes **********************************/
 
@@ -106,14 +113,7 @@ typedef unsigned long long                tUint64; //
 #define FALSE 0
 #endif
 
-/*
- *  The following include has to be after the unicode defines.  By putting it
- *  here, many modules in various parts of the tree are cleaner.
- */
-//#if (defined (LITTLEFOOT) && defined (INMEM))
-//  #include  "lf/inmem.h"
-//#endif /* LITTLEFOOT && INMEM */
-
+// OS specific function remapping
 #define gmemcmp     memcmp
 #define gmemcpy     memcpy
 #define gmemset     memset
@@ -124,6 +124,7 @@ typedef unsigned long long                tUint64; //
 #define gfprintf    fprintf
 #define gsscanf     sscanf
 #define gvsprintf   vsprintf
+#define gvsnprintf  m_vsnprintf
 
 #define gstrcpy     strcpy
 #define gstrncpy    strncpy

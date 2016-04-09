@@ -12,7 +12,7 @@
 #include "xstdafx.h"
 #include "xerror.h"
 #include "xstrlib.h"
-#include <SmingCore/SmingCore.h>
+//#include <SmingCore/SmingCore.h>
 
 #define CPARSE_CLSLVL_DBG CLOG_CLS_F | CLOG_LVL_02 //
 

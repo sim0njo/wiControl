@@ -15,7 +15,6 @@
     tGpiodShutter *pObj = m_shutter; 
 
     // initialise all channels
-//  Debug.println("CGpiod::_shutterOnConfig");
     g_log.LogPrt(CGPIOD_CLSLVL_SHUTTER | 0x0000, "CGpiod::_shutterOnConfig");
 
     memset(m_shutter, 0, sizeof(m_shutter)); 
@@ -43,17 +42,12 @@
     tUint32       dwObj;
     tGpiodShutter *pObj = m_shutter; 
 
-//  Debug.println("CGpiod::_shutterOnInit");
     g_log.LogPrt(CGPIOD_CLSLVL_SHUTTER | 0x0000, "CGpiod::_shutterOnInit");
     for (dwObj = 0; dwObj < CGPIOD_UDM_COUNT; dwObj++, pObj++) {
       _ioSetPinVal(pObj->dwPinUp,   ((pObj->dwState >> 0) & CGPIOD_OUT_STATE_ON) ^ pObj->dwPol);
       _ioSetPinVal(pObj->dwPinDown, ((pObj->dwState >> 1) & CGPIOD_OUT_STATE_ON) ^ pObj->dwPol);
-//    digitalWrite(pObj->dwPinUp,   (((pObj->dwState >> 0) & CGPIOD_OUT_STATE_ON) ^ pObj->dwPol) ? HIGH : LOW);
-//    digitalWrite(pObj->dwPinDown, (((pObj->dwState >> 1) & CGPIOD_OUT_STATE_ON) ^ pObj->dwPol) ? HIGH : LOW);
       _ioSetPinDir(pObj->dwPinUp,   CGPIOD_PIN_DIR_OUTPUT);
       _ioSetPinDir(pObj->dwPinDown, CGPIOD_PIN_DIR_OUTPUT);
-//    pinMode(pObj->dwPinUp,   OUTPUT);
-//    pinMode(pObj->dwPinDown, OUTPUT);
       } // for
 
     return m_dwError;
@@ -165,11 +159,10 @@
     tGpiodShutter *pObj = m_shutter; 
 
     // set outputs to off and switch to input
+    g_log.LogPrt(CGPIOD_CLSLVL_SHUTTER | 0x0000, "CGpiod::_shutterOnExit");
     for (dwObj = 0; dwObj < CGPIOD_UDM_COUNT; dwObj++, pObj++) {
       _ioSetPinVal(pObj->dwPinUp,    CGPIOD_OUT_STATE_OFF ^ pObj->dwPol);
       _ioSetPinVal(pObj->dwPinDown,  CGPIOD_OUT_STATE_OFF ^ pObj->dwPol);
-//    digitalWrite(pObj->dwPinUp,   (CGPIOD_OUT_STATE_OFF ^ pObj->dwPol) ? HIGH : LOW);
-//    digitalWrite(pObj->dwPinDown, (CGPIOD_OUT_STATE_OFF ^ pObj->dwPol) ? HIGH : LOW);
       pinMode(pObj->dwPinUp,   INPUT);
       pinMode(pObj->dwPinDown, INPUT);
       } // for
@@ -184,7 +177,7 @@
   { 
     tGpiodCmd cmd = { pEvt->msNow, 0, 0, 0, 0, 0, 0 };
 
-//  Debug.println("CGpiod::_shutterDoEvt");
+    PrintEvt(pEvt, CGPIOD_CLSLVL_SHUTTER | 0x0000, "CGpiod::_shutterDoEvt");
     switch (pEvt->dwEvt) {
       case CGPIOD_IN_EVT_INGT0:
         // stop shutter
@@ -243,163 +236,159 @@
     tGpiodShutter *pObj  = &m_shutter[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK]; 
     tGpiodEvt     evt    = { pCmd->msNow, pCmd->dwObj, 0, 0, 0 };
 
-    do {
-      Debug.println("CGpiod::_shutterDoCmd");
+    PrintCmd(pCmd, CGPIOD_CLSLVL_SHUTTER | 0x0000, "CGpiod::_shutterDoCmd");
+    switch (pCmd->dwCmd & CGPIOD_OBJ_CMD_MASK) {
+      case CGPIOD_UDM_CMD_STATUS: 
+        evt.dwEvt = (pObj->dwState == CGPIOD_UDM_STATE_UP  ) ? CGPIOD_UDM_EVT_UPON   :
+                    (pObj->dwState == CGPIOD_UDM_STATE_DOWN) ? CGPIOD_UDM_EVT_DOWNON : CGPIOD_UDM_EVT_STOP;
+        DoEvt(&evt);
+        break;
 
-      switch (pCmd->dwCmd & CGPIOD_OBJ_CMD_MASK) {
-        case CGPIOD_UDM_CMD_STATUS: 
-          evt.dwEvt = (pObj->dwState == CGPIOD_UDM_STATE_UP  ) ? CGPIOD_UDM_EVT_UPON   :
-                      (pObj->dwState == CGPIOD_UDM_STATE_DOWN) ? CGPIOD_UDM_EVT_DOWNON : CGPIOD_UDM_EVT_STOP;
-          DoEvt(&evt);
-          break;
+      case CGPIOD_UDM_CMD_STOP: 
+        if (_shutterCheckPrio(pObj, pCmd)) break;
+        _shutterSetState(pObj, CGPIOD_UDM_STATE_STOP, &evt);
+        pObj->dwCmd = CGPIOD_UDM_CMD_STOP;
+        break;
 
-        case CGPIOD_UDM_CMD_STOP: 
-          if (_shutterCheckPrio(pObj, pCmd)) break;
-          _shutterSetState(pObj, CGPIOD_UDM_STATE_STOP, &evt);
-          pObj->dwCmd = CGPIOD_UDM_CMD_STOP;
-          break;
+      case CGPIOD_UDM_CMD_TOGGLEUP: 
+        if (_shutterCheckPrio(pObj, pCmd)) break;
+        _shutterSetState(pObj, (pObj->dwState == CGPIOD_UDM_STATE_STOP) ? CGPIOD_UDM_STATE_UP : 
+                                                                          CGPIOD_UDM_STATE_STOP, &evt);
+        pObj->dwCmd = (pObj->dwState == CGPIOD_UDM_STATE_STOP) ? CGPIOD_UDM_CMD_UP : CGPIOD_UDM_CMD_STOP;
+        pObj->dwRun = pCmd->msNow + pCmd->dwRun;
+        break;
 
-        case CGPIOD_UDM_CMD_TOGGLEUP: 
-          if (_shutterCheckPrio(pObj, pCmd)) break;
-          _shutterSetState(pObj, (pObj->dwState == CGPIOD_UDM_STATE_STOP) ? CGPIOD_UDM_STATE_UP : 
-                                                                            CGPIOD_UDM_STATE_STOP, &evt);
-          pObj->dwCmd = (pObj->dwState == CGPIOD_UDM_STATE_STOP) ? CGPIOD_UDM_CMD_UP : CGPIOD_UDM_CMD_STOP;
-          pObj->dwRun = pCmd->msNow + pCmd->dwRun;
-          break;
+      case CGPIOD_UDM_CMD_TOGGLEDOWN: 
+        if (_shutterCheckPrio(pObj, pCmd)) break;
+        _shutterSetState(pObj, (pObj->dwState == CGPIOD_UDM_STATE_STOP) ? CGPIOD_UDM_STATE_DOWN : 
+                                                                          CGPIOD_UDM_STATE_STOP, &evt);
+        pObj->dwCmd = (pObj->dwState == CGPIOD_UDM_STATE_STOP) ? CGPIOD_UDM_CMD_DOWN : CGPIOD_UDM_CMD_STOP;
+        pObj->dwRun = pCmd->msNow + pCmd->dwRun;
+        break;
 
-        case CGPIOD_UDM_CMD_TOGGLEDOWN: 
-          if (_shutterCheckPrio(pObj, pCmd)) break;
-          _shutterSetState(pObj, (pObj->dwState == CGPIOD_UDM_STATE_STOP) ? CGPIOD_UDM_STATE_DOWN : 
-                                                                            CGPIOD_UDM_STATE_STOP, &evt);
-          pObj->dwCmd = (pObj->dwState == CGPIOD_UDM_STATE_STOP) ? CGPIOD_UDM_CMD_DOWN : CGPIOD_UDM_CMD_STOP;
-          pObj->dwRun = pCmd->msNow + pCmd->dwRun;
-          break;
-
-        case CGPIOD_UDM_CMD_UP: 
-          if (_shutterCheckPrio(pObj, pCmd)) break;
+      case CGPIOD_UDM_CMD_UP: 
+        if (_shutterCheckPrio(pObj, pCmd)) break;
           
-          // make sure to stop first, then move up
-          _shutterSetState(pObj, CGPIOD_UDM_STATE_STOP, &evt);
-          _shutterSetState(pObj, CGPIOD_UDM_STATE_UP, &evt);
-          pObj->dwCmd = CGPIOD_UDM_CMD_UP;
-          pObj->dwRun = pCmd->msNow + pCmd->dwRun;
-          break;
+        // make sure to stop first, then move up
+        _shutterSetState(pObj, CGPIOD_UDM_STATE_STOP, &evt);
+        _shutterSetState(pObj, CGPIOD_UDM_STATE_UP, &evt);
+        pObj->dwCmd = CGPIOD_UDM_CMD_UP;
+        pObj->dwRun = pCmd->msNow + pCmd->dwRun;
+        break;
 
-        case CGPIOD_UDM_CMD_DOWN: 
-          if (_shutterCheckPrio(pObj, pCmd)) break;
+      case CGPIOD_UDM_CMD_DOWN: 
+        if (_shutterCheckPrio(pObj, pCmd)) break;
           
-          // make sure to stop first, then move down
-          _shutterSetState(pObj, CGPIOD_UDM_STATE_STOP, &evt);
-          _shutterSetState(pObj, CGPIOD_UDM_STATE_DOWN, &evt);
-          pObj->dwCmd = CGPIOD_UDM_CMD_DOWN;
-          pObj->dwRun = pCmd->msNow + pCmd->dwRun;
-          break;
+        // make sure to stop first, then move down
+        _shutterSetState(pObj, CGPIOD_UDM_STATE_STOP, &evt);
+        _shutterSetState(pObj, CGPIOD_UDM_STATE_DOWN, &evt);
+        pObj->dwCmd = CGPIOD_UDM_CMD_DOWN;
+        pObj->dwRun = pCmd->msNow + pCmd->dwRun;
+        break;
 
-        case CGPIOD_UDM_CMD_TIPUP: 
-          if (_shutterCheckPrio(pObj, pCmd)) break;
+      case CGPIOD_UDM_CMD_TIPUP: 
+        if (_shutterCheckPrio(pObj, pCmd)) break;
           
-          // make sure to stop first, then move up
-          _shutterSetState(pObj, CGPIOD_UDM_STATE_STOP, &evt);
-          _shutterSetState(pObj, CGPIOD_UDM_STATE_UP, &evt);
-          pObj->dwCmd = CGPIOD_UDM_CMD_TIPUP;
-          pObj->dwRun = pCmd->msNow + pCmd->dwRun;
-          break;
+        // make sure to stop first, then move up
+        _shutterSetState(pObj, CGPIOD_UDM_STATE_STOP, &evt);
+        _shutterSetState(pObj, CGPIOD_UDM_STATE_UP, &evt);
+        pObj->dwCmd = CGPIOD_UDM_CMD_TIPUP;
+        pObj->dwRun = pCmd->msNow + pCmd->dwRun;
+        break;
 
-        case CGPIOD_UDM_CMD_TIPDOWN: 
-          if (_shutterCheckPrio(pObj, pCmd)) break;
+      case CGPIOD_UDM_CMD_TIPDOWN: 
+        if (_shutterCheckPrio(pObj, pCmd)) break;
           
-          // make sure to stop first, then move down
-          _shutterSetState(pObj, CGPIOD_UDM_STATE_STOP, &evt);
-          _shutterSetState(pObj, CGPIOD_UDM_STATE_DOWN, &evt);
-          pObj->dwCmd = CGPIOD_UDM_CMD_TIPDOWN;
-          pObj->dwRun = pCmd->msNow + pCmd->dwRun;
-          break;
+        // make sure to stop first, then move down
+        _shutterSetState(pObj, CGPIOD_UDM_STATE_STOP, &evt);
+        _shutterSetState(pObj, CGPIOD_UDM_STATE_DOWN, &evt);
+        pObj->dwCmd = CGPIOD_UDM_CMD_TIPDOWN;
+        pObj->dwRun = pCmd->msNow + pCmd->dwRun;
+        break;
 
-        case CGPIOD_UDM_CMD_PRIOLOCK: 
-          pObj->dwPrioLvl  = CGPIOD_UDM_PRIO_LVL_5;
-          pObj->dwPrioMask = pCmd->dwPrioMask;
-          _SetFlags(&pObj->dwFlags, CGPIOD_UDM_FLG_LOCKED);
-          break;
+      case CGPIOD_UDM_CMD_PRIOLOCK: 
+        pObj->dwPrioLvl  = CGPIOD_UDM_PRIO_LVL_5;
+        pObj->dwPrioMask = pCmd->dwPrioMask;
+        _SetFlags(&pObj->dwFlags, CGPIOD_UDM_FLG_LOCKED);
+        break;
 
-        case CGPIOD_UDM_CMD_PRIOUNLOCK: 
-          _RstFlags(&pObj->dwFlags, CGPIOD_UDM_FLG_LOCKED);
-          break;
+      case CGPIOD_UDM_CMD_PRIOUNLOCK: 
+        _RstFlags(&pObj->dwFlags, CGPIOD_UDM_FLG_LOCKED);
+        break;
 
-        case CGPIOD_UDM_CMD_LEARNON: 
-          if (_shutterCheckPrio(pObj, pCmd)) break;
-          break;
+      case CGPIOD_UDM_CMD_LEARNON: 
+        if (_shutterCheckPrio(pObj, pCmd)) break;
+        break;
 
-        case CGPIOD_UDM_CMD_LEARNOFF: 
-          if (_shutterCheckPrio(pObj, pCmd)) break;
-          break;
+      case CGPIOD_UDM_CMD_LEARNOFF: 
+        if (_shutterCheckPrio(pObj, pCmd)) break;
+        break;
 
-        case CGPIOD_UDM_CMD_PRIOSET: 
-          pObj->dwPrioLvl  = pCmd->dwPrioLvl;
-          pObj->dwPrioMask = CGPIOD_UDM_PRIO_MASK_NONE;
-          _SetFlags(&pObj->dwFlags, CGPIOD_UDM_FLG_LOCKED);
-          break;
+      case CGPIOD_UDM_CMD_PRIOSET: 
+        pObj->dwPrioLvl  = pCmd->dwPrioLvl;
+        pObj->dwPrioMask = CGPIOD_UDM_PRIO_MASK_NONE;
+        _SetFlags(&pObj->dwFlags, CGPIOD_UDM_FLG_LOCKED);
+        break;
 
-        case CGPIOD_UDM_CMD_PRIORESET: 
-          _RstFlags(&pObj->dwFlags, CGPIOD_UDM_FLG_LOCKED);
-          break;
+      case CGPIOD_UDM_CMD_PRIORESET: 
+        _RstFlags(&pObj->dwFlags, CGPIOD_UDM_FLG_LOCKED);
+        break;
 
-        case CGPIOD_UDM_CMD_SENSROLUP:
-          if (_shutterCheckPrio(pObj, pCmd)) break;
+      case CGPIOD_UDM_CMD_SENSROLUP:
+        if (_shutterCheckPrio(pObj, pCmd)) break;
           
-          // make sure to stop first, then move up
-          _shutterSetState(pObj, CGPIOD_UDM_STATE_STOP, &evt);
-          _shutterSetState(pObj, CGPIOD_UDM_STATE_UP, &evt);
-          pObj->dwCmd   = CGPIOD_UDM_CMD_SENSROLUP;
-          pObj->dwDelay = pCmd->msNow + pCmd->dwDelay;
-          pObj->dwRun   = pCmd->msNow + pCmd->dwDelay + pCmd->dwRun;
-          pObj->dwTip   = 0;
-          break;
+        // make sure to stop first, then move up
+        _shutterSetState(pObj, CGPIOD_UDM_STATE_STOP, &evt);
+        _shutterSetState(pObj, CGPIOD_UDM_STATE_UP, &evt);
+        pObj->dwCmd   = CGPIOD_UDM_CMD_SENSROLUP;
+        pObj->dwDelay = pCmd->msNow + pCmd->dwDelay;
+        pObj->dwRun   = pCmd->msNow + pCmd->dwDelay + pCmd->dwRun;
+        pObj->dwTip   = 0;
+        break;
 
-        case CGPIOD_UDM_CMD_SENSJALUP: 
-          if (_shutterCheckPrio(pObj, pCmd)) break;
+      case CGPIOD_UDM_CMD_SENSJALUP: 
+        if (_shutterCheckPrio(pObj, pCmd)) break;
           
-          // make sure to stop first, then move up
-          _shutterSetState(pObj, CGPIOD_UDM_STATE_STOP, &evt);
-          _shutterSetState(pObj, CGPIOD_UDM_STATE_UP, &evt);
-          pObj->dwCmd   = CGPIOD_UDM_CMD_SENSJALUP;
-          pObj->dwDelay = pCmd->msNow + pCmd->dwDelay;
-          pObj->dwRun   = pCmd->msNow + pCmd->dwDelay + pCmd->dwRun;
-          pObj->dwTip   = pCmd->msNow + pCmd->dwDelay + pCmd->dwRun + pCmd->dwTip;
-          break;
+        // make sure to stop first, then move up
+        _shutterSetState(pObj, CGPIOD_UDM_STATE_STOP, &evt);
+        _shutterSetState(pObj, CGPIOD_UDM_STATE_UP, &evt);
+        pObj->dwCmd   = CGPIOD_UDM_CMD_SENSJALUP;
+        pObj->dwDelay = pCmd->msNow + pCmd->dwDelay;
+        pObj->dwRun   = pCmd->msNow + pCmd->dwDelay + pCmd->dwRun;
+        pObj->dwTip   = pCmd->msNow + pCmd->dwDelay + pCmd->dwRun + pCmd->dwTip;
+        break;
 
-        case CGPIOD_UDM_CMD_SENSROLDOWN: 
-          if (_shutterCheckPrio(pObj, pCmd)) break;
+      case CGPIOD_UDM_CMD_SENSROLDOWN: 
+        if (_shutterCheckPrio(pObj, pCmd)) break;
           
-          // make sure to stop first, then move down
-          _shutterSetState(pObj, CGPIOD_UDM_STATE_STOP, &evt);
-          _shutterSetState(pObj, CGPIOD_UDM_STATE_DOWN, &evt);
-          pObj->dwCmd   = CGPIOD_UDM_CMD_SENSROLDOWN;
-          pObj->dwDelay = pCmd->msNow + pCmd->dwDelay;
-          pObj->dwRun   = pCmd->msNow + pCmd->dwDelay + pCmd->dwRun;
-          pObj->dwTip   = 0;
-          break;
+        // make sure to stop first, then move down
+        _shutterSetState(pObj, CGPIOD_UDM_STATE_STOP, &evt);
+        _shutterSetState(pObj, CGPIOD_UDM_STATE_DOWN, &evt);
+        pObj->dwCmd   = CGPIOD_UDM_CMD_SENSROLDOWN;
+        pObj->dwDelay = pCmd->msNow + pCmd->dwDelay;
+        pObj->dwRun   = pCmd->msNow + pCmd->dwDelay + pCmd->dwRun;
+        pObj->dwTip   = 0;
+        break;
 
-        case CGPIOD_UDM_CMD_SENSJALDOWN: 
-          if (_shutterCheckPrio(pObj, pCmd)) break;
+      case CGPIOD_UDM_CMD_SENSJALDOWN: 
+        if (_shutterCheckPrio(pObj, pCmd)) break;
           
-          // make sure to stop first, then move up
-          _shutterSetState(pObj, CGPIOD_UDM_STATE_STOP, &evt);
-          _shutterSetState(pObj, CGPIOD_UDM_STATE_DOWN, &evt);
-          pObj->dwCmd   = CGPIOD_UDM_CMD_SENSJALDOWN;
-          pObj->dwDelay = pCmd->msNow + pCmd->dwDelay;
-          pObj->dwRun   = pCmd->msNow + pCmd->dwDelay + pCmd->dwRun;
-          pObj->dwTip   = pCmd->msNow + pCmd->dwDelay + pCmd->dwRun + pCmd->dwTip;
-          break;
+        // make sure to stop first, then move up
+        _shutterSetState(pObj, CGPIOD_UDM_STATE_STOP, &evt);
+        _shutterSetState(pObj, CGPIOD_UDM_STATE_DOWN, &evt);
+        pObj->dwCmd   = CGPIOD_UDM_CMD_SENSJALDOWN;
+        pObj->dwDelay = pCmd->msNow + pCmd->dwDelay;
+        pObj->dwRun   = pCmd->msNow + pCmd->dwDelay + pCmd->dwRun;
+        pObj->dwTip   = pCmd->msNow + pCmd->dwDelay + pCmd->dwRun + pCmd->dwTip;
+        break;
 
-        default:
-//        g_log.LogPrt(m_dwClsLvl | 0x0099, "%s,dropping unknown cmd %u", pFunc, pCmd->dwCmd);
-          break;
-        } // switch
-
-      } while (FALSE);
+      default:
+        g_log.LogPrt(CGPIOD_CLSLVL_OUTPUT | 0x9999, "CGpiod::_shutterDoCmd,unknown cmd %u", pCmd->dwCmd);
+        break;
+      } // switch
 
     return XERROR_SUCCESS; 
-    } // _outputDoCmd
+    } // _shutterDoCmd
 
   //--------------------------------------------------------------------------
   // set new state to hw and send event as needed
@@ -421,22 +410,16 @@
       case CGPIOD_UDM_STATE_UP:
         _ioSetPinVal(pObj->dwPinDown,  CGPIOD_OUT_STATE_OFF ^ pObj->dwPol);
         _ioSetPinVal(pObj->dwPinUp,    CGPIOD_OUT_STATE_ON  ^ pObj->dwPol);
-//      digitalWrite(pObj->dwPinDown, (CGPIOD_OUT_STATE_OFF ^ pObj->dwPol) ? HIGH : LOW);
-//      digitalWrite(pObj->dwPinUp,   (CGPIOD_OUT_STATE_ON  ^ pObj->dwPol) ? HIGH : LOW);
         if (pEvt) pEvt->dwEvt = CGPIOD_UDM_EVT_UPON;
         break;
       case CGPIOD_UDM_STATE_DOWN:
         _ioSetPinVal(pObj->dwPinUp,    CGPIOD_OUT_STATE_OFF ^ pObj->dwPol);
         _ioSetPinVal(pObj->dwPinDown,  CGPIOD_OUT_STATE_ON  ^ pObj->dwPol);
-//      digitalWrite(pObj->dwPinUp,   (CGPIOD_OUT_STATE_OFF ^ pObj->dwPol) ? HIGH : LOW);
-//      digitalWrite(pObj->dwPinDown, (CGPIOD_OUT_STATE_ON  ^ pObj->dwPol) ? HIGH : LOW);
         if (pEvt) pEvt->dwEvt = CGPIOD_UDM_EVT_DOWNON;
         break;
       default:
         _ioSetPinVal(pObj->dwPinUp,    CGPIOD_OUT_STATE_OFF ^ pObj->dwPol);
         _ioSetPinVal(pObj->dwPinDown,  CGPIOD_OUT_STATE_OFF ^ pObj->dwPol);
-//      digitalWrite(pObj->dwPinUp,   (CGPIOD_OUT_STATE_OFF ^ pObj->dwPol) ? HIGH : LOW);
-//      digitalWrite(pObj->dwPinDown, (CGPIOD_OUT_STATE_OFF ^ pObj->dwPol) ? HIGH : LOW);
         if (pEvt) pEvt->dwEvt = (pObj->dwState == CGPIOD_UDM_STATE_UP  ) ? CGPIOD_UDM_EVT_UPOFF : CGPIOD_UDM_EVT_DOWNOFF;
         break;
       } // switch

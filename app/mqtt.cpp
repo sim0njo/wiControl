@@ -1,6 +1,5 @@
 
 #include <user_config.h>
-#include <SmingCore/SmingCore.h>
 #include <SmingCore/Debug.h>
 #include <AppSettings.h>
 #include <mqtt.h>
@@ -25,6 +24,7 @@ void ICACHE_FLASH_ATTR mqttPublishMessage(String strTopic, String strMsg)
   if (!g_pMqtt)
     return;
 
+//g_log.LogPrt(CGPIOD_CLSLVL | 0x0000, "CGpiod::_DoPublish,topic=%s,msg=%s", szTopic, strMsg.c_str());
   Debug.println("mqttPublishMessage,topic=" + AppSettings.mqttClientId + String("/") + AppSettings.mqttEvtPfx + String("/") + strTopic + ",msg=" + strMsg);
   g_pMqtt->publish(AppSettings.mqttClientId + String("/") + AppSettings.mqttEvtPfx + String("/") + strTopic, strMsg);
   g_dwMqttPktTx++;

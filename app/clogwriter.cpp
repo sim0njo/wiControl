@@ -3,22 +3,18 @@
 //
 // Copyright (c) Jo Simons, 2005-2015, All Rights Reserved.
 //
-// 20150813, v6.0.0.0, separate config for console/file/syslog
-//
 // dwMsg:32 = 0xCCLLssss
 //   CC   class 0-15, class 15 = for xxLibs objects, index into m_dwLvl[]
 //   LL   level 0-31, matches bit in m_dwLvl mask
 //   ssss sequence-nr 0-65535
 //----------------------------------------------------------------------------
 #include "clogwriter.hpp"
+#include "xstrlib.h"
 #include <SmingCore/Debug.h>
 
-// internal defines
-//#define _CLOG_CLS_MAX                    0x10000000 //
-//#define _CLOG_CLS_NBR                            16 //
-//#define _CLOG_LVL_MASK                           31 //
-//#define _CLOG_CLS_LVL_MASK               0xF0E00000 //
-//#define _CLOG_MAX_BUF                           512 //
+#define CLOG_CLS_LVL_MASK               0x0F1FFFFF //
+#define CLOG_LVL_MASK                   0x001F0000 //
+
 
 CLogWriter           g_log;
 
@@ -36,22 +32,22 @@ CLogWriter           g_log;
   //----------------------------------------------------------------------------
   // get/set output format
   //----------------------------------------------------------------------------
-  tUint32 CLogWriter::GetFormat()                   { return m_dwFormat; };
-  tUint32 CLogWriter::SetFormat(tUint32 dwFormat)   { return m_dwFormat = dwFormat & CLOG_FMT_MASK; };
+  tUint32 CLogWriter::GetFormat()                  { return m_dwFormat; }
+  tUint32 CLogWriter::SetFormat(tUint32 dwFormat)  { return m_dwFormat = dwFormat & CLOG_FMT_MASK; }
 
   //----------------------------------------------------------------------------
   // get/set class levels
   //----------------------------------------------------------------------------
-  tUint32 CLogWriter::GetClsLevels(tUint32 dwCls)      { 
-    return (dwCls < _CLOG_CLS_MAX) ?  m_dwLvl[dwCls >> 24]           : 0; 
+  tUint32 CLogWriter::GetClsLevels(tUint32 dwCls)  { 
+    return (dwCls < CLOG_CLS_MAX) ?  m_dwLvl[dwCls >> 24]           : 0; 
     } // GetClsLevels
 
   tUint32 CLogWriter::SetClsLevels(tUint32 dwCls, tUint32 dwLvls) {
-    return (dwCls < _CLOG_CLS_MAX) ? (m_dwLvl[dwCls >> 24] = dwLvls) : 0; 
+    return (dwCls < CLOG_CLS_MAX) ? (m_dwLvl[dwCls >> 24] = dwLvls) : 0; 
     } // SetClsLevels
 
-  tUint32 CLogWriter::HasClsLevels()                { 
-    for (tUint32 dwCls = CLOG_CLS_0; dwCls < _CLOG_CLS_MAX; dwCls += CLOG_CLS_1)
+  tUint32 CLogWriter::HasClsLevels()               { 
+    for (tUint32 dwCls = CLOG_CLS_0; dwCls < CLOG_CLS_MAX; dwCls += CLOG_CLS_1)
       if (m_dwLvl[dwCls >> 24]) return 1;
 
     return 0;
@@ -66,13 +62,13 @@ CLogWriter           g_log;
 
     do {
       // exit if level not supported for class
-      if ((dwMsg & _CLOG_CLS_LVL_MASK) || !(m_dwLvl[dwMsg >> 24] & (0x1 << ((dwMsg >> 16) & _CLOG_LVL_MASK))))
+      if ((dwMsg & ~CLOG_CLS_LVL_MASK) || !(m_dwLvl[dwMsg >> 24] & (0x1 << ((dwMsg & CLOG_LVL_MASK) >> 16))))
         break;
 
       // first compose logline leader
       pOut = _Leader(m_str, dwMsg);
       va_start(argList, pFmt);
-      if (m_vsnprintf(pOut, _CLOG_MAX_BUF - gstrlen(m_str) - 1, pFmt, argList) < 0)
+      if (gvsnprintf(pOut, CLOG_MAX_BUF - gstrlen(m_str) - 1, pFmt, argList) < 0)
         break;
 
       va_end(argList);
@@ -92,13 +88,13 @@ CLogWriter           g_log;
 
     do {
       // exit if level not supported for class
-      if ((dwMsg & _CLOG_CLS_LVL_MASK) || !(m_dwLvl[dwMsg >> 24] & (0x1 << ((dwMsg >> 16) & _CLOG_LVL_MASK))))
+      if ((dwMsg & ~CLOG_CLS_LVL_MASK) || !(m_dwLvl[dwMsg >> 24] & (0x1 << ((dwMsg & CLOG_LVL_MASK) >> 16))))
         break;
 
       // first compose logline leader
       pOut = _Leader(m_str, dwMsg);
       va_start(argList, pFmt);
-      if (m_vsnprintf(pOut, _CLOG_MAX_BUF - gstrlen(m_str) - 1, pFmt, argList) < 0)
+      if (gvsnprintf(pOut, CLOG_MAX_BUF - gstrlen(m_str) - 1, pFmt, argList) < 0)
         break;
 
       va_end(argList);
@@ -119,7 +115,7 @@ CLogWriter           g_log;
         } // while
       } while (FALSE);
 
-    }; // LogBin
+    } // LogBin
 
   //----------------------------------------------------------------------------
   // support functions
@@ -127,20 +123,20 @@ CLogWriter           g_log;
   void    CLogWriter::_NibbleToHex(tUint8 byNibble, tChar **ppHex) {
     **ppHex = (byNibble < 0x0A) ? byNibble + '0' : byNibble + '7';
     (*ppHex)++;
-    }; // _NibbleToHex
+    } // _NibbleToHex
 
   void    CLogWriter:: _ByteToHex(tUint8 byByte, tChar **ppHex) {
     _NibbleToHex(byByte / 16, ppHex);
     _NibbleToHex(byByte % 16, ppHex);
-    }; // _ByteToHex
+    } // _ByteToHex
 
   void    CLogWriter:: _ByteToAsc(tUint8 byByte, tChar **ppAsc) {
     **ppAsc = ((byByte < 32) || (byByte > 127)) ? '.' : byByte;
     (*ppAsc)++;
-    }; // _ByteToAsc
+    } // _ByteToAsc
 
   //----------------------------------------------------------------------------
-  // build logline leader <pri> date_time msgid
+  // build logline leader: msgid
   //----------------------------------------------------------------------------
   tChar*  CLogWriter::_Leader(tChar *pOut, tUint32 dwMsg) {
     if (m_dwFormat & CLOG_FMT_MSGID) {
@@ -150,7 +146,7 @@ CLogWriter           g_log;
       } // if
 
     return pOut;
-    }; // _Leader
+    } // _Leader
 
   //----------------------------------------------------------------------------
   // write msg to output streams

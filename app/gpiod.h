@@ -7,8 +7,6 @@
 #ifndef __cgpiod_hpp__
 #define __cgpiod_hpp__
 
-#include <SmingCore/SmingCore.h>
-#include <SmingCore/Debug.h>
 #include <mqtt.h>
 #include <xstdafx.h>
 #include <xerror.h>
@@ -394,8 +392,8 @@ class CGpiod {
   //--------------------------------------------------------------------------
   // gpiod_print.cpp
   //--------------------------------------------------------------------------
-  void               PrintEvt(tGpiodEvt* pEvt);
-  void               PrintCmd(tGpiodCmd* pCmd);
+  void               PrintEvt(tGpiodEvt* pEvt, tUint32 dwClsLvl, tCChar* szPfx);
+  void               PrintCmd(tGpiodCmd* pCmd, tUint32 dwClsLvl, tCChar* szPfx);
   tCChar*            _printObj2String(tChar* pOut, tUint32 dwObj);
   tCChar*            _printObjEvt2String(tChar* pOut, tUint32 dwObj, tUint32 dwEvt);
   tCChar*            _printObjCmd2String(tChar* pOut, tUint32 dwObj, tUint32 dwCmd);
