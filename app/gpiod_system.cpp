@@ -27,8 +27,7 @@
     // configure heartbeat timers
     memset(m_hbeat, 0, sizeof(m_hbeat));
     for (dwObj = 0; dwObj < CGPIOD_HB_COUNT; dwObj++) {
-      m_hbeat[dwObj].msPeriod = (dwObj == CGPIOD_HB1) ? CGPIOD_HB1_PERIOD :
-                                (dwObj == CGPIOD_HB2) ? CGPIOD_HB2_PERIOD : CGPIOD_HB0_PERIOD;
+      m_hbeat[dwObj].msPeriod = (dwObj == CGPIOD_HB0) ? CGPIOD_HB0_PERIOD : CGPIOD_HB0_PERIOD;
       } // for
 
     return m_dwError;
@@ -53,11 +52,10 @@
 
     // handle heartbeat timers
     for (dwObj = 0; dwObj < CGPIOD_HB_COUNT; dwObj++, pObj++) {
-      evt.dwObj = CGPIOD_OBJ_CLS_HBEAT + dwObj;
-
       if (msNow > (pObj->msStart + pObj->msPeriod)) {
         pObj->dwCntr++;
         pObj->msStart = msNow;
+        evt.dwObj = CGPIOD_OBJ_CLS_HBEAT + dwObj;
         evt.dwEvt = (pObj->dwCntr & 1) ? CGPIOD_HB_EVT_ODD : CGPIOD_HB_EVT_EVEN;
         DoEvt(&evt);
         } // if

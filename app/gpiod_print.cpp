@@ -59,7 +59,6 @@ tCChar* CGpiod::_printObj2String(tChar* pOut, tUint32 dwObj)
 //----------------------------------------------------------------------------
 tCChar* CGpiod::_printObjEvt2String(tChar* pOut, tUint32 dwObj, tUint32 dwEvt) 
 {
-  tUint32    dwErr  = XERROR_SUCCESS;
   tParseRsvd *pRsvd = g_gpiodParseEvtInput;
 //tParseRsvd *pRsvd = (dwObj & CGPIOD_OBJ_CLS_INPUT)   ? g_gpiodParseEvtInput  :
 //                    (dwObj & CGPIOD_OBJ_CLS_OUTPUT)  ? g_gpiodParseCmdOutput  :

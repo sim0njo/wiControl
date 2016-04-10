@@ -213,14 +213,14 @@ tUint32 CGpiod::_parseCmdParams(tGpiodCmd* pOut)
 tParseRsvd g_gpiodParseObj[] = {
 //  dwMask0           dwMask1            dwTType           dwTVal      szTVal
 //                    CGPIOD_OBJ_CLS                       0xPPPPMMMM                                   
-  { 0x00000001      , 0x00000100       , CPARSE_TYPE_NODE, 0x00000100, "input0",    },
-  { 0x00000001      , 0x00000100       , CPARSE_TYPE_NODE, 0x00000101, "input1",    },
-  { 0x00000001      , 0x00000201       , CPARSE_TYPE_NODE, 0x00000200, "output0",   },
-  { 0x00000001      , 0x00000201       , CPARSE_TYPE_NODE, 0x00000201, "output1",   },
-  { 0x00000001      , 0x00000402       , CPARSE_TYPE_NODE, 0x00000400, "shutter0",  },
-  { 0x00000001      , 0x00001000       , CPARSE_TYPE_NODE, 0x00001000, "system",    },
+  { 0x00000001      , 0x00000100       , CPARSE_TYPE_NODE, 0x00000100, "input0",   },
+  { 0x00000001      , 0x00000100       , CPARSE_TYPE_NODE, 0x00000101, "input1",   },
+  { 0x00000001      , 0x00000201       , CPARSE_TYPE_NODE, 0x00000200, "output0",  },
+  { 0x00000001      , 0x00000201       , CPARSE_TYPE_NODE, 0x00000201, "output1",  },
+  { 0x00000001      , 0x00000402       , CPARSE_TYPE_NODE, 0x00000400, "shutter0", },
+  { 0x00000001      , 0x00001000       , CPARSE_TYPE_NODE, 0x00001000, "system",   },
                                                                          
-  { 0x00000000      , 0x00000000       , 0x00000000      , 0x00000000, "",          },
+  { 0x00000000      , 0x00000000       , 0x00000000      , 0x00000000, "",         },
   };
 
 tParseRsvd g_gpiodParseEvtInput[] = {
@@ -236,20 +236,20 @@ tParseRsvd g_gpiodParseEvtInput[] = {
 
 //fb% wbs                                                    PPPP      params                
 //                                                               EEEE  cmd/evt         
-  { 0x00000001      , 0x00000200       , CPARSE_TYPE_LEAF, 0x00000002, "on",         },
-  { 0x00000001      , 0x00000200       , CPARSE_TYPE_LEAF, 0x00000003, "off",        },
-  { 0x00000001      , 0x00000200       , CPARSE_TYPE_LEAF, 0x00000004, "timerended", },
+  { 0x00000001      , 0x00000200       , CPARSE_TYPE_LEAF, 0x00000002, "on",       },
+  { 0x00000001      , 0x00000200       , CPARSE_TYPE_LEAF, 0x00000003, "off",      },
+  { 0x00000001      , 0x00000200       , CPARSE_TYPE_LEAF, 0x00000004, "timexp",   },
 
 //fb% wbr                                                    PPPP      params                
 //                                                               EEEE  cmd/evt         
-  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x00000002, "stop",       },
-  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x00000003, "upon",       },
-  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x00000004, "upoff",      },
-  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x00000005, "downon",     },
-  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x00000006, "downoff",    },
-  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x00000007, "timerended", },
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x00000001, "stop",     },
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x00000002, "upon",     },
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x00000003, "downon",   },
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x00000004, "upoff",    },
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x00000005, "downoff",  },
+  { 0x00000001      , 0x00000400       , CPARSE_TYPE_LEAF, 0x00000006, "timexp",   },
 
-  { CPARSE_MASK_NONE, CPARSE_MASK_NONE , CPARSE_TYPE_NONE, 0x00000000, "",           },
+  { CPARSE_MASK_NONE, CPARSE_MASK_NONE , CPARSE_TYPE_NONE, 0x00000000, "",         },
   };
 
 tParseRsvd g_gpiodParseCmdOutput[] = {

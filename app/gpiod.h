@@ -86,13 +86,9 @@ extern tParseRsvd    g_gpiodParseCmdSystem[];
 //----------------------------------------------------------------------------
 // heartbeat definitions
 //----------------------------------------------------------------------------
-#define CGPIOD_HB_COUNT                          3 //
-#define CGPIOD_HB0                               0 // 0.5s heartbeat
-#define CGPIOD_HB0_PERIOD                      500 // 
-#define CGPIOD_HB1                               1 // 1.0s heartbeat
-#define CGPIOD_HB1_PERIOD                     1000 // 
-#define CGPIOD_HB2                               2 // 2.0s heartbeat
-#define CGPIOD_HB2_PERIOD                     2000 // 
+#define CGPIOD_HB_COUNT                          1 //
+#define CGPIOD_HB0                               1 // 1.0s heartbeat
+#define CGPIOD_HB0_PERIOD                     1000 // 
 
 #define CGPIOD_HB_EVT_EVEN                       0 // 
 #define CGPIOD_HB_EVT_ODD                        1 // 
@@ -191,7 +187,7 @@ typedef struct {
 
 #define CGPIOD_OUT_EVT_ON                        2 //
 #define CGPIOD_OUT_EVT_OFF                       3 //
-#define CGPIOD_OUT_EVT_TIMEXP                 0xFD // time expired
+#define CGPIOD_OUT_EVT_TIMEXP                    4 // time expired
 
 #define CGPIOD_OUT_FLG_NONE             0x00000000 //
 #define CGPIOD_OUT_FLG_MQTT_ON          0x00000004 //

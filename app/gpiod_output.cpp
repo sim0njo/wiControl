@@ -153,7 +153,8 @@
 
     else if ((pEvt->dwObj & CGPIOD_OBJ_CLS_MASK) == CGPIOD_OBJ_CLS_HBEAT) {
       // handle 1 second heartbeat for synchronous blinking both outputs
-      if ((pEvt->dwObj & CGPIOD_OBJ_NUM_MASK) == CGPIOD_HB1) {
+      if ((pEvt->dwObj & CGPIOD_OBJ_NUM_MASK) == CGPIOD_HB0) {
+        g_log.LogPrt(CGPIOD_CLSLVL_OUTPUT | 0x0200, "CGpiod::_outputDoEvt,1 sec heartbeat");
 
         // handle each output object that requires a tick
         for (dwObj = 0; dwObj < CGPIOD_OUT_COUNT; dwObj++, pObj++) {
@@ -288,7 +289,7 @@
 
       case CGPIOD_OUT_CMD_BLINK: 
         if (pObj->dwFlags & CGPIOD_OUT_FLG_LOCKED) break;
-        pObj->dwCmd    = CGPIOD_OUT_CMD_BLINK;
+        pObj->dwCmd = CGPIOD_OUT_CMD_BLINK;
         _outputSetState(pObj, pObj->dwState ^ CGPIOD_OUT_STATE_ON, &evt);
         break;
 
