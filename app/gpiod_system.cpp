@@ -16,13 +16,13 @@
     tUint32 dwObj;
 
     m_dwEmul = AppSettings.gpiodEmul;
-    g_log.LogPrt(CGPIOD_CLSLVL_SYSTEM | 0x0010, "CGpiod::_systemOnConfig,emul=%s", _printVal2String(str, m_dwEmul));
+    Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0010, "CGpiod::_systemOnConfig,emul=%s", _printVal2String(str, m_dwEmul));
 
     m_dwMode = AppSettings.gpiodMode;
-    g_log.LogPrt(CGPIOD_CLSLVL_SYSTEM | 0x0020, "CGpiod::_systemOnConfig,mode=%s", _printVal2String(str, m_dwMode));
+    Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0020, "CGpiod::_systemOnConfig,mode=%s", _printVal2String(str, m_dwMode));
 
     m_dwEfmt = AppSettings.gpiodEfmt;
-    g_log.LogPrt(CGPIOD_CLSLVL_SYSTEM | 0x0030, "CGpiod::_systemOnConfig,efmt=%s", _printVal2String(str, m_dwEfmt));
+    Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0030, "CGpiod::_systemOnConfig,efmt=%s", _printVal2String(str, m_dwEfmt));
 
     // configure heartbeat timers
     memset(m_hbeat, 0, sizeof(m_hbeat));
@@ -44,6 +44,18 @@
   //--------------------------------------------------------------------------
   // run outputs
   //--------------------------------------------------------------------------
+  tUint32 CGpiod::timerExpired(tUint32 msNow, tUint32 msTimer) 
+  {
+    // handle clock wrap
+    if ((msTimer > ESP8266_MILLIS_MID) && (msNow < ESP8266_MILLIS_MID))
+      msNow += ESP8266_MILLIS_MAX;
+    
+    return (msNow > msTimer) ? 1 : 0;
+    } //
+
+  //--------------------------------------------------------------------------
+  // run outputs
+  //--------------------------------------------------------------------------
   tUint32 CGpiod::_systemOnRun(tUint32 msNow) 
   {
     tUint32     dwObj;
@@ -52,7 +64,7 @@
 
     // handle heartbeat timers
     for (dwObj = 0; dwObj < CGPIOD_HB_COUNT; dwObj++, pObj++) {
-      if (msNow > (pObj->msStart + pObj->msPeriod)) {
+      if (timerExpired(msNow, pObj->msStart + pObj->msPeriod)) {
         pObj->dwCntr++;
         pObj->msStart = msNow;
         evt.dwObj = CGPIOD_OBJ_CLS_HBEAT + dwObj;
@@ -69,7 +81,7 @@
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_systemOnExit() 
   {
-    g_log.LogPrt(CGPIOD_CLSLVL_SYSTEM | 0x0000, "CGpiod::_systemOnExit");
+    Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0000, "CGpiod::_systemOnExit");
     return m_dwError;
     } // CGpiod::_systemOnExit
 
@@ -81,7 +93,7 @@
     tChar     str[32];
     tGpiodEvt evt = { pCmd->msNow, pCmd->dwObj, 0, 0, 0 };
 
-    PrintCmd(pCmd, CGPIOD_CLSLVL_SYSTEM | 0x0000, "CGpiod::_systemDoCmd");
+    PrintCmd(pCmd, CLSLVL_GPIOD_SYSTEM | 0x0000, "CGpiod::_systemDoCmd");
     switch (pCmd->dwCmd & CGPIOD_OBJ_CMD_MASK) {
       case CGPIOD_SYS_CMD_VERSION: 
         evt.szTopic = "version";
@@ -131,7 +143,7 @@
         break;
 
       default:
-        g_log.LogPrt(CGPIOD_CLSLVL_SYSTEM | 0x9999, "CGpiod::_systemDoCmd,unknown cmd %u", pCmd->dwCmd);
+        Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x9999, "CGpiod::_systemDoCmd,unknown cmd %u", pCmd->dwCmd);
         break;
       } // switch
 

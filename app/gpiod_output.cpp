@@ -15,7 +15,7 @@
     tGpiodOutput *pObj = m_output; 
 
     // initialise all channels
-    g_log.LogPrt(CGPIOD_CLSLVL_OUTPUT | 0x0000, "CGpiod::_outputOnConfig");
+    Debug.logTxt(CLSLVL_GPIOD_OUTPUT | 0x0000, "CGpiod::_outputOnConfig");
 
     memset(m_output, 0, sizeof(m_output)); 
     for (dwObj = 0; dwObj < CGPIOD_OUT_COUNT; dwObj++, pObj++) {
@@ -38,7 +38,7 @@
     tUint32      dwObj;
     tGpiodOutput *pObj = m_output; 
 
-    g_log.LogPrt(CGPIOD_CLSLVL_OUTPUT | 0x0000, "CGpiod::_outputOnInit");
+    Debug.logTxt(CLSLVL_GPIOD_OUTPUT | 0x0000, "CGpiod::_outputOnInit");
     for (dwObj = 0; dwObj < CGPIOD_OUT_COUNT; dwObj++, pObj++) {
       _ioSetPinVal(pObj->dwPin, pObj->dwState ^ pObj->dwPol);
       _ioSetPinDir(pObj->dwPin, CGPIOD_PIN_DIR_OUTPUT);
@@ -112,7 +112,7 @@
     tGpiodOutput *pObj = m_output; 
 
     // set outputs to off and switch to input
-    g_log.LogPrt(CGPIOD_CLSLVL_OUTPUT | 0x0000, "CGpiod::_outputOnExit");
+    Debug.logTxt(CLSLVL_GPIOD_OUTPUT | 0x0000, "CGpiod::_outputOnExit");
     for (dwObj = 0; dwObj < CGPIOD_OUT_COUNT; dwObj++, pObj++) {
       digitalWrite(pObj->dwPin, ((pObj->dwState = CGPIOD_OUT_STATE_OFF) ^ pObj->dwPol) ? HIGH : LOW);
       pinMode(pObj->dwPin, INPUT);
@@ -131,7 +131,6 @@
     tGpiodEvt    evt = { pEvt->msNow, 0, 0, 0, 0 };
     tGpiodOutput *pObj = m_output; 
 
-    PrintEvt(pEvt, CGPIOD_CLSLVL_OUTPUT | 0x0000, "CGpiod::_outputDoEvt");
     if      ((pEvt->dwObj & CGPIOD_OBJ_CLS_MASK) == CGPIOD_OBJ_CLS_INPUT) {
       switch (pEvt->dwEvt) {
         case CGPIOD_IN_EVT_OUTLT1:
@@ -152,9 +151,11 @@
       } // if 
 
     else if ((pEvt->dwObj & CGPIOD_OBJ_CLS_MASK) == CGPIOD_OBJ_CLS_HBEAT) {
+//    PrintEvt(pEvt, CLSLVL_GPIOD_OUTPUT | 0x0000, "CGpiod::_outputDoEvt");
+
       // handle 1 second heartbeat for synchronous blinking both outputs
       if ((pEvt->dwObj & CGPIOD_OBJ_NUM_MASK) == CGPIOD_HB0) {
-        g_log.LogPrt(CGPIOD_CLSLVL_OUTPUT | 0x0200, "CGpiod::_outputDoEvt,1 sec heartbeat");
+//      Debug.logTxt(CLSLVL_GPIOD_OUTPUT | 0x0200, "CGpiod::_outputDoEvt,1 sec heartbeat");
 
         // handle each output object that requires a tick
         for (dwObj = 0; dwObj < CGPIOD_OUT_COUNT; dwObj++, pObj++) {
@@ -179,7 +180,7 @@
     tGpiodOutput *pObj = &m_output[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK]; 
     tGpiodEvt    evt   = { pCmd->msNow, pCmd->dwObj, 0, 0 };
 
-    PrintCmd(pCmd, CGPIOD_CLSLVL_OUTPUT | 0x0000, "CGpiod::_outputDoCmd");
+    PrintCmd(pCmd, CLSLVL_GPIOD_OUTPUT | 0x0000, "CGpiod::_outputDoCmd");
     switch (pCmd->dwCmd & CGPIOD_OBJ_CMD_MASK) {
       case CGPIOD_OUT_CMD_STATUS: 
         evt.dwEvt = pObj->dwState ? CGPIOD_OUT_EVT_ON : CGPIOD_OUT_EVT_OFF;
@@ -294,7 +295,7 @@
         break;
 
       default:
-        g_log.LogPrt(CGPIOD_CLSLVL_OUTPUT | 0x9999, "CGpiod::_outputDoCmd,unknown cmd %u", pCmd->dwCmd);
+        Debug.logTxt(CLSLVL_GPIOD_OUTPUT | 0x9999, "CGpiod::_outputDoCmd,unknown cmd %u", pCmd->dwCmd);
         break;
       } // switch
 

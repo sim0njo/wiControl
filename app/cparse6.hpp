@@ -12,7 +12,6 @@
 #include "xstdafx.h"
 #include "xerror.h"
 #include "xstrlib.h"
-//#include <SmingCore/SmingCore.h>
 
 #define CPARSE_CLSLVL_DBG CLOG_CLS_F | CLOG_LVL_02 //
 
@@ -413,6 +412,13 @@ class CParse6 {
         break;
 
       default:
+/*
+        if (parse.GetNumber() == CPARSE_TYPE_NUMBER) {
+          m_cSepa = *m_pStr;
+          *m_pStr = 0;
+          break;
+          } // if
+*/
         if (gisdigit(*m_pStr)) {
           // collect number
           m_dwTType = CPARSE_TYPE_NUMBER;
@@ -460,6 +466,43 @@ class CParse6 {
 //  g_log.LogPrt(CPARSE_CLSLVL_DBG | 0x9999, "%s,ttype=0x%08X,tval=%u/%s", pFunc, m_dwTType, m_dwTVal, m_pTStr);
     return m_dwTType;
     } ; // NextToken
+
+//--------------------------------------------------------------------
+// collect decimal/hexadecimal number
+//--------------------------------------------------------------------
+tUint32 GetNumber() 
+{
+  if (gisdigit(*m_pStr)) {
+    // collect number
+    m_dwTType = CPARSE_TYPE_NUMBER;
+          
+    // handle hexadecimal format 0x.....
+    if ((*m_pStr == '0') && ((*(m_pStr + 1) == 'x') || (*(m_pStr + 1) == 'X'))) {
+      for (m_pStr += 2; gisxdigit(*m_pStr); ) {
+        m_dwTVal = (m_dwTVal * 16) + _Hex2Val(*m_pStr++);
+        } // for
+
+//    m_cSepa = *m_pStr;
+//    *m_pStr = 0;
+      } // if
+
+    else {
+      // handle decimal format
+      while (*m_pStr && gisdigit(*m_pStr)) {
+        m_dwTVal = (m_dwTVal * 10) + *m_pStr - '0';
+        m_pStr++;
+        } // while
+
+//    m_cSepa = *m_pStr;
+//    *m_pStr = 0;
+      } // else
+
+    } // if isdigit
+  else
+    m_dwTType = CPARSE_TYPE_NONE;
+            
+  return m_dwTType;
+  } // GetNumber
 
 //--------------------------------------------------------------------
 // read optional/mandatory separator character '.'                      

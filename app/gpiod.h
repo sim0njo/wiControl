@@ -11,19 +11,13 @@
 #include <xstdafx.h>
 #include <xerror.h>
 #include <cparse.hpp>
-#include <clogwriter.hpp>
+#include <app_logclslvl.h>
 
 extern tParseRsvd    g_gpiodParseObj[];
-extern tParseRsvd    g_gpiodParseEvtInput[];
+extern tParseRsvd    g_gpiodParseObjEvt[];
 extern tParseRsvd    g_gpiodParseCmdOutput[];
 extern tParseRsvd    g_gpiodParseCmdShutter[];
 extern tParseRsvd    g_gpiodParseCmdSystem[];
-
-#define CGPIOD_CLSLVL                  CLOG_LVL_04 //
-#define CGPIOD_CLSLVL_INPUT            CLOG_LVL_05 //
-#define CGPIOD_CLSLVL_OUTPUT           CLOG_LVL_06 //
-#define CGPIOD_CLSLVL_SHUTTER          CLOG_LVL_07 //
-#define CGPIOD_CLSLVL_SYSTEM           CLOG_LVL_08 //
 
 #define CGPIOD_VERSION                   "4.0.1.0" //                                   
 #define CGPIOD_DATE                       __DATE__ //
@@ -51,8 +45,8 @@ extern tParseRsvd    g_gpiodParseCmdSystem[];
 
 #define CGPIOD_OBJ_NUM_MASK             0x000000FF //
 #define CGPIOD_OBJ_CLS_MASK             0x0000FF00 //
-#define CGPIOD_OBJ_CLS_WBS              0x00001B00 // WBS = input + output + system
-#define CGPIOD_OBJ_CLS_WBR              0x00001D00 // WBR = input + shutter + system
+#define CGPIOD_OBJ_CLS_WBS              0x00001300 // WBS = input + output + system
+#define CGPIOD_OBJ_CLS_WBR              0x00001500 // WBR = input + shutter + system
 #define CGPIOD_OBJ_CLS_INPUT            0x00000100 // input
 #define CGPIOD_OBJ_CLS_OUTPUT           0x00000200 // output
 #define CGPIOD_OBJ_CLS_SHUTTER          0x00000400 // shutter
@@ -87,7 +81,7 @@ extern tParseRsvd    g_gpiodParseCmdSystem[];
 // heartbeat definitions
 //----------------------------------------------------------------------------
 #define CGPIOD_HB_COUNT                          1 //
-#define CGPIOD_HB0                               1 // 1.0s heartbeat
+#define CGPIOD_HB0                               0 // 1.0s heartbeat
 #define CGPIOD_HB0_PERIOD                     1000 // 
 
 #define CGPIOD_HB_EVT_EVEN                       0 // 
@@ -308,6 +302,23 @@ typedef struct {
   tUint32            dwEmul;                       //
   tUint32            dwMode;                       //
   tUint32            dwEfmt;                       //
+
+  union {
+    struct {
+      tUint32        dwRun;                        //
+      } parmsOutput;
+    struct {
+      tUint32        dwDelay;                      //
+      tUint32        dwRun;                        //
+      tUint32        dwTip;                        //
+      } parmsShutter;
+    struct {
+      tUint32        dwEmul;                       //
+      tUint32        dwMode;                       //
+      tUint32        dwEfmt;                       //
+      } parmsSystem;
+    };
+
   } tGpiodCmd;
 
 typedef struct {
@@ -437,6 +448,7 @@ class CGpiod {
   tUint32            _systemOnRun(tUint32 msNow);
   tUint32            _systemOnExit();
   tUint32            _systemDoCmd(tGpiodCmd* pCmd);
+  tUint32            timerExpired(tUint32 msNow, tUint32 msTimer);
 
   //--------------------------------------------------------------------------
   // gpiod_io.cpp

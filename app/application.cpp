@@ -8,7 +8,6 @@
 #include <HTTP.h>
 #include <gpiod.h>
 #include <cparse.hpp>
-#include <clogwriter.hpp>
 
 FTPServer      g_ftp;
 TelnetServer   g_telnet;
@@ -26,7 +25,6 @@ void appReportHeapUsage()
   cmd.dwObj = CGPIOD_OBJ_SYSTEM;
   cmd.dwCmd = CGPIOD_SYS_CMD_MEMORY;
   g_gpiod.DoCmd(&cmd);
-//  mqttPublishMessage("memory", String(system_get_free_heap_size()));
   } //
 
 //----------------------------------------------------------------------------
@@ -111,7 +109,7 @@ void processInfoCommand(String commandLine, CommandOutput* pOut)
   pOut->printf(SystemClock.getSystemTimeString().c_str());
   pOut->printf("\r\n");
 
-  pOut->printf("Loglevel           : 0x%08X\r\n", g_log.GetClsLevels(CLOG_CLS_0));
+  pOut->printf("Loglevel           : 0x%08X\r\n", Debug.logClsLevels(DEBUG_CLS_0));
   pOut->printf("Free Heap          : %d\r\n", system_get_free_heap_size());
   pOut->printf("CPU Frequency      : %d MHz\r\n", system_get_cpu_freq());
   pOut->printf("System Chip ID     : %x\r\n", system_get_chip_id());
@@ -267,21 +265,18 @@ void processLogLevelCommand(String commandLine, CommandOutput* pOut)
 {
   Vector<String> commandToken;
   int            numToken = splitString(commandLine, ' ' , commandToken);
-  CParse         parse;
-  tChar*         pStr = 0;
+  tUint32        dwLevels;
 
-    if (numToken > 1) {
-      // commandToken[1] is loglevel
-      pStr = xstrdup(commandToken[1].c_str());
-      parse.SetString(pStr);
-      if (parse.NextToken(0, 0) == CPARSE_TYPE_NUMBER) {
-//        AppSettings.dwLogLevel = parse.TVal();
-        g_log.SetClsLevels(CLOG_CLS_0, parse.TVal());
-        } // 
-      } // if
+  if (numToken > 1) {
+    // commandToken[1] is loglevel
+    dwLevels = xstrToUint32(commandToken[1].c_str());
+    Debug.logClsLevels(DEBUG_CLS_0, dwLevels);
+        
+    // toggle msgId usage
+    Debug.logPrintMsgId(Debug.logPrintMsgId() ? false : true);
+    } // if
 
-  pOut->printf("Loglevel = 0x%08X\r\n\r\n", g_log.GetClsLevels(CLOG_CLS_0));
-  if (pStr) free(pStr);
+  pOut->printf("Loglevel = 0x%08X\r\n\r\n", Debug.logClsLevels(DEBUG_CLS_0));
 //AppSettings.save();
 //System.restart();
   } // processLogLevelCommand

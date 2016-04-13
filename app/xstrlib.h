@@ -22,7 +22,7 @@ tInt32   xstricmp(tCChar* pStr1, tCChar* pStr2);
 
 tUint32  xstrNextArgVal(tChar** ppStr, tChar cSep1, tChar cSep2, tChar** ppArg, tChar** ppVal);
 tUint32  xstrNextArg(tChar** ppStr, tChar cSep1, tChar** ppArg);
-tUint32  xstrToUint32(tChar* pVal);
+tUint32  xstrToUint32(tCChar* pVal);
 tUint32  xstrToUint32(tUint32& dwVal, tCChar* pVal);
 tUint32  xstrHexToUint8(tUint8* pOut, tChar* pIn);
 tChar*   xstrUint8ToHex(tChar* pOut, tUint8* pIn, tUint32 cbIn);

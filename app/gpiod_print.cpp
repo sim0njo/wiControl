@@ -15,13 +15,13 @@ void CGpiod::PrintEvt(tGpiodEvt* pEvt, tUint32 dwClsLvl, tCChar* szPfx)
   tCChar *szTopic = pEvt->szTopic ? pEvt->szTopic : "system";
 
   if      (pEvt->dwObj == CGPIOD_OBJ_SYSTEM)
-    g_log.LogPrt(dwClsLvl, "CGpiod::PrintEvt,%s.%s", szTopic, pEvt->szEvt);
+    Debug.logTxt(dwClsLvl, "%s,%s.%s", szPfx, szTopic, pEvt->szEvt);
 
   else if (pEvt->szEvt)
-    g_log.LogPrt(dwClsLvl, "CGpiod::PrintEvt,%s.%s", _printObj2String(str1, pEvt->dwObj), pEvt->szEvt);
+    Debug.logTxt(dwClsLvl, "%s,%s.%s", szPfx, _printObj2String(str1, pEvt->dwObj), pEvt->szEvt);
 
   else 
-    g_log.LogPrt(dwClsLvl, "CGpiod::PrintEvt,%s.%s", _printObj2String(str1, pEvt->dwObj), _printObjEvt2String(str2, pEvt->dwObj, pEvt->dwEvt));
+    Debug.logTxt(dwClsLvl, "%s,%s.%s", szPfx, _printObj2String(str1, pEvt->dwObj), _printObjEvt2String(str2, pEvt->dwObj, pEvt->dwEvt));
 
   } // PrintEvt
 
@@ -30,9 +30,9 @@ void CGpiod::PrintEvt(tGpiodEvt* pEvt, tUint32 dwClsLvl, tCChar* szPfx)
 //--------------------------------------------------------------------------
 void CGpiod::PrintCmd(tGpiodCmd* pCmd, tUint32 dwClsLvl, tCChar* szPfx) 
 {
-  tChar        str1[16], str2[16], str3[32];
+  tChar  str1[16], str2[16], str3[32];
 
-  g_log.LogPrt(dwClsLvl, "%s,%s.%s%s", szPfx, _printObj2String(str1, pCmd->dwObj),
+  Debug.logTxt(dwClsLvl, "%s,%s.%s%s", szPfx, _printObj2String(str1, pCmd->dwObj),
                _printObjCmd2String(str2, pCmd->dwObj, pCmd->dwCmd), _printCmdParamVals(str3, sizeof(str2), pCmd));
   } // PrintCmd
 
@@ -59,7 +59,7 @@ tCChar* CGpiod::_printObj2String(tChar* pOut, tUint32 dwObj)
 //----------------------------------------------------------------------------
 tCChar* CGpiod::_printObjEvt2String(tChar* pOut, tUint32 dwObj, tUint32 dwEvt) 
 {
-  tParseRsvd *pRsvd = g_gpiodParseEvtInput;
+  tParseRsvd *pRsvd = g_gpiodParseObjEvt;
 //tParseRsvd *pRsvd = (dwObj & CGPIOD_OBJ_CLS_INPUT)   ? g_gpiodParseEvtInput  :
 //                    (dwObj & CGPIOD_OBJ_CLS_OUTPUT)  ? g_gpiodParseCmdOutput  :
 //                    (dwObj & CGPIOD_OBJ_CLS_SHUTTER) ? g_gpiodParseCmdShutter : g_gpiodParseCmdSystem;
@@ -81,7 +81,7 @@ tCChar* CGpiod::_printObjEvt2String(tChar* pOut, tUint32 dwObj, tUint32 dwEvt)
 tCChar* CGpiod::_printObjCmd2String(tChar* pOut, tUint32 dwObj, tUint32 dwCmd) 
 {
   tUint32    dwErr  = XERROR_SUCCESS;
-  tParseRsvd *pRsvd = (dwObj & CGPIOD_OBJ_CLS_INPUT)   ? g_gpiodParseEvtInput  :
+  tParseRsvd *pRsvd = (dwObj & CGPIOD_OBJ_CLS_INPUT)   ? g_gpiodParseObjEvt  :
                       (dwObj & CGPIOD_OBJ_CLS_OUTPUT)  ? g_gpiodParseCmdOutput  :
                       (dwObj & CGPIOD_OBJ_CLS_SHUTTER) ? g_gpiodParseCmdShutter : g_gpiodParseCmdSystem;
 
@@ -167,7 +167,7 @@ tCChar* CGpiod::_printCmdParamVals(tChar* pOut, tUint32 cbOut, tGpiodCmd* pCmd)
       else 
         SetError(XERROR_INPUT);
 
-      g_log.LogPrt(m_dwClsLvl | 0x0010, "%s,ack=%u", pFunc, m_req.dwParm[0]);
+      Debug.logTxt(m_dwClsLvl | 0x0010, "%s,ack=%u", pFunc, m_req.dwParm[0]);
       } // if
 */
     } while (FALSE);

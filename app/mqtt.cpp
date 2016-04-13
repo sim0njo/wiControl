@@ -1,6 +1,5 @@
 
 #include <user_config.h>
-#include <SmingCore/Debug.h>
 #include <AppSettings.h>
 #include <mqtt.h>
 #include <HTTP.h>
@@ -24,8 +23,8 @@ void ICACHE_FLASH_ATTR mqttPublishMessage(String strTopic, String strMsg)
   if (!g_pMqtt)
     return;
 
-//g_log.LogPrt(CGPIOD_CLSLVL | 0x0000, "CGpiod::_DoPublish,topic=%s,msg=%s", szTopic, strMsg.c_str());
-  Debug.println("mqttPublishMessage,topic=" + AppSettings.mqttClientId + String("/") + AppSettings.mqttEvtPfx + String("/") + strTopic + ",msg=" + strMsg);
+  Debug.logTxt(CLSLVL_MQTT | 0x0000, "mqttPublishMessagetopic=%s/%s/%s,msg=%s", 
+               AppSettings.mqttClientId.c_str(), AppSettings.mqttEvtPfx.c_str(), strTopic.c_str(), strMsg.c_str());
   g_pMqtt->publish(AppSettings.mqttClientId + String("/") + AppSettings.mqttEvtPfx + String("/") + strTopic, strMsg);
   g_dwMqttPktTx++;
   } // mqttPublishMessage
@@ -41,20 +40,19 @@ void ICACHE_FLASH_ATTR mqttStartClient()
   if (g_pMqtt)
     delete g_pMqtt;
 
-  Debug.println("mqttStartClient");
+  Debug.logTxt(CLSLVL_MQTT | 0x0000, "mqttStartClient");
   AppSettings.load();
   if (!AppSettings.mqttServer.equals(String("")) && AppSettings.mqttPort != 0) {
     g_pMqtt = new MqttClient(AppSettings.mqttServer, AppSettings.mqttPort, gpiodOnMqttPublish);
     g_bMqttIsConnected = g_pMqtt->connect(AppSettings.mqttClientId, AppSettings.mqttUser, AppSettings.mqttPass);
 
-    Debug.println("mqttStartClient,subscribe=" + AppSettings.mqttClientId + String("/") + AppSettings.mqttCmdPfx + String("/#"));
-
+    Debug.logTxt(CLSLVL_MQTT | 0x0010, "mqttStartClient,subscribe=%s/%s/#",
+                 AppSettings.mqttClientId.c_str(), AppSettings.mqttCmdPfx.c_str());
     g_pMqtt->subscribe(AppSettings.mqttClientId + String("/") + AppSettings.mqttCmdPfx + String("/#"));
 
     sprintf(str, "%s/%s", APP_ALIAS, APP_TOPOLOGY);
     mqttPublishMessage("platform", str);
     mqttPublishMessage("version", APP_VERSION);
-//    mqttPublishVersion();
     g_bMqttIsConfigured = TRUE;
     }
   } // mqttStartClient

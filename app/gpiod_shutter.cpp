@@ -15,7 +15,7 @@
     tGpiodShutter *pObj = m_shutter; 
 
     // initialise all channels
-    g_log.LogPrt(CGPIOD_CLSLVL_SHUTTER | 0x0000, "CGpiod::_shutterOnConfig");
+    Debug.logTxt(CLSLVL_GPIOD_SHUTTER | 0x0000, "CGpiod::_shutterOnConfig");
 
     memset(m_shutter, 0, sizeof(m_shutter)); 
     for (dwObj = 0; dwObj < CGPIOD_UDM_COUNT; dwObj++, pObj++) {
@@ -42,7 +42,7 @@
     tUint32       dwObj;
     tGpiodShutter *pObj = m_shutter; 
 
-    g_log.LogPrt(CGPIOD_CLSLVL_SHUTTER | 0x0000, "CGpiod::_shutterOnInit");
+    Debug.logTxt(CLSLVL_GPIOD_SHUTTER | 0x0000, "CGpiod::_shutterOnInit");
     for (dwObj = 0; dwObj < CGPIOD_UDM_COUNT; dwObj++, pObj++) {
       _ioSetPinVal(pObj->dwPinUp,   ((pObj->dwState >> 0) & CGPIOD_OUT_STATE_ON) ^ pObj->dwPol);
       _ioSetPinVal(pObj->dwPinDown, ((pObj->dwState >> 1) & CGPIOD_OUT_STATE_ON) ^ pObj->dwPol);
@@ -159,7 +159,7 @@
     tGpiodShutter *pObj = m_shutter; 
 
     // set outputs to off and switch to input
-    g_log.LogPrt(CGPIOD_CLSLVL_SHUTTER | 0x0000, "CGpiod::_shutterOnExit");
+    Debug.logTxt(CLSLVL_GPIOD_SHUTTER | 0x0000, "CGpiod::_shutterOnExit");
     for (dwObj = 0; dwObj < CGPIOD_UDM_COUNT; dwObj++, pObj++) {
       _ioSetPinVal(pObj->dwPinUp,    CGPIOD_OUT_STATE_OFF ^ pObj->dwPol);
       _ioSetPinVal(pObj->dwPinDown,  CGPIOD_OUT_STATE_OFF ^ pObj->dwPol);
@@ -177,7 +177,7 @@
   { 
     tGpiodCmd cmd = { pEvt->msNow, 0, 0, 0, 0, 0, 0 };
 
-    PrintEvt(pEvt, CGPIOD_CLSLVL_SHUTTER | 0x0000, "CGpiod::_shutterDoEvt");
+//  PrintEvt(pEvt, CLSLVL_GPIOD_SHUTTER | 0x0000, "CGpiod::_shutterDoEvt");
     switch (pEvt->dwEvt) {
       case CGPIOD_IN_EVT_INGT0:
         // stop shutter
@@ -236,7 +236,7 @@
     tGpiodShutter *pObj  = &m_shutter[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK]; 
     tGpiodEvt     evt    = { pCmd->msNow, pCmd->dwObj, 0, 0, 0 };
 
-    PrintCmd(pCmd, CGPIOD_CLSLVL_SHUTTER | 0x0000, "CGpiod::_shutterDoCmd");
+    PrintCmd(pCmd, CLSLVL_GPIOD_SHUTTER | 0x0000, "CGpiod::_shutterDoCmd");
     switch (pCmd->dwCmd & CGPIOD_OBJ_CMD_MASK) {
       case CGPIOD_UDM_CMD_STATUS: 
         evt.dwEvt = (pObj->dwState == CGPIOD_UDM_STATE_UP  ) ? CGPIOD_UDM_EVT_UPON   :
@@ -383,7 +383,7 @@
         break;
 
       default:
-        g_log.LogPrt(CGPIOD_CLSLVL_OUTPUT | 0x9999, "CGpiod::_shutterDoCmd,unknown cmd %u", pCmd->dwCmd);
+        Debug.logTxt(CLSLVL_GPIOD_OUTPUT | 0x9999, "CGpiod::_shutterDoCmd,unknown cmd %u", pCmd->dwCmd);
         break;
       } // switch
 

@@ -245,24 +245,45 @@ tInt32 xstricmp(tCChar* pStr1, tCChar* pStr2)
   } // xstrnicmp
 
 //----------------------------------------------------------------------------
-// convert decimal ascii number to tUint32
+// convert decimal/hexadecimal number to tUint32
 //----------------------------------------------------------------------------
-tUint32 xstrToUint32(tCChar* pVal)
+tUint32 xstrToUint32(tCChar* pIn)
 {
-  register tUint32 dwRet = 0;
+  register tUint32 dwOut = 0;
  
-  for ( ; gisdigit(*pVal); pVal++) 
-    dwRet = (dwRet * 10) + (*pVal - '0');
+  // handle hexadecimal format 0x.....
+  if ((*pIn == '0') && ((*(pIn + 1) == 'x') || (*(pIn + 1) == 'X'))) {
+    for (pIn += 2; gisxdigit(*pIn); pIn++) 
+      dwOut = (dwOut * 16) + ((*pIn > '9') ? ((*pIn & 0x07) + 9) : (*pIn - '0'));
+    } // if
 
-  return dwRet;
+  else {
+    for ( ; gisdigit(*pIn); pIn++) 
+      dwOut = (dwOut * 10) + (*pIn - '0');
+    } // else
+
+  return dwOut;
   } // xstrToUint32
 
-tUint32 xstrToUint32(tUint32& dwVal, tCChar* pVal)
+tUint32 xstrToUint32(tUint32& dwOut, tCChar* pIn)
 {
-  for (dwVal = 0; gisdigit(*pVal); pVal++) 
-    dwVal = (dwVal * 10) + (*pVal - '0');
+  dwOut = 0;
 
-  return (*pVal) ? XERROR_INPUT : XERROR_SUCCESS;
+  // handle hexadecimal format 0x.....
+  if ((*pIn == '0') && ((*(pIn + 1) == 'x') || (*(pIn + 1) == 'X'))) {
+    for (pIn += 2; gisxdigit(*pIn); pIn++) 
+      dwOut = (dwOut * 16) + ((*pIn > '9') ? ((*pIn & 0x07) + 9) : (*pIn - '0'));
+    } // if
+
+  else {
+    for ( ; gisdigit(*pIn); pIn++) 
+      dwOut = (dwOut * 10) + (*pIn - '0');
+    } // else
+
+//  for (dwOut = 0; gisdigit(*pIn); pIn++) 
+//    dwOut = (dwOut * 10) + (*pIn - '0');
+
+  return (*pIn) ? XERROR_INPUT : XERROR_SUCCESS;
   } // xstrToUint32
 
 //----------------------------------------------------------------------------

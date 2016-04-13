@@ -1,5 +1,4 @@
 
-//#include <SmingCore/SmingCore.h>
 #include <AppSettings.h>
 #include <HTTP.h>
 #include <gpiod.h>
@@ -11,25 +10,21 @@ CGpiod               g_gpiod;
 //----------------------------------------------------------------------------
 void                 atsOnHttpQuery(HttpRequest &request, HttpResponse &response)
 {
-  String str;
-
   if (!g_http.isHttpClientAllowed(request, response))
     return;
 
   // handle new settings
   if (request.getRequestMethod() == RequestMethod::POST) {
     if (request.getPostParameter("terse")) 
-      g_log.LogPrt(CLOG_CLS_0 | 0x0100, "gpiodOnHttpQuery,terse posted");
+      Debug.logTxt(DEBUG_CLS_0 | 0x0100, "gpiodOnHttpQuery,terse posted");
     } // if
   else {
-    if (request.getQueryParameter("terse")) 
-      g_log.LogPrt(CLOG_CLS_0 | 0x0200, "gpiodOnHttpQuery,terse in query");
+    String strTerse = request.getQueryParameter("terse");
+    Debug.logTxt(DEBUG_CLS_0 | 0x0210, "atsOnHttpQuery,terse=%s", strTerse.c_str());
     
-    str = request.getQueryParameter(String("ccmd"));
-    g_log.LogPrt(CLOG_CLS_0 | 0x0210, "gpiodOnHttpQuery,ccmd=%s", str.c_str());
-
-    str = request.getPostParameter(String("ccmd"));
-    g_log.LogPrt(CLOG_CLS_0 | 0x0220, "gpiodOnHttpQuery,ccmd=%s", str.c_str());
+    String strCcmd = request.getQueryParameter("ccmd");
+    Debug.logTxt(DEBUG_CLS_0 | 0x0210, "atsOnHttpQuery,ccmd=%s", strCcmd.c_str());
+   
     } // else
 
   // send page
@@ -100,12 +95,13 @@ void ICACHE_FLASH_ATTR gpiodOnMqttPublish(String strTopic, String strMsg)
   tGpiodCmd cmd = { 0 };
 
   do {
-    g_log.LogPrt(CGPIOD_CLSLVL | 0x0000, "gpiodOnPublish,topic=%s,msg=%s", strTopic.c_str(), strMsg.c_str());
+    Debug.logTxt(CLSLVL_GPIOD | 0x0000, "gpiodOnPublish,topic=%s,msg=%s", strTopic.c_str(), strMsg.c_str());
+    Debug.logBin(CLSLVL_GPIOD | 0x0010, 2, strTopic.c_str(), strTopic.length(), "gpiodOnPublish");
   
     // check to be sure, but we should not receive other messages
     gsprintf(str, "%s/%s/", AppSettings.mqttClientId.c_str(), AppSettings.mqttCmdPfx.c_str());
     if (xstrnicmp(pTopic, str, gstrlen(str)) && (dwErr = XERROR_DATA)) {
-      g_log.LogPrt(CGPIOD_CLSLVL | 0x0100, "gpiodOnMqttPublish,not for us,dropping");
+      Debug.logTxt(CLSLVL_GPIOD | 0x0100, "gpiodOnMqttPublish,not for us,dropping");
       break;
       } // if
 
@@ -115,7 +111,7 @@ void ICACHE_FLASH_ATTR gpiodOnMqttPublish(String strTopic, String strMsg)
 
     // parse object, cmd and optional parms
     if (g_gpiod.ParseCmd(&cmd, pTopic, pMsg, (g_gpiod.GetEmul() == CGPIOD_EMUL_OUTPUT) ? CGPIOD_OBJ_CLS_WBS : CGPIOD_OBJ_CLS_WBR)) {
-      g_log.LogPrt(CGPIOD_CLSLVL | 0x0200, "gpiodOnMqttPublish,ParseCmd() failed,dropping");
+      Debug.logTxt(CLSLVL_GPIOD | 0x0200, "gpiodOnMqttPublish,ParseCmd() failed,dropping");
       dwErr = XERROR_DATA;
       break;
       } // if
@@ -162,7 +158,8 @@ tUint32 CGpiod::OnInit()
 //--------------------------------------------------------------------------
 // run subsystems
 //--------------------------------------------------------------------------
-void CGpiod::OnRun() {
+void CGpiod::OnRun() 
+{
   tUint32 msNow = millis();
 
   _systemOnRun(msNow);
@@ -178,19 +175,20 @@ void CGpiod::OnRun() {
 //--------------------------------------------------------------------------
 // exit subsystems
 //--------------------------------------------------------------------------
-tUint32 CGpiod::OnExit() {
+tUint32 CGpiod::OnExit() 
+{
+  _systemOnExit();
+  _inputOnExit();
 
   if (m_dwEmul == CGPIOD_EMUL_OUTPUT)
     _outputOnExit();
   else
     _shutterOnExit();
 
-  _inputOnExit();
-  _systemOnExit();
   } // OnExit
 
 //--------------------------------------------------------------------------
-// handle event, dwObj = 0x----TTOO, dwEvt = 0|1-n, szEvt = 0 | "str"
+// handle event, dwObj = 0x----CCOO, dwEvt = 0|1-n, szEvt = 0 | "str"
 //--------------------------------------------------------------------------
 tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt) 
 {
@@ -200,7 +198,7 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
 
   switch (pEvt->dwObj & CGPIOD_OBJ_CLS_MASK) {
     case CGPIOD_OBJ_CLS_INPUT:
-      PrintEvt(pEvt, CGPIOD_CLSLVL | 0x0100, "CGpiod::DoEvt");
+//    PrintEvt(pEvt, CLSLVL_GPIOD | 0x0100, "CGpiod::DoEvt");
 
       if (m_dwMode & CGPIOD_MODE_STANDALONE) { 
         if (m_dwEmul == CGPIOD_EMUL_OUTPUT) 
@@ -219,7 +217,7 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
       break;
 
     case CGPIOD_OBJ_CLS_OUTPUT:
-      PrintEvt(pEvt, CGPIOD_CLSLVL | 0x0200, "CGpiod::DoEvt");
+//    PrintEvt(pEvt, CLSLVL_GPIOD | 0x0200, "CGpiod::DoEvt");
 
       if ((m_dwMode & CGPIOD_MODE_MQTT) && (m_output[dwObj].dwFlags & (0x1 << pEvt->dwEvt))) {
         if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
@@ -231,7 +229,7 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
       break;
 
     case CGPIOD_OBJ_CLS_SHUTTER:
-      PrintEvt(pEvt, CGPIOD_CLSLVL | 0x0400, "CGpiod::DoEvt");
+//    PrintEvt(pEvt, CLSLVL_GPIOD | 0x0400, "CGpiod::DoEvt");
 
       if ((m_dwMode & CGPIOD_MODE_MQTT) && (m_shutter[dwObj].dwFlags & (0x1 << pEvt->dwEvt))) {
         if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
@@ -247,7 +245,7 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
       break;
 
     case CGPIOD_OBJ_CLS_SYSTEM:
-      PrintEvt(pEvt, CGPIOD_CLSLVL | 0x1000, "CGpiod::DoEvt");
+//    PrintEvt(pEvt, CLSLVL_GPIOD | 0x1000, "CGpiod::DoEvt");
       szTopic = pEvt->szTopic ? pEvt->szTopic : "system";
 
       if (pEvt->szEvt)
@@ -291,7 +289,7 @@ tUint32 CGpiod::DoCmd(tGpiodCmd* pCmd)
 //----------------------------------------------------------------------------
 void CGpiod::_DoPublish(tUint32 fDup, tUint32 fQoS, tUint32 fRetain, tCChar* szTopic, tCChar* szMsg) 
 {
-//  g_log.LogPrt(CGPIOD_CLSLVL | 0x0000, "CGpiod::_DoPublish,topic=%s,msg=%s", szTopic, szMsg);
+//  Debug.logTxt(CLSLVL_GPIOD | 0x0000, "CGpiod::_DoPublish,topic=%s,msg=%s", szTopic, szMsg);
   mqttPublishMessage(String(szTopic), String(szMsg));
   } // _DoPublish
 
@@ -300,7 +298,7 @@ void CGpiod::_DoPublish(tUint32 fDup, tUint32 fQoS, tUint32 fRetain, tCChar* szT
 //----------------------------------------------------------------------------
 void CGpiod::begin()
 {
-  g_log.LogPrt(CGPIOD_CLSLVL | 0x0000, "CGpiod::begin");
+  Debug.logTxt(CLSLVL_GPIOD | 0x0000, "CGpiod::begin");
   OnConfig();
   OnInit();
 

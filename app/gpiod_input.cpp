@@ -15,7 +15,7 @@
     tGpiodInput *pObj = m_input; 
 
     // initialise all channels
-    g_log.LogPrt(CGPIOD_CLSLVL_INPUT | 0x0000, "CGpiod::_inputOnConfig");
+    Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0000, "CGpiod::_inputOnConfig");
     memset(m_input, 0, sizeof(m_input)); 
 
     for (dwObj = 0; dwObj < CGPIOD_IN_COUNT; dwObj++, pObj++) {
@@ -41,7 +41,7 @@
     tUint32     dwObj;
     tGpiodInput *pObj = m_input; 
 
-    g_log.LogPrt(CGPIOD_CLSLVL_INPUT | 0x0000, "CGpiod::_inputOnInit");
+    Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0000, "CGpiod::_inputOnInit");
     for (dwObj = 0; dwObj < CGPIOD_IN_COUNT; dwObj++, pObj++) {
       _ioSetPinDir(pObj->dwPin, CGPIOD_PIN_DIR_INPUT);
       _ioSetPinPullup(pObj->dwPin, (pObj->dwPol == CGPIOD_IN_POL_INVERT) ? 1 : 0);
@@ -74,7 +74,7 @@
             pObj->msState = msNow;
             pObj->dwState = CGPIOD_IN_STATE_INGT0;
             evt.dwEvt     = CGPIOD_IN_EVT_INGT0;
-            g_log.LogPrt(CGPIOD_CLSLVL_INPUT | 0x0200, "CGpiod::_inputOnRun,ingt0");
+            Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0200, "CGpiod::_inputOnRun,ingt0");
             DoEvt(&evt);
             } // if
           break;
@@ -86,7 +86,7 @@
             pObj->msState = 0;
             pObj->dwState = CGPIOD_IN_STATE_OUT;
             evt.dwEvt     = CGPIOD_IN_EVT_OUTLT1;
-            g_log.LogPrt(CGPIOD_CLSLVL_INPUT | 0x0300, "CGpiod::_inputOnRun,outlt1");
+            Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0300, "CGpiod::_inputOnRun,outlt1");
             DoEvt(&evt);
             } 
           else {
@@ -95,7 +95,7 @@
 
             pObj->dwState = CGPIOD_IN_STATE_INGT1;
             evt.dwEvt     = CGPIOD_IN_EVT_INGT1;
-            g_log.LogPrt(CGPIOD_CLSLVL_INPUT | 0x0400, "CGpiod::_inputOnRun,ingt1");
+            Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0400, "CGpiod::_inputOnRun,ingt1");
             DoEvt(&evt);
             } // else
           break;
@@ -107,7 +107,7 @@
             pObj->msState = 0;
             pObj->dwState = CGPIOD_IN_STATE_OUT;
             evt.dwEvt     = CGPIOD_IN_EVT_OUTGT1;
-            g_log.LogPrt(CGPIOD_CLSLVL_INPUT | 0x0500, "CGpiod::_inputOnRun,outgt1");
+            Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0500, "CGpiod::_inputOnRun,outgt1");
             DoEvt(&evt);
             } 
           else {
@@ -116,7 +116,7 @@
 
             pObj->dwState = CGPIOD_IN_STATE_INGT2;
             evt.dwEvt     = CGPIOD_IN_EVT_INGT2;
-            g_log.LogPrt(CGPIOD_CLSLVL_INPUT | 0x0600, "CGpiod::_inputOnRun,ingt2");
+            Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0600, "CGpiod::_inputOnRun,ingt2");
             DoEvt(&evt);
             } // else
           break;
@@ -128,7 +128,7 @@
             pObj->msState = 0;
             pObj->dwState = CGPIOD_IN_STATE_OUT;
             evt.dwEvt     = CGPIOD_IN_EVT_OUT;
-            g_log.LogPrt(CGPIOD_CLSLVL_INPUT | 0x0700, "CGpiod::_inputOnRun,out");
+            Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0700, "CGpiod::_inputOnRun,out");
             DoEvt(&evt);
             } 
           break;
@@ -143,7 +143,7 @@
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_inputOnExit() 
   {
-    g_log.LogPrt(CGPIOD_CLSLVL_INPUT | 0x0000, "CGpiod::_inputOnExit");
+    Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0000, "CGpiod::_inputOnExit");
     return m_dwError;
     } // CGpiod::_inputOnExit
 

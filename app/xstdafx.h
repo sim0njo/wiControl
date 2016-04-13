@@ -45,6 +45,7 @@
 
 #ifdef SMING
   #include <SmingCore/SmingCore.h>
+  #include <SmingCore/Debug.h>
 #endif //
 
 /********************************** Includes **********************************/
@@ -76,6 +77,13 @@ typedef double                            tDouble; //
 typedef float                              tFloat; //
 typedef long long                          tInt64; //
 typedef unsigned long long                tUint64; //
+
+
+#ifdef SMING
+#define ESP8266_MILLIS_MAX                 4294967 //
+#define ESP8266_MILLIS_MID                 2147483 //
+#endif //
+
 
 #ifndef xmax
 #define xmax(a,b)           (((a) > (b)) ? (a) : (b))
