@@ -16,7 +16,7 @@ void                 atsOnHttpQuery(HttpRequest &request, HttpResponse &response
   // handle new settings
   if (request.getRequestMethod() == RequestMethod::POST) {
     if (request.getPostParameter("terse")) 
-      Debug.logTxt(DEBUG_CLS_0 | 0x0100, "gpiodOnHttpQuery,terse posted");
+      Debug.logTxt(DEBUG_CLS_0 | 0x0100, "atsOnHttpQuery,terse posted");
     } // if
   else {
     String strTerse = request.getQueryParameter("terse");
@@ -41,7 +41,7 @@ void                 gpiodOnHttpConfig(HttpRequest &request, HttpResponse &respo
 
   // handle new settings
   if (request.getRequestMethod() == RequestMethod::POST) {
-    AppSettings.gpiodEmul = (request.getPostParameter("gpiodEmul") == "0") ? CGPIOD_EMUL_OUTPUT     : CGPIOD_EMUL_SHUTTER;
+    AppSettings.gpiodEmul = (request.getPostParameter("gpiodEmul") == "1") ? CGPIOD_EMUL_OUTPUT     : CGPIOD_EMUL_SHUTTER;
     AppSettings.gpiodMode = (request.getPostParameter("gpiodMode") == "1") ? CGPIOD_MODE_STANDALONE : 
                             (request.getPostParameter("gpiodMode") == "2") ? CGPIOD_MODE_MQTT       : CGPIOD_MODE_BOTH;
     AppSettings.gpiodEfmt = (request.getPostParameter("gpiodEfmt") == "0") ? CGPIOD_EFMT_NUMERICAL  : CGPIOD_EFMT_TEXTUAL;
@@ -57,8 +57,8 @@ void                 gpiodOnHttpConfig(HttpRequest &request, HttpResponse &respo
   auto &vars = tmpl->variables();
   vars["appAlias"] = APP_ALIAS;
 
-  vars["gpiodEmul0"] = (AppSettings.gpiodEmul == CGPIOD_EMUL_OUTPUT)     ? "checked='checked'" : "";
-  vars["gpiodEmul1"] = (AppSettings.gpiodEmul == CGPIOD_EMUL_SHUTTER)    ? "checked='checked'" : "";
+  vars["gpiodEmul1"] = (AppSettings.gpiodEmul == CGPIOD_EMUL_OUTPUT)     ? "checked='checked'" : "";
+  vars["gpiodEmul2"] = (AppSettings.gpiodEmul == CGPIOD_EMUL_SHUTTER)    ? "checked='checked'" : "";
 
   vars["gpiodMode1"] = (AppSettings.gpiodMode == CGPIOD_MODE_STANDALONE) ? "checked='checked'" : "";
   vars["gpiodMode2"] = (AppSettings.gpiodMode == CGPIOD_MODE_MQTT)       ? "checked='checked'" : "";
@@ -110,7 +110,7 @@ void ICACHE_FLASH_ATTR gpiodOnMqttPublish(String strTopic, String strMsg)
     g_dwMqttPktRx++;
 
     // parse object, cmd and optional parms
-    if (g_gpiod.ParseCmd(&cmd, pTopic, pMsg, (g_gpiod.GetEmul() == CGPIOD_EMUL_OUTPUT) ? CGPIOD_OBJ_CLS_WBS : CGPIOD_OBJ_CLS_WBR)) {
+    if (g_gpiod.ParseCmd(&cmd, pTopic, pMsg, CGPIOD_ORIG_MQTT, g_gpiod.GetEmul())) {
       Debug.logTxt(CLSLVL_GPIOD | 0x0200, "gpiodOnMqttPublish,ParseCmd() failed,dropping");
       dwErr = XERROR_DATA;
       break;
@@ -207,6 +207,7 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
           _shutterDoEvt(pEvt);
         } // if
 
+      // only if orig==local !!!
       if ((m_dwMode & CGPIOD_MODE_MQTT) && (m_input[dwObj].dwFlags & (0x1 << pEvt->dwEvt))) {
         if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
           _DoPublish(0, 0, 0, _printObj2String(str1, pEvt->dwObj), _printVal2String(str2, pEvt->dwEvt));
@@ -289,7 +290,6 @@ tUint32 CGpiod::DoCmd(tGpiodCmd* pCmd)
 //----------------------------------------------------------------------------
 void CGpiod::_DoPublish(tUint32 fDup, tUint32 fQoS, tUint32 fRetain, tCChar* szTopic, tCChar* szMsg) 
 {
-//  Debug.logTxt(CLSLVL_GPIOD | 0x0000, "CGpiod::_DoPublish,topic=%s,msg=%s", szTopic, szMsg);
   mqttPublishMessage(String(szTopic), String(szMsg));
   } // _DoPublish
 

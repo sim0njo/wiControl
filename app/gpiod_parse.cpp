@@ -7,26 +7,33 @@
 #include <gpiod.h>
 
 //--------------------------------------------------------------------------
-//
+// parse command
+//   pObj = 0                         | <obj>
+//   pCmd = <obj>.<method> *[.<parm>] | <method> *[.<parm>]
 //--------------------------------------------------------------------------
-tUint32 CGpiod::ParseCmd(tGpiodCmd* pOut, tChar* pObj, tChar* pCmd, tUint32 dwMask1) 
+tUint32 CGpiod::ParseCmd(tGpiodCmd* pOut, tChar* pObj, tChar* pCmd, tUint32 dwOrig, tUint32 dwEmul) 
 {
   tUint32 dwErr = XERROR_SUCCESS;
 
   do {
     // parse object
+    memset(pOut, 0, sizeof(tGpiodCmd));
     m_parse.SetReservedIdents(g_gpiodParseObj);
-    m_parse.SetString(pObj);
-    if ((m_parse.NextToken(1, dwMask1) != CPARSE_TYPE_NODE) && (dwErr = XERROR_DATA))
+    m_parse.SetString(pObj ? pObj : pCmd);
+    if ((m_parse.NextToken(dwOrig, dwEmul) != CPARSE_TYPE_NODE) && (dwErr = XERROR_DATA))
       break;
       
-    pOut->dwObj = m_parse.TVal();
+    pOut->dwOrig = dwOrig;
+    pOut->dwObj  = m_parse.TVal();
 
     // parse command and parms
-    m_parse.SetString(pCmd);
+    if (pObj)
+      m_parse.SetString(pCmd);
+    else
+      m_parse.SkipSeparator(CPARSE_TYPE_PERIOD, 0);
 
     switch (pOut->dwObj & CGPIOD_OBJ_CLS_MASK) {
-      case CGPIOD_OBJ_CLS_INPUT:   dwErr = _parseEvtInput(pOut);
+      case CGPIOD_OBJ_CLS_INPUT:   dwErr = _parseCmdInput(pOut);
         break;
       case CGPIOD_OBJ_CLS_OUTPUT:  dwErr = _parseCmdOutput(pOut);
         break;
@@ -46,13 +53,13 @@ tUint32 CGpiod::ParseCmd(tGpiodCmd* pOut, tChar* pObj, tChar* pCmd, tUint32 dwMa
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-tUint32 CGpiod::_parseEvtInput(tGpiodCmd* pOut) 
+tUint32 CGpiod::_parseCmdInput(tGpiodCmd* pOut) 
 {
   tUint32 dwErr = XERROR_SUCCESS;
 
   do {
-    m_parse.SetReservedIdents(g_gpiodParseObjEvt);
-    if ((m_parse.NextToken(1, CGPIOD_OBJ_CLS_INPUT) != CPARSE_TYPE_LEAF) && (dwErr = XERROR_DATA))
+    m_parse.SetReservedIdents(g_gpiodParseCmdInput);
+    if ((m_parse.NextToken(pOut->dwOrig, gpiodNum2Mask(pOut->dwObj & CGPIOD_OBJ_NUM_MASK)) != CPARSE_TYPE_LEAF) && (dwErr = XERROR_DATA))
       break;
 
     pOut->dwCmd = m_parse.TVal();
@@ -60,7 +67,7 @@ tUint32 CGpiod::_parseEvtInput(tGpiodCmd* pOut)
     } while (FALSE);
 
   return dwErr; 
-  } // _parseEvtInput
+  } // _parseCmdInput
 
 //----------------------------------------------------------------------------
 //
@@ -71,7 +78,7 @@ tUint32 CGpiod::_parseCmdOutput(tGpiodCmd* pOut)
 
   do {
     m_parse.SetReservedIdents(g_gpiodParseCmdOutput);
-    if ((m_parse.NextToken(1, CGPIOD_OBJ_CLS_OUTPUT) != CPARSE_TYPE_LEAF) && (dwErr = XERROR_DATA))
+    if ((m_parse.NextToken(pOut->dwOrig, gpiodNum2Mask(pOut->dwObj & CGPIOD_OBJ_NUM_MASK)) != CPARSE_TYPE_LEAF) && (dwErr = XERROR_DATA))
       break;
 
     pOut->dwCmd = m_parse.TVal();
@@ -90,7 +97,7 @@ tUint32 CGpiod::_parseCmdShutter(tGpiodCmd* pOut)
 
   do {
     m_parse.SetReservedIdents(g_gpiodParseCmdShutter);
-    if ((m_parse.NextToken(1, CGPIOD_OBJ_CLS_SHUTTER) != CPARSE_TYPE_LEAF) && (dwErr = XERROR_DATA))
+    if ((m_parse.NextToken(pOut->dwOrig, gpiodNum2Mask(pOut->dwObj & CGPIOD_OBJ_NUM_MASK)) != CPARSE_TYPE_LEAF) && (dwErr = XERROR_DATA))
       break;
 
     pOut->dwCmd = m_parse.TVal();
@@ -108,9 +115,8 @@ tUint32 CGpiod::_parseCmdSystem(tGpiodCmd* pOut)
   tUint32 dwErr = XERROR_SUCCESS;
 
   do {
-    // parse command
     m_parse.SetReservedIdents(g_gpiodParseCmdSystem);
-    if ((m_parse.NextToken(1, CGPIOD_OBJ_CLS_SYSTEM) != CPARSE_TYPE_LEAF) && (dwErr = XERROR_DATA))
+    if ((m_parse.NextToken(pOut->dwOrig, 1) != CPARSE_TYPE_LEAF) && (dwErr = XERROR_DATA))
       break;
 
     pOut->dwCmd = m_parse.TVal();
@@ -175,11 +181,13 @@ tUint32 CGpiod::_parseCmdParams(tGpiodCmd* pOut)
 
     if (pOut->dwCmd & 0x08000000) { // tiptime 1-65535 1/10th seconds (6535s or 65535 1/10th s)
       if (dwErr = m_parse.GetNumber(&pOut->dwTip, 1, 65535)) break;
+      pOut->parmsShutter.dwTip = pOut->dwTip;
 //    Debug.LogTxt(m_dwClsLvl | 0x0010, "%s,tip=%u", pFunc, pOut->dwTip);
       } // if
 
     if (pOut->dwCmd & 0x10000000) { // <emul> 0|1
       if (dwErr = m_parse.GetNumber(&pOut->dwEmul, 0, 1)) break;
+      pOut->parmsSystem.dwEmul = pOut->dwEmul;
       } // if
 
     if (pOut->dwCmd & 0x20000000) { // <mode> 1|2|3

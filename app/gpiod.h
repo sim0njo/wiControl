@@ -15,9 +15,12 @@
 
 extern tParseRsvd    g_gpiodParseObj[];
 extern tParseRsvd    g_gpiodParseObjEvt[];
+extern tParseRsvd    g_gpiodParseCmdInput[];
 extern tParseRsvd    g_gpiodParseCmdOutput[];
 extern tParseRsvd    g_gpiodParseCmdShutter[];
 extern tParseRsvd    g_gpiodParseCmdSystem[];
+
+#define gpiodNum2Mask(dwNum)        (0x1 << dwNum)
 
 #define CGPIOD_VERSION                   "4.0.1.0" //                                   
 #define CGPIOD_DATE                       __DATE__ //
@@ -25,8 +28,8 @@ extern tParseRsvd    g_gpiodParseCmdSystem[];
 #define CGPIOD_CMD_PFX                       "cmd" //
 #define CGPIOD_EVT_PFX                       "evt" //
 
-#define CGPIOD_EMUL_OUTPUT                       0 // emulate output0-1
-#define CGPIOD_EMUL_SHUTTER                      1 // emulate shutter0
+#define CGPIOD_EMUL_OUTPUT                       1 // emulate output0-1
+#define CGPIOD_EMUL_SHUTTER                      2 // emulate shutter0
 
 #define CGPIOD_MODE_STANDALONE                   1 // handle events locally
 #define CGPIOD_MODE_MQTT                         2 // publish events
@@ -35,6 +38,18 @@ extern tParseRsvd    g_gpiodParseCmdSystem[];
 #define CGPIOD_EFMT_NUMERICAL                    0 // 
 #define CGPIOD_EFMT_TEXTUAL                      1 // 
 
+//----------------------------------------------------------------------------
+#define CGPIOD_ORIG_INPUT               0x10000000 // 
+#define CGPIOD_ORIG_OUTPUT              0x10000001 // 
+#define CGPIOD_ORIG_SHUTTER             0x10000002 // 
+#define CGPIOD_ORIG_CLI                 0x10000004 // 
+#define CGPIOD_ORIG_HTTP                0x10000008 // 
+#define CGPIOD_ORIG_MQTT                0x00000010 // 
+#define CGPIOD_ORIG_INTERNAL            0x80000000 // 
+
+#define CGPIOD_ORIG_FLG_PUBLISH         0x10000000 // 
+
+//----------------------------------------------------------------------------
 #define CGPIOD_PIN_DIR_INPUT                     0 // 
 #define CGPIOD_PIN_DIR_OUTPUT                    1 // 
 
@@ -177,7 +192,11 @@ typedef struct {
 #define CGPIOD_OUT_CMD_TIMESET                  16 //
 #define CGPIOD_OUT_CMD_TIMEADD                  17 //
 #define CGPIOD_OUT_CMD_TIMEABORT                18 //
-#define CGPIOD_OUT_CMD_BLINK                    19 //
+#define CGPIOD_OUT_CMD_TIMERONDELAYED           19 //
+#define CGPIOD_OUT_CMD_TIMEROFFDELAYED          20 //
+#define CGPIOD_OUT_CMD_TIMERONTIMED             21 //
+#define CGPIOD_OUT_CMD_TIMERABORT               22 //
+#define CGPIOD_OUT_CMD_BLINK                    23 //
 
 #define CGPIOD_OUT_EVT_ON                        2 //
 #define CGPIOD_OUT_EVT_OFF                       3 //
@@ -235,6 +254,10 @@ typedef struct {
 #define CGPIOD_UDM_CMD_SENSJALUP                16 //
 #define CGPIOD_UDM_CMD_SENSROLDOWN              17 //
 #define CGPIOD_UDM_CMD_SENSJALDOWN              18 //
+#define CGPIOD_UDM_CMD_TIMERONDELAYED           19 //
+#define CGPIOD_UDM_CMD_TIMEROFFDELAYED          20 //
+#define CGPIOD_UDM_CMD_TIMERONTIMED             21 //
+#define CGPIOD_UDM_CMD_TIMERABORT               22 //
 
 #define CGPIOD_UDM_PRIO_LVL_0                    0 //
 #define CGPIOD_UDM_PRIO_LVL_1                    1 //
@@ -291,6 +314,7 @@ typedef struct {
 //----------------------------------------------------------------------------
 typedef struct {
   tUint32            msNow;                        // 
+  tUint32            dwOrig;                       // 
   tUint32            dwObj;                        // 
   tUint32            dwCmd;                        // 
   tUint32            dwLock;                       //
@@ -305,6 +329,7 @@ typedef struct {
 
   union {
     struct {
+      tUint32        dwDelay;                      //
       tUint32        dwRun;                        //
       } parmsOutput;
     struct {
@@ -389,8 +414,8 @@ class CGpiod {
   //--------------------------------------------------------------------------
   // gpiod_parse.cpp
   //--------------------------------------------------------------------------
-  tUint32            ParseCmd(tGpiodCmd* pOut, tChar* pObj, tChar* pCmd, tUint32 dwMask1);
-  tUint32            _parseEvtInput(tGpiodCmd* pOut);
+  tUint32            ParseCmd(tGpiodCmd* pOut, tChar* pObj, tChar* pCmd, tUint32 dwMask0, tUint32 dwMask1);
+  tUint32            _parseCmdInput(tGpiodCmd* pOut);
   tUint32            _parseCmdOutput(tGpiodCmd* pOut);
   tUint32            _parseCmdShutter(tGpiodCmd* pOut);
   tUint32            _parseCmdSystem(tGpiodCmd* pOut);

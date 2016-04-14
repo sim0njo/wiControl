@@ -60,12 +60,9 @@ tCChar* CGpiod::_printObj2String(tChar* pOut, tUint32 dwObj)
 tCChar* CGpiod::_printObjEvt2String(tChar* pOut, tUint32 dwObj, tUint32 dwEvt) 
 {
   tParseRsvd *pRsvd = g_gpiodParseObjEvt;
-//tParseRsvd *pRsvd = (dwObj & CGPIOD_OBJ_CLS_INPUT)   ? g_gpiodParseEvtInput  :
-//                    (dwObj & CGPIOD_OBJ_CLS_OUTPUT)  ? g_gpiodParseCmdOutput  :
-//                    (dwObj & CGPIOD_OBJ_CLS_SHUTTER) ? g_gpiodParseCmdShutter : g_gpiodParseCmdSystem;
 
   for ( ; pRsvd->dwMask0; pRsvd++)
-    if (((pRsvd->dwMask1 & CGPIOD_OBJ_CLS_MASK) &  (dwObj & CGPIOD_OBJ_CLS_MASK)) &&
+    if (((pRsvd->dwMask0 & CGPIOD_OBJ_CLS_MASK) &  (dwObj & CGPIOD_OBJ_CLS_MASK)) &&
         ((pRsvd->dwTVal  & CGPIOD_OBJ_EVT_MASK) == (dwEvt & CGPIOD_OBJ_EVT_MASK))) { 
       gstrcpy(pOut, pRsvd->szTVal);
       return pOut; 
@@ -81,12 +78,13 @@ tCChar* CGpiod::_printObjEvt2String(tChar* pOut, tUint32 dwObj, tUint32 dwEvt)
 tCChar* CGpiod::_printObjCmd2String(tChar* pOut, tUint32 dwObj, tUint32 dwCmd) 
 {
   tUint32    dwErr  = XERROR_SUCCESS;
-  tParseRsvd *pRsvd = (dwObj & CGPIOD_OBJ_CLS_INPUT)   ? g_gpiodParseObjEvt  :
+  tParseRsvd *pRsvd = (dwObj & CGPIOD_OBJ_CLS_INPUT)   ? g_gpiodParseCmdInput   :
                       (dwObj & CGPIOD_OBJ_CLS_OUTPUT)  ? g_gpiodParseCmdOutput  :
                       (dwObj & CGPIOD_OBJ_CLS_SHUTTER) ? g_gpiodParseCmdShutter : g_gpiodParseCmdSystem;
 
   for ( ; pRsvd->dwMask0; pRsvd++)
-    if (((pRsvd->dwMask1 & CGPIOD_OBJ_CLS_MASK) &  (dwObj & CGPIOD_OBJ_CLS_MASK)) &&
+    if (
+//      ((pRsvd->dwMask1 & CGPIOD_OBJ_CLS_MASK) &  (dwObj & CGPIOD_OBJ_CLS_MASK)) &&
         ((pRsvd->dwTVal  & CGPIOD_OBJ_CMD_MASK) == (dwCmd & CGPIOD_OBJ_CMD_MASK))) {
       gstrcpy(pOut, pRsvd->szTVal);
       return pOut; 
