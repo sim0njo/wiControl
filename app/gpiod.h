@@ -11,7 +11,7 @@
 #include <xstdafx.h>
 #include <xerror.h>
 #include <cparse.hpp>
-#include <app_logclslvl.h>
+#include <app_log_clslevels.h>
 
 extern tParseRsvd    g_gpiodParseObj[];
 extern tParseRsvd    g_gpiodParseObjEvt[];

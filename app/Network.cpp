@@ -151,11 +151,11 @@ void NetworkClass::softApEnable()
     sprintf(id, "%x", system_get_chip_id());
     if (AppSettings.apPassword.equals(""))
     {
-        WifiAccessPoint.config((String)"WifiIoNode-" + id, "", AUTH_OPEN);
+        WifiAccessPoint.config((String)"wiControl-" + id, "", AUTH_OPEN);
     }
     else
     {
-        WifiAccessPoint.config((String)"WifiIoNode-" + id,
+        WifiAccessPoint.config((String)"wiControl-" + id,
                                AppSettings.apPassword, AUTH_WPA_WPA2_PSK);
     }
 
@@ -257,8 +257,8 @@ void NetworkClass::handleEvent(System_Event_t *e)
         if (connected)
         {
             connected = false;
-            Debug.printf("Wifi client got disconnected (%d)\n",
-                         e->event_info.disconnected.reason);
+            Debug.printf("Wifi client got disconnected (%d)\n", e->event_info.disconnected.reason);
+
             // Enable SoftAP.
             // This function will check whether the AP can be enabled.
             softApEnable();
