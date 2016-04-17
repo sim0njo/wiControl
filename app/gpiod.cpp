@@ -242,6 +242,7 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
       break;
 
     case CGPIOD_OBJ_CLS_HBEAT:
+      _systemDoEvt(pEvt);
       _outputDoEvt(pEvt);
       break;
 

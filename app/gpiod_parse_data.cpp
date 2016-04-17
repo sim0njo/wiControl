@@ -86,6 +86,7 @@ tParseRsvd g_gpiodParseCmdOutput[] = {
   { 0x00000018      , 0x00000000       , CPARSE_TYPE_LEAF, 0x00000015, "timerontimed",   },
   { 0x00000018      , 0x00000000       , CPARSE_TYPE_LEAF, 0x00000016, "timerabort",     },
   { 0x00000018      , 0x00000003       , CPARSE_TYPE_LEAF, 0x00000017, "blink",          },
+  { 0x00000018      , 0x00000003       , CPARSE_TYPE_LEAF, 0x02000018, "blinktimed",     }, // 1-65535 s
 
   { 0x00000000      , 0x00000000       , 0x00000000      , 0x00000000, "",         },
   };
@@ -123,23 +124,19 @@ tParseRsvd g_gpiodParseCmdShutter[] = {
 tParseRsvd g_gpiodParseCmdSystem[] = {
 //  dwMask0           dwMask1            dwTType           dwTVal      szTVal
 //  CGPIOD_ORIG_%                                          0xPPPPMMMM                                   
-  { 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000001, "version",   },
-  { 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000002, "memory",    },
-  { 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000003, "uptime",    },
-  { 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x80000004, "emul",      }, // <emul>.ack
-  { 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x80000005, "mode",      }, // <mode>.ack
-  { 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x80000006, "efmt",      }, // <efmt>.ack
-  { 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x80000007, "disable",   }, // ack
-  { 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x80000008, "enable",    }, // ack
-  { 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x80000009, "reboot",    }, // ack
-//{ 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000000, "output",    },
-//{ 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000001, "shutter",   },
-//{ 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000001, "standalone",},
-//{ 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000002, "networked", },
-//{ 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000003, "both",      },
-//{ 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000000, "numerical", },
-//{ 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000001, "textual",   } ,
-//{ 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000001, "ack",       },
+  { 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000001, "ping",      },
+  { 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000002, "version",   },
+  { 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000003, "memory",    },
+  { 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000004, "uptime",    },
+  { 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x80010005, "loglevel",  }, // <loglevel>.ack
+  { 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x80020006, "emul",      }, // <emul>.ack
+  { 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x80040007, "mode",      }, // <mode>.ack
+  { 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x80080008, "efmt",      }, // <efmt>.ack
+  { 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x80100009, "lock",      }, // .ack
+  { 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x8010000A, "disable",   }, // .ack
+  { 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x8000000B, "restart",   }, // .ack
+
+  { 0x00000018      , 0x00001000       , CPARSE_TYPE_PARM, 0x00000001, "ack",       },
 
   { 0x00000000      , 0x00000000       , 0x00000000      , 0x00000000, "", },
   };

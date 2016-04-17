@@ -22,7 +22,9 @@
       // initialise defaults
       pObj->dwFlags     = CGPIOD_IN_FLG_MQTT_ALL; // all events to MQTT
       pObj->dwState     = CGPIOD_IN_STATE_OUT; 
-      pObj->dwPin       = (dwObj == 0) ? CGPIOD_IN0_PIN : CGPIOD_IN1_PIN; 
+      pObj->dwPin       = (dwObj == 0) ? CGPIOD_IN0_PIN : 
+                          (dwObj == 1) ? CGPIOD_IN1_PIN : 
+                          (dwObj == 2) ? CGPIOD_IN2_PIN : CGPIOD_IN3_PIN; 
       pObj->dwPol       = CGPIOD_IN_POL_INVERT;  
       pObj->dwVal       = CGPIOD_IN_VAL_OUT; 
       pObj->tmrDebounce = CGPIOD_IN_TMR_DEBOUNCE; 
