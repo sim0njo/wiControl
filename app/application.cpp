@@ -103,6 +103,8 @@ void processInfoCommand(String commandLine, CommandOutput* pOut)
   pOut->printf("Gpiod mode         : %s\r\n", (g_gpiod.GetMode() == CGPIOD_MODE_STANDALONE) ? "standalone" :
                                               (g_gpiod.GetMode() == CGPIOD_MODE_MQTT)       ? "MQTT"       : "both");
   pOut->printf("Gpiod event format : %s\r\n", (g_gpiod.GetEfmt() == CGPIOD_EFMT_NUMERICAL)  ? "numerical"  : "textual");
+  pOut->printf("Gpiod lock state   : %s\r\n", (g_gpiod.GetFlags(CGPIOD_FLG_LOCK))           ? "locked"     : "unlocked");
+  pOut->printf("Gpiod disable state: %s\r\n", (g_gpiod.GetFlags(CGPIOD_FLG_DISABLE))        ? "disabled"   : "enabled");
   pOut->printf("\r\n");
 
   pOut->printf("System Time        : ");

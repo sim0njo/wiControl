@@ -12,7 +12,6 @@
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_systemOnConfig() 
   {
-//    tChar   str[32];
     tUint32      dwObj;
     tGpiodOutput *pObj = m_led; 
 
@@ -146,7 +145,8 @@
     tGpiodOutput *pObj = m_led; 
 
     if ((pEvt->dwObj & CGPIOD_OBJ_CLS_MASK) == CGPIOD_OBJ_CLS_HBEAT) {
-      // handle 1 second heartbeat for synchronous blinking outputs
+      
+      // handle 1 second heartbeat for synchronous blinking leds
       for (dwObj = 0; dwObj < CGPIOD_LED_COUNT; dwObj++, pObj++) {
         if ((pObj->dwCmd == CGPIOD_LED_CMD_BLINK) || (pObj->dwCmd == CGPIOD_LED_CMD_BLINKTIMED))
           _outputSetState(pObj, (pEvt->dwEvt == CGPIOD_HB_EVT_ODD) ? CGPIOD_OUT_STATE_ON : CGPIOD_OUT_STATE_OFF, 0);

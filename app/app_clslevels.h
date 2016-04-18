@@ -20,6 +20,7 @@
 #define CLSLVL_MQTT                   DEBUG_LVL_01 //
 #define CLSLVL_HTTP                   DEBUG_LVL_02 //
 #define CLSLVL_NETWORK                DEBUG_LVL_03 //
+#define CLSLVL_ATS                    DEBUG_LVL_04 //
                                                
 #define CLSLVL_GPIOD                  DEBUG_LVL_08 // 0x0100
 #define CLSLVL_GPIOD_INPUT            DEBUG_LVL_09 // 0x0200

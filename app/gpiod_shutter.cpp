@@ -235,6 +235,14 @@
     } // _shutterCheckPrio
 
   //--------------------------------------------------------------------------
+  // get shutter status
+  //--------------------------------------------------------------------------
+  tUint32 CGpiod::_shutterGetCmdStatus(tGpiodCmd* pCmd) 
+  { 
+    return m_shutter[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK].dwState;
+    } // CGpiod::_shutterGetCmdStatus
+
+  //--------------------------------------------------------------------------
   // called by _DoCmd()
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_shutterDoCmd(tGpiodCmd* pCmd) 

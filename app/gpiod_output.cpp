@@ -182,6 +182,14 @@
     } // CGpiod::_outputDoEvt
 
   //--------------------------------------------------------------------------
+  // get output status
+  //--------------------------------------------------------------------------
+  tUint32 CGpiod::_outputGetCmdStatus(tGpiodCmd* pCmd) 
+  { 
+    return m_output[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK].dwState;
+    } // CGpiod::_outputGetCmdStatus
+
+  //--------------------------------------------------------------------------
   // execute command for outputs, called by _DoCmd()
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_outputDoCmd(tGpiodCmd* pCmd) 
@@ -311,11 +319,12 @@
         break;
 
       default:
+        pCmd->dwError = XERROR_INPUT;
         Debug.logTxt(CLSLVL_GPIOD_OUTPUT | 0x9999, "CGpiod::_outputDoCmd,unknown cmd %u", pCmd->dwCmd);
         break;
       } // switch
 
-    return XERROR_SUCCESS; 
+    return pCmd->dwError; 
     } // _outputDoCmd
 
   //--------------------------------------------------------------------------

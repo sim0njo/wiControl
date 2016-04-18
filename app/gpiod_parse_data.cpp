@@ -15,7 +15,7 @@ tParseRsvd g_gpiodParseObj[] = {
   { 0x00000018      , 0x00000001       , CPARSE_TYPE_NODE, 0x00000201, "out1",     },
   { 0x00000018      , 0x00000002       , CPARSE_TYPE_NODE, 0x00000400, "out0",     },
   { 0x10000000      , 0x00000000       , CPARSE_TYPE_NODE, 0x00000800, "hbeat0",   }, // only for print
-  { 0x00000018      , 0x00000003       , CPARSE_TYPE_NODE, 0x00001000, "system",   },
+  { 0x00000010      , 0x00000003       , CPARSE_TYPE_NODE, 0x00001000, "system",   },
                                                                          
   { 0x00000000      , 0x00000000       , 0x00000000      , 0x00000000, "",         },
   };

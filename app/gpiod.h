@@ -356,6 +356,7 @@ typedef struct {
   tUint32            dwObj;                        // 
   tUint32            dwCmd;                        // 
   tUint32            dwParms;                      //
+  tUint32            dwError;                      //
 
   union {
     struct {
@@ -427,9 +428,9 @@ class CGpiod {
   //--------------------------------------------------------------------------
   //
   //--------------------------------------------------------------------------
-  tUint32            _GetFlags(tUint32* pFlags, tUint32 dwFlags) { return *pFlags &   dwFlags; }
-  tUint32            _SetFlags(tUint32* pFlags, tUint32 dwFlags) { return *pFlags |=  dwFlags; }
-  tUint32            _RstFlags(tUint32* pFlags, tUint32 dwFlags) { return *pFlags &= ~dwFlags; }
+  tUint32            GetFlags(tUint32 dwFlags)     { return m_dwFlags &   dwFlags; }
+//tUint32            SetFlags(tUint32 dwFlags)     { return m_dwFlags |=  dwFlags; }
+//tUint32            RstFlags(tUint32 dwFlags)     { return m_dwFlags &= ~dwFlags; }
 
   //--------------------------------------------------------------------------
   // gpiod.cpp
@@ -443,6 +444,7 @@ class CGpiod {
   void               OnRun();
   tUint32            OnExit();
 
+  tUint32            GetCmdStatus(tGpiodCmd* pCmd);
   tUint32            DoCmd(tGpiodCmd* pCmd);
   tUint32            DoEvt(tGpiodEvt* pEvt);
   void               _DoPublish(tUint32 fDup, tUint32 fQoS, tUint32 fRetain, tCChar* szObj, tCChar* szMsg);
@@ -470,6 +472,13 @@ class CGpiod {
 
  private:
   //--------------------------------------------------------------------------
+  //
+  //--------------------------------------------------------------------------
+  tUint32            _GetFlags(tUint32* pFlags, tUint32 dwFlags) { return *pFlags &   dwFlags; }
+  tUint32            _SetFlags(tUint32* pFlags, tUint32 dwFlags) { return *pFlags |=  dwFlags; }
+  tUint32            _RstFlags(tUint32* pFlags, tUint32 dwFlags) { return *pFlags &= ~dwFlags; }
+
+  //--------------------------------------------------------------------------
   // gpiod_input.cpp
   //--------------------------------------------------------------------------
   tUint32            _inputOnConfig();
@@ -487,6 +496,7 @@ class CGpiod {
   tUint32            _outputOnExit();
   tUint32            _outputDoEvt(tGpiodEvt* pEvt);
   tUint32            _outputDoCmd(tGpiodCmd* pCmd);
+  tUint32            _outputGetCmdStatus(tGpiodCmd* pCmd);
   void               _outputSetState(tGpiodOutput* pObj, tUint32 dwState, tGpiodEvt* pEvt);
 
   //--------------------------------------------------------------------------
@@ -498,6 +508,7 @@ class CGpiod {
   tUint32            _shutterOnExit();
   tUint32            _shutterDoEvt(tGpiodEvt* pEvt);
   tUint32            _shutterDoCmd(tGpiodCmd* pCmd);
+  tUint32            _shutterGetCmdStatus(tGpiodCmd* pCmd);
   tUint32            _shutterCheckPrio(tGpiodShutter* pObj, tGpiodCmd* pCmd);
   void               _shutterSetState(tGpiodShutter* pObj, tUint32 dwState, tGpiodEvt* pEvt);
 
