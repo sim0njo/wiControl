@@ -26,7 +26,7 @@
     m_dwEfmt  = AppSettings.gpiodEfmt;
     Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0030, "CGpiod::_systemOnConfig,efmt=%u", m_dwEfmt);
 
-    // configure heartbeat timers
+    // configure heartbeat timer
     memset(&m_hbeat, 0, sizeof(m_hbeat));
     m_hbeat.msPeriod = CGPIOD_HB0_PERIOD;
 
@@ -62,18 +62,6 @@
   //--------------------------------------------------------------------------
   // run outputs
   //--------------------------------------------------------------------------
-  tUint32 CGpiod::timerExpired(tUint32 msNow, tUint32 msTimer) 
-  {
-    // handle clock wrap
-    if ((msTimer > ESP8266_MILLIS_MID) && (msNow < ESP8266_MILLIS_MID))
-      msNow += ESP8266_MILLIS_MAX;
-    
-    return (msNow > msTimer) ? 1 : 0;
-    } //
-
-  //--------------------------------------------------------------------------
-  // run outputs
-  //--------------------------------------------------------------------------
   tUint32 CGpiod::_systemOnRun(tUint32 msNow) 
   {
     tUint32      dwObj;
@@ -81,7 +69,7 @@
     tGpiodEvt    evt = { msNow, 0, 0, 0, 0 };
 
     // handle heartbeat timer
-    if (timerExpired(msNow, m_hbeat.msStart + m_hbeat.msPeriod)) {
+    if (TimerExpired(msNow, m_hbeat.msStart + m_hbeat.msPeriod)) {
       m_hbeat.dwCntr++;
       m_hbeat.msStart = msNow;
       evt.dwObj = CGPIOD_OBJ_CLS_HBEAT + dwObj;
@@ -177,14 +165,14 @@
       case CGPIOD_SYS_CMD_VERSION: 
         evt.szTopic = "version";
         evt.szEvt   = CGPIOD_VERSION;
-        DoEvt(&evt);
+        DoSta(&evt);
         break;
 
       case CGPIOD_SYS_CMD_MEMORY: 
         gsprintf(str, "%u", system_get_free_heap_size());
         evt.szTopic = "memory";
         evt.szEvt   = str;
-        DoEvt(&evt);
+        DoSta(&evt);
         break;
 
       case CGPIOD_SYS_CMD_UPTIME: 
@@ -194,10 +182,14 @@
         if ((pCmd->dwParms & 0x00010000) && !_GetFlags(&m_dwFlags, CGPIOD_FLG_LOCK))
           Debug.logClsLevels(DEBUG_CLS_0, pCmd->parmsSystem.dwParm);
 
-        gsprintf(str, "%u", Debug.logClsLevels(DEBUG_CLS_0));
+        if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
+          gsprintf(str, "%u",     Debug.logClsLevels(DEBUG_CLS_0));
+        else
+          gsprintf(str, "0x%08X", Debug.logClsLevels(DEBUG_CLS_0));
+
         evt.szTopic = "loglevel";
         evt.szEvt   = str;
-        DoEvt(&evt);
+        DoSta(&evt);
         break;
 
       case CGPIOD_SYS_CMD_EMUL:
@@ -217,7 +209,7 @@
 
         evt.szTopic = "emul";
         evt.szEvt   = str;
-        DoEvt(&evt);
+        DoSta(&evt);
         break;
 
       case CGPIOD_SYS_CMD_MODE: 
@@ -236,7 +228,7 @@
 
         evt.szTopic = "mode";
         evt.szEvt   = str;
-        DoEvt(&evt);
+        DoSta(&evt);
         break;
 
       case CGPIOD_SYS_CMD_EFMT: 
@@ -254,7 +246,7 @@
 
         evt.szTopic = "efmt";
         evt.szEvt   = str;
-        DoEvt(&evt);
+        DoSta(&evt);
         break;
 
       case CGPIOD_SYS_CMD_LOCK:
@@ -268,7 +260,7 @@
 
         evt.szTopic = "lock";
         evt.szEvt   = str;
-        DoEvt(&evt);
+        DoSta(&evt);
         break;
 
       case CGPIOD_SYS_CMD_DISABLE: 
@@ -282,7 +274,7 @@
 
         evt.szTopic = "disable";
         evt.szEvt   = str;
-        DoEvt(&evt);
+        DoSta(&evt);
         break;
 
       case CGPIOD_SYS_CMD_RESTART: 

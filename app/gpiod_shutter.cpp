@@ -235,27 +235,23 @@
     } // _shutterCheckPrio
 
   //--------------------------------------------------------------------------
-  // get shutter status
-  //--------------------------------------------------------------------------
-  tUint32 CGpiod::_shutterGetCmdStatus(tGpiodCmd* pCmd) 
-  { 
-    return m_shutter[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK].dwState;
-    } // CGpiod::_shutterGetCmdStatus
-
-  //--------------------------------------------------------------------------
   // called by _DoCmd()
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_shutterDoCmd(tGpiodCmd* pCmd) 
   { 
+    tChar         str1[16], str2[16];
     tGpiodShutter *pObj = &m_shutter[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK]; 
     tGpiodEvt     evt   = { pCmd->msNow, pCmd->dwObj, 0, 0, 0 };
 
     PrintCmd(pCmd, CLSLVL_GPIOD_SHUTTER | 0x0000, "CGpiod::_shutterDoCmd");
     switch (pCmd->dwCmd & CGPIOD_OBJ_CMD_MASK) {
       case CGPIOD_UDM_CMD_STATUS: 
-        evt.dwEvt = (pObj->dwState == CGPIOD_UDM_STATE_UP  ) ? CGPIOD_UDM_EVT_UPON   :
-                    (pObj->dwState == CGPIOD_UDM_STATE_DOWN) ? CGPIOD_UDM_EVT_DOWNON : CGPIOD_UDM_EVT_STOP;
-        DoEvt(&evt);
+        // only send status for non-session origins
+        if (pCmd->dwOrig == CGPIOD_ORIG_MQTT) {
+          evt.dwEvt = pObj->dwState;
+          DoSta(&evt);
+          } // if
+
         break;
 
       case CGPIOD_UDM_CMD_STOP: 
@@ -401,6 +397,7 @@
         break;
       } // switch
 
+    pCmd->dwState = pObj->dwState;
     return XERROR_SUCCESS; 
     } // _shutterDoCmd
 

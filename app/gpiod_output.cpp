@@ -182,26 +182,23 @@
     } // CGpiod::_outputDoEvt
 
   //--------------------------------------------------------------------------
-  // get output status
-  //--------------------------------------------------------------------------
-  tUint32 CGpiod::_outputGetCmdStatus(tGpiodCmd* pCmd) 
-  { 
-    return m_output[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK].dwState;
-    } // CGpiod::_outputGetCmdStatus
-
-  //--------------------------------------------------------------------------
   // execute command for outputs, called by _DoCmd()
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_outputDoCmd(tGpiodCmd* pCmd) 
   { 
+    tChar        str1[16], str2[16];
     tGpiodOutput *pObj = &m_output[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK]; 
-    tGpiodEvt    evt   = { pCmd->msNow, pCmd->dwObj, 0, 0 };
+    tGpiodEvt    evt   = { pCmd->msNow, pCmd->dwObj, 0, 0, 0 };
 
     PrintCmd(pCmd, CLSLVL_GPIOD_OUTPUT | 0x0000, "CGpiod::_outputDoCmd");
     switch (pCmd->dwCmd & CGPIOD_OBJ_CMD_MASK) {
       case CGPIOD_OUT_CMD_STATUS: 
-        evt.dwEvt = pObj->dwState ? CGPIOD_OUT_EVT_ON : CGPIOD_OUT_EVT_OFF;
-        DoEvt(&evt);
+        // only send status for non-session origins
+        if (pCmd->dwOrig == CGPIOD_ORIG_MQTT) {
+          evt.dwEvt = pObj->dwState;
+          DoSta(&evt);
+          } // if
+
         break;
 
       case CGPIOD_OUT_CMD_ON: 
@@ -324,6 +321,7 @@
         break;
       } // switch
 
+    pCmd->dwState = pObj->dwState;
     return pCmd->dwError; 
     } // _outputDoCmd
 

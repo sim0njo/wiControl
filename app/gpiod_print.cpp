@@ -11,7 +11,7 @@
 //--------------------------------------------------------------------------
 void CGpiod::PrintEvt(tGpiodEvt* pEvt, tUint32 dwClsLvl, tCChar* szPfx) 
 {
-  tChar  str1[32], str2[32];
+  tChar  str1[16], str2[16];
   tCChar *szTopic = pEvt->szTopic ? pEvt->szTopic : "system";
 
   if      (pEvt->dwObj == CGPIOD_OBJ_SYSTEM)
@@ -21,7 +21,8 @@ void CGpiod::PrintEvt(tGpiodEvt* pEvt, tUint32 dwClsLvl, tCChar* szPfx)
     Debug.logTxt(dwClsLvl, "%s,%s.%s", szPfx, _printObj2String(str1, pEvt->dwObj), pEvt->szEvt);
 
   else 
-    Debug.logTxt(dwClsLvl, "%s,%s.%s", szPfx, _printObj2String(str1, pEvt->dwObj), _printObjEvt2String(str2, pEvt->dwObj, pEvt->dwEvt));
+    Debug.logTxt(dwClsLvl, "%s,%s.%s", szPfx, 
+                 _printObj2String(str1, pEvt->dwObj), _printObjEvt2String(str2, pEvt->dwObj, pEvt->dwEvt));
 
   } // PrintEvt
 
@@ -55,7 +56,25 @@ tCChar* CGpiod::_printObj2String(tChar* pOut, tUint32 dwObj)
   } // _printObj2String
 
 //----------------------------------------------------------------------------
-//
+// convert object status to string
+//----------------------------------------------------------------------------
+tCChar* CGpiod::_printObjSta2String(tChar* pOut, tUint32 dwObj, tUint32 dwSta) 
+{
+  tParseRsvd *pRsvd = g_gpiodParseObjSta;
+
+  for ( ; pRsvd->dwMask0; pRsvd++)
+    if (((pRsvd->dwMask0 & CGPIOD_OBJ_CLS_MASK) &  (dwObj & CGPIOD_OBJ_CLS_MASK)) &&
+        ( pRsvd->dwTVal                         ==  dwSta                       )) { 
+      gstrcpy(pOut, pRsvd->szTVal);
+      return pOut; 
+      } // if
+
+  gsprintf(pOut, "%08X", dwSta);
+  return pOut; 
+  } // _printObjSta2String
+
+//----------------------------------------------------------------------------
+// convert object event to string
 //----------------------------------------------------------------------------
 tCChar* CGpiod::_printObjEvt2String(tChar* pOut, tUint32 dwObj, tUint32 dwEvt) 
 {
@@ -63,7 +82,7 @@ tCChar* CGpiod::_printObjEvt2String(tChar* pOut, tUint32 dwObj, tUint32 dwEvt)
 
   for ( ; pRsvd->dwMask0; pRsvd++)
     if (((pRsvd->dwMask0 & CGPIOD_OBJ_CLS_MASK) &  (dwObj & CGPIOD_OBJ_CLS_MASK)) &&
-        ((pRsvd->dwTVal  & CGPIOD_OBJ_EVT_MASK) == (dwEvt & CGPIOD_OBJ_EVT_MASK))) { 
+        ( pRsvd->dwTVal                         ==  dwEvt                       )) { 
       gstrcpy(pOut, pRsvd->szTVal);
       return pOut; 
       } // if

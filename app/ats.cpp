@@ -55,7 +55,7 @@ void CAtsReq::DoCcmd(String strCcmd)
         _AppendTerse(sz);
         } //
       else {
-        gsprintf(sz, "%u", g_gpiod.GetCmdStatus(&cmd));
+        gsprintf(sz, "%u", cmd.dwState);
         _AppendTerse(sz);
         } // else
 

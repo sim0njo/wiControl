@@ -9,63 +9,96 @@
 
 // MQTT client
 MqttClient*          g_pMqtt = NULL;
-bool                 g_bMqttIsConfigured = FALSE;
-bool                 g_bMqttIsConnected = FALSE;
-unsigned long        g_dwMqttPktRx = 0;
-unsigned long        g_dwMqttPktTx = 0;
+uint32_t             g_bMqttIsConnected = FALSE;
+uint32_t             g_mqttPktRx = 0;
+uint32_t             g_mqttPktRxDropped = 0;
+uint32_t             g_mqttPktTx = 0;
 
 
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-void ICACHE_FLASH_ATTR mqttPublishMessage(String strTopic, String strMsg)
+void     ICACHE_FLASH_ATTR mqttSubscribe(tCChar* szTopicFilter)
+{
+  Debug.logTxt(CLSLVL_MQTT | 0x0000, "mqttSubscribe,topicFilter=%s/%s",
+               AppSettings.mqttClientId.c_str(), szTopicFilter);
+  g_pMqtt->subscribe(AppSettings.mqttClientId + String("/") + String(szTopicFilter));
+  } // mqttSubscribe
+
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
+void ICACHE_FLASH_ATTR mqttPublish(tCChar* szPfx, tCChar* szTopic, tCChar* szMsg)
 {
   if (!g_pMqtt)
     return;
 
-  Debug.logTxt(CLSLVL_MQTT | 0x0000, "mqttPublishMessagetopic=%s/%s/%s,msg=%s", 
-               AppSettings.mqttClientId.c_str(), AppSettings.mqttEvtPfx.c_str(), strTopic.c_str(), strMsg.c_str());
-  g_pMqtt->publish(AppSettings.mqttClientId + String("/") + AppSettings.mqttEvtPfx + String("/") + strTopic, strMsg);
-  g_dwMqttPktTx++;
+  Debug.logTxt(CLSLVL_MQTT | 0x0000, "mqttPublish,topic=%s/%s/%s,msg=%s", 
+               AppSettings.mqttClientId.c_str(), szPfx, szTopic, szMsg);
+  g_pMqtt->publish(AppSettings.mqttClientId + String("/") + String(szPfx) + String("/") + String(szTopic), String(szMsg));
+  g_mqttPktTx++;
   } // mqttPublishMessage
+
+//----------------------------------------------------------------------------
+// MQTT client callback, topic=<client-id>/... msg=...
+//----------------------------------------------------------------------------
+void ICACHE_FLASH_ATTR mqttOnPublish(String strTopic, String strMsg)
+{
+  tUint32 cbTopic = strTopic.length(), cbMsg = strMsg.length();
+
+  do {
+    // make sure topic starts with <client-id>
+    Debug.logTxt(CLSLVL_MQTT | 0x0000, "mqttOnPublish,topic=%s,msg=%s", strTopic.c_str(), strMsg.c_str());
+    if (strTopic.startsWith(AppSettings.mqttClientId + "/") == 0) {
+      Debug.logTxt(CLSLVL_MQTT | 0x0010, "mqttOnPublish,not for us,dropping");
+      g_mqttPktRxDropped++;
+      return;
+      } // if
+
+    g_mqttPktRx++;
+
+    // copy topic/msg to modifiable buffer on stack
+    tChar szTopic[cbTopic + 1], szMsg[cbMsg + 1];
+    tChar *pTopic = szTopic;
+    gstrcpy(szTopic, strTopic.c_str());
+    gstrcpy(szMsg, strMsg.c_str());
+
+    // pass topic=<pfx>/<obj>... on to GPIOD
+    pTopic += (AppSettings.mqttClientId.length() + 1);
+    gpiodOnMqttPublish(pTopic, szMsg);
+    } while (FALSE);
+
+  } // mqttOnPublish
 
 //----------------------------------------------------------------------------
 // start MQTT client
 //----------------------------------------------------------------------------
-void ICACHE_FLASH_ATTR mqttStartClient()
+uint32_t ICACHE_FLASH_ATTR mqttStartClient()
 {
-  tChar str[32];
-
   // delete existing instance
+  Debug.logTxt(CLSLVL_MQTT | 0x0000, "mqttStartClient");
   if (g_pMqtt)
     delete g_pMqtt;
 
-  Debug.logTxt(CLSLVL_MQTT | 0x0000, "mqttStartClient");
   AppSettings.load();
   if (!AppSettings.mqttServer.equals(String("")) && AppSettings.mqttPort != 0) {
-    g_pMqtt = new MqttClient(AppSettings.mqttServer, AppSettings.mqttPort, gpiodOnMqttPublish);
+    g_pMqtt = new MqttClient(AppSettings.mqttServer, AppSettings.mqttPort, mqttOnPublish);
     g_bMqttIsConnected = g_pMqtt->connect(AppSettings.mqttClientId, AppSettings.mqttUser, AppSettings.mqttPass);
-
-    Debug.logTxt(CLSLVL_MQTT | 0x0010, "mqttStartClient,subscribe=%s/%s/#",
-                 AppSettings.mqttClientId.c_str(), AppSettings.mqttCmdPfx.c_str());
-    g_pMqtt->subscribe(AppSettings.mqttClientId + String("/") + AppSettings.mqttCmdPfx + String("/#"));
-
-    sprintf(str, "%s/%s", APP_ALIAS, APP_TOPOLOGY);
-    mqttPublishMessage("platform", str);
-    mqttPublishMessage("version", APP_VERSION);
-    g_bMqttIsConfigured = TRUE;
+    return g_bMqttIsConnected;
     }
+
+  return FALSE;
   } // mqttStartClient
 
 //----------------------------------------------------------------------------
-// restart MQTT client if needed
+// restart MQTT client if needed, return true if restarted
 //----------------------------------------------------------------------------
-void ICACHE_FLASH_ATTR mqttCheckClient()
+uint32_t ICACHE_FLASH_ATTR mqttCheckClient()
 {
   if (g_pMqtt && g_pMqtt->isProcessing())
-    return;
+    return FALSE;
 
-  mqttStartClient();
+  return mqttStartClient();
   } // mqttCheckClient
 
 //----------------------------------------------------------------------------
@@ -74,8 +107,6 @@ void ICACHE_FLASH_ATTR mqttCheckClient()
 void mqttOnHttpConfig(HttpRequest &request, HttpResponse &response)
 {
   AppSettings.load();
-  g_bMqttIsConfigured = FALSE;
-
   if (!g_http.isHttpClientAllowed(request, response))
     return;
 
@@ -110,18 +141,13 @@ void mqttOnHttpConfig(HttpRequest &request, HttpResponse &response)
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-bool mqttIsConnected(void) 
+uint32_t mqttIsConnected(void) 
 {
   if (g_pMqtt == NULL)
     return (FALSE);
   else
     return((g_pMqtt->getConnectionState() == eTCS_Connected));
   } //
-
-//----------------------------------------------------------------------------
-//
-//----------------------------------------------------------------------------
-bool   mqttIsConfigured(void) { return g_bMqttIsConfigured; }
 
 //----------------------------------------------------------------------------
 //

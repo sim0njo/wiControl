@@ -53,7 +53,7 @@
     } // _inputOnInit
 
   //--------------------------------------------------------------------------
-  // run outputs
+  // run inputs
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_inputOnRun(tUint32 msNow) 
   {
@@ -148,6 +148,35 @@
     Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0000, "CGpiod::_inputOnExit");
     return m_dwError;
     } // CGpiod::_inputOnExit
+
+  //--------------------------------------------------------------------------
+  // execute command for inputs, called by _DoCmd()
+  //--------------------------------------------------------------------------
+  tUint32 CGpiod::_inputDoCmd(tGpiodCmd* pCmd) 
+  { 
+    tChar       str1[16], str2[16];
+    tGpiodInput *pObj = &m_input[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK]; 
+    tGpiodEvt   evt   = { pCmd->msNow, pCmd->dwObj, 0, 0, 0 };
+
+    PrintCmd(pCmd, CLSLVL_GPIOD_OUTPUT | 0x0000, "CGpiod::_inputDoCmd");
+    switch (pCmd->dwCmd & CGPIOD_OBJ_CMD_MASK) {
+      case CGPIOD_IN_CMD_STATUS: 
+        if (pCmd->dwOrig == CGPIOD_ORIG_MQTT) {
+          evt.dwEvt = pObj->dwState;
+          DoSta(&evt);
+          } // if
+
+        break;
+
+      default: // treat as event
+        evt.dwEvt = pCmd->dwCmd;
+        DoEvt(&evt);
+        break;
+      } // switch
+
+    pCmd->dwState = pObj->dwState;
+    return pCmd->dwError; 
+    } // _inputDoCmd
 
   //--------------------------------------------------------------------------
   // return valid debounced state for pin

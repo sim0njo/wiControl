@@ -5,9 +5,10 @@
 #include <mqtt.h>
 #include <Network.h>
 #include <AppSettings.h>
-#include <gpiod.h>
 #include <Services/WebHelpers/base64.h>
 #include <Wiring/SplitString.h>
+#include <ats.h>
+#include <gpiod.h>
 
 // Forward declarations
 void                 StartOtaUpdateWeb(String);
@@ -89,8 +90,9 @@ void httpOnStatus(HttpRequest &request, HttpResponse &response)
   // --- Statistics --------------------------------------------------
 //    vars["nrfRx"] = rfPacketsRx; //TODO check counters at MySensor.cpp
 //    vars["nrfTx"] = rfPacketsTx;
-  vars["mqttRx"] = g_dwMqttPktRx;
-  vars["mqttTx"] = g_dwMqttPktTx;
+  vars["mqttRx"]        = g_mqttPktRx;
+  vars["mqttRxDropped"] = g_mqttPktRxDropped;
+  vars["mqttTx"]        = g_mqttPktTx;
     
   response.sendTemplate(tmpl); // will be automatically deleted
   } //

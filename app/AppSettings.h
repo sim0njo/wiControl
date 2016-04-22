@@ -59,7 +59,7 @@ class ApplicationSettingsStorage
   int                gpiodMode = 1;
   int                gpiodEfmt = 0;
 
-  unsigned int       dwLogLevel = 0;
+  unsigned int       dwLogLevel = 0x3FFF;
 
   void               load();
   void               save();
