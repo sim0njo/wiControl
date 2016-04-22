@@ -68,7 +68,7 @@
       switch (pObj->dwCmd) {
         case CGPIOD_UDM_CMD_UP:    // 5
         case CGPIOD_UDM_CMD_TIPUP: // 7
-          if (msNow >= pObj->dwRun) {
+          if (TimerExpired(msNow, pObj->dwRun)) {
             _shutterSetState(pObj, CGPIOD_UDM_STATE_STOP, &evt);
             pObj->dwCmd = CGPIOD_UDM_CMD_NONE;
             } // if
@@ -76,7 +76,7 @@
 
         case CGPIOD_UDM_CMD_DOWN:    // 6
         case CGPIOD_UDM_CMD_TIPDOWN: // 8
-          if (msNow >= pObj->dwRun) {
+          if (TimerExpired(msNow, pObj->dwRun)) {
             _shutterSetState(pObj, CGPIOD_UDM_STATE_STOP, &evt);
             pObj->dwCmd = CGPIOD_UDM_CMD_NONE;
             } // if

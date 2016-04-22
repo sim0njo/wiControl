@@ -59,11 +59,10 @@ tUint32 CGpiod::_parseCmdInput(tGpiodCmd* pOut)
 
   do {
     m_parse.SetReservedIdents(g_gpiodParseCmdInput);
-    if ((m_parse.NextToken(pOut->dwOrig, gpiodNum2Mask(pOut->dwObj & CGPIOD_OBJ_NUM_MASK)) != CPARSE_TYPE_LEAF) && (dwErr = XERROR_DATA))
+    if ((m_parse.NextToken(pOut->dwOrig, xNum2BitMask(pOut->dwObj & CGPIOD_OBJ_NUM_MASK)) != CPARSE_TYPE_LEAF) && (dwErr = XERROR_DATA))
       break;
 
     pOut->dwCmd = m_parse.TVal();
-//  dwErr = _parseCmdParams(pOut);
     } while (FALSE);
 
   return dwErr; 
@@ -79,7 +78,7 @@ tUint32 CGpiod::_parseCmdOutput(tGpiodCmd* pOut)
   do {
     // parse command
     m_parse.SetReservedIdents(g_gpiodParseCmdOutput);
-    if ((m_parse.NextToken(pOut->dwOrig, gpiodNum2Mask(pOut->dwObj & CGPIOD_OBJ_NUM_MASK)) != CPARSE_TYPE_LEAF) && (dwErr = XERROR_DATA))
+    if ((m_parse.NextToken(pOut->dwOrig, xNum2BitMask(pOut->dwObj & CGPIOD_OBJ_NUM_MASK)) != CPARSE_TYPE_LEAF) && (dwErr = XERROR_DATA))
       break;
 
     pOut->dwCmd = m_parse.TVal();
@@ -110,7 +109,7 @@ tUint32 CGpiod::_parseCmdShutter(tGpiodCmd* pOut)
   do {
     // parse command
     m_parse.SetReservedIdents(g_gpiodParseCmdShutter);
-    if ((m_parse.NextToken(pOut->dwOrig, gpiodNum2Mask(pOut->dwObj & CGPIOD_OBJ_NUM_MASK)) != CPARSE_TYPE_LEAF) && (dwErr = XERROR_DATA))
+    if ((m_parse.NextToken(pOut->dwOrig, xNum2BitMask(pOut->dwObj & CGPIOD_OBJ_NUM_MASK)) != CPARSE_TYPE_LEAF) && (dwErr = XERROR_DATA))
       break;
 
     pOut->dwCmd = m_parse.TVal();
@@ -210,33 +209,4 @@ tUint32 CGpiod::_parseCmdSystem(tGpiodCmd* pOut)
 
   return dwErr; 
   } // _parseCmdSystem
-
-//----------------------------------------------------------------------------
-//
-//----------------------------------------------------------------------------
-tUint32 CGpiod::_parseCmdParams(tGpiodCmd* pOut) 
-{
-  tUint32 dwErr = XERROR_SUCCESS;
-//tUint32 dwParm;
-
-  do {
-//  Debug.LogTxt(m_dwClsLvl | 0x0000, "%s,mask=0x%08X", pFunc, pOut->dwCmd & 0xFFFF0000);
-    if ((pOut->dwCmd & 0xFFFF0000) == 0)
-      break;
-
-//  if (pOut->dwCmd & 0x00600000) { // level 0-255
-//    if (dwErr = m_parse.GetNumber(&pOut->dwParm[0], 0, 255)) break;
-//    Debug.LogTxt(CLSLVL_GPIOD_PARSE | 0x0010, "%s,level=%u", pFunc, pOut->dwParm[0]);
-//    } // if
-
-//  if (pOut->dwCmd & 0x01800000) { // runtime 1-160 seconds
-//    if (dwErr = m_parse.GetNumber(&pOut->dwRun, 1, 160)) break;
-//    Debug.LogTxt(CLSLVL_GPIOD_PARSE | 0x0010, "%s,run=%u", pFunc, pOut->dwRun);
-//    } // if
-
-    } while (FALSE);
-
-//  Debug.LogTxt(m_dwClsLvl | 0x9999, "%s,err=%u", pFunc, dwErr);
-    return dwErr;
-    } // _parseCmdParams
 

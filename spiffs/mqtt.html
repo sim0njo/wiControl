@@ -38,20 +38,13 @@
     <div class="jumbotron">
         <h1>MQTT Settings</h1>
     </div>
+
     <div class="row">
         <div class="col-lg-6 col-md-offset-3">
             <form method="post" action="">
                 <fieldset>
                     <legend>Server settings</legend>
                     <div class="col-md-offset-2">
-                        <div class="form-group">
-                            <label>Username</label>
-                            <input class="form-control" style="width: 250px" type="text" name="user" value="{user}">
-                        </div>
-                        <div class="form-group">
-                            <label>Password</label>
-                            <input class="form-control" style="width: 250px" type="text" name="password" value="{password}">
-                        </div>
                         <div class="form-group">
                             <label>Server</label>
                             <input class="form-control" style="width: 250px" type="text" name="server" value="{server}">
@@ -61,21 +54,16 @@
                             <input class="form-control" style="width: 250px" type="text" name="port" value="{port}">
                         </div>
                         <div class="form-group">
+                            <label>Username</label>
+                            <input class="form-control" style="width: 250px" type="text" name="user" value="{user}">
+                        </div>
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input class="form-control" style="width: 250px" type="text" name="password" value="{password}">
+                        </div>
+                        <div class="form-group">
                             <label>ClientId</label>
                             <input class="form-control" style="width: 250px" type="text" name="clientId" value="{clientId}">
-                        </div>
-                    </div>
-                </fieldset>
-                <fieldset>
-                    <legend>Pub/sub settings</legend>
-                    <div class="col-md-offset-2">
-                        <div class="form-group">
-                            <label>Event prefix</label>
-                            <input class="form-control" style="width: 250px" type="text" name="evtPfx" value="{evtPfx}">
-                        </div>
-                        <div class="form-group">
-                            <label>Command prefix</label>
-                            <input class="form-control" style="width: 250px" type="text" name="cmdPfx" value="{cmdPfx}">
                         </div>
                     </div>
                 </fieldset>

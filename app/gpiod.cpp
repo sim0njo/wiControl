@@ -47,19 +47,7 @@ void                 gpiodOnHttpConfig(HttpRequest &request, HttpResponse &respo
 
 //----------------------------------------------------------------------------
 // MQTT client callback
-// <cmdpfx>/<obj>, i.e. astr76b32/L3R1W2/cmd/shutter0=up.0.5
-//
-// <cmdpfx>/in%=<evt>
-// <cmdpfx>/out%=<cmd> *[.<parm>]
-//
-// <cmdpfx>/emul=get | set.<emul>.ack
-// <cmdpfx>/mode=get | set.<mode>.ack
-// <cmdpfx>/memory=?
-//
-// <cmdpfx>/system=emul
-// <cmdpfx>/system=emul.0|1.ack
-// <cmdpfx>/system=emul.output|shutter.ack
-// <cmdpfx>/system=memory
+// <cmdpfx>/<obj>=<cmd> *[.<parm>], i.e. cmd/out0=up.0.5
 //----------------------------------------------------------------------------
 void ICACHE_FLASH_ATTR gpiodOnMqttPublish(tChar* szTopic, tChar* szMsg)
 {
@@ -196,12 +184,12 @@ tUint32 CGpiod::DoSta(tGpiodEvt* pEvt)
 //--------------------------------------------------------------------------
 tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt) 
 {
-  tUint32 dwObj = pEvt->dwObj & CGPIOD_OBJ_NUM_MASK;
   tChar   str1[16], str2[16];
+  tUint32 dwObj = pEvt->dwObj & CGPIOD_OBJ_NUM_MASK;
 
   switch (pEvt->dwObj & CGPIOD_OBJ_CLS_MASK) {
     case CGPIOD_OBJ_CLS_INPUT:
-      // report event
+      // report event if configured
       if ((m_dwMode & CGPIOD_MODE_MQTT) && (m_input[dwObj].dwFlags & (0x1 << pEvt->dwEvt))) {
         if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
           mqttPublish(CGPIOD_EVT_PFX, _printObj2String(str1, pEvt->dwObj), _printVal2String(str2, pEvt->dwEvt));
@@ -220,7 +208,7 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
       break;
 
     case CGPIOD_OBJ_CLS_OUTPUT:
-      // report event
+      // report event if configured
       if ((m_dwMode & CGPIOD_MODE_MQTT) && (m_output[dwObj].dwFlags & (0x1 << pEvt->dwEvt))) {
         if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
           mqttPublish(CGPIOD_EVT_PFX, _printObj2String(str1, pEvt->dwObj), _printVal2String(str2, pEvt->dwEvt));
@@ -231,7 +219,7 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
       break;
 
     case CGPIOD_OBJ_CLS_SHUTTER:
-      // report event
+      // report event if configured
       if ((m_dwMode & CGPIOD_MODE_MQTT) && (m_shutter[dwObj].dwFlags & (0x1 << pEvt->dwEvt))) {
         if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
           mqttPublish(CGPIOD_EVT_PFX, _printObj2String(str1, pEvt->dwObj), _printVal2String(str2, pEvt->dwEvt));
@@ -242,11 +230,13 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
       break;
 
     case CGPIOD_OBJ_CLS_HBEAT:
+      // handle objects that require heartbeat
       _systemDoEvt(pEvt);
       _outputDoEvt(pEvt);
       break;
 
     case CGPIOD_OBJ_CLS_SYSTEM:
+      // report event
       if (pEvt->szEvt)
         mqttPublish(CGPIOD_EVT_PFX, pEvt->szTopic ? pEvt->szTopic : "system", pEvt->szEvt);
 

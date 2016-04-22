@@ -93,11 +93,11 @@ typedef unsigned long long                tUint64; //
 #define xmin(a,b)           (((a) < (b)) ? (a) : (b))
 #endif
 
-#define xNBR_2_BITPOS(dwNbr)           ((dwNbr < 32) ? (0x01  << dwNbr) : 0)
+#define xNum2BitMask(dwNum)        (0x01 << dwNum) //
 
-#define MAKE_tUint32(a, b, c, d) \
+#define xMakeUint32(a, b, c, d) \
   ((tUint32) ( ((tUint8)a) | (((tUint32)(tUint8)b) << 8) | (((tUint32)(tUint8)c) << 16) | (((tUint32)(tUint8)d) << 24) ))
-#define MAKE_tUint16(a, b) \
+#define xMakeUint16(a, b) \
   ((tUint16) ( ((tUint8)a) | (((tUint16)(tUint8)b) << 8) )
 
 #ifdef LINUX

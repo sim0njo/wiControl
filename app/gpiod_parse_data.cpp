@@ -16,12 +16,8 @@ tParseRsvd g_gpiodParseObj[] = {
 
   { 0x00000018      , 0x00000001       , CPARSE_TYPE_NODE, 0x00000200, "out0",      },
   { 0x00000018      , 0x00000001       , CPARSE_TYPE_NODE, 0x00000201, "out1",      },
-  { 0x00000018      , 0x00000001       , CPARSE_TYPE_NODE, 0x00000206, "out6",      },
-  { 0x00000018      , 0x00000001       , CPARSE_TYPE_NODE, 0x00000207, "out7",      },
 
   { 0x00000018      , 0x00000002       , CPARSE_TYPE_NODE, 0x00000400, "out0",      },
-  { 0x00000018      , 0x00000002       , CPARSE_TYPE_NODE, 0x00000406, "out6",      },
-  { 0x00000018      , 0x00000002       , CPARSE_TYPE_NODE, 0x00000407, "out7",      },
 
   { 0x10000000      , 0x00000000       , CPARSE_TYPE_NODE, 0x00000800, "hbeat0",    }, // only for print
 
@@ -93,7 +89,7 @@ tParseRsvd g_gpiodParseCmdInput[] = {
 tParseRsvd g_gpiodParseCmdOutput[] = {
 //  dwMask0           dwMask1            dwTType           dwTVal      szTVal
 //  CGPIOD_ORIG_%     Num2Mask(cc)                         0xPPPPMMMM  params                
-  { 0x00000018      , 0x000000C3       , CPARSE_TYPE_LEAF, 0x00000001, "status",         },
+  { 0x00000018      , 0x00000003       , CPARSE_TYPE_LEAF, 0x00000001, "status",         },
   { 0x00000018      , 0x00000003       , CPARSE_TYPE_LEAF, 0x00000002, "on",             },
   { 0x00000018      , 0x00000003       , CPARSE_TYPE_LEAF, 0x00000003, "off",            },
   { 0x00000018      , 0x00000003       , CPARSE_TYPE_LEAF, 0x00000004, "onlocked",       },
@@ -111,14 +107,8 @@ tParseRsvd g_gpiodParseCmdOutput[] = {
   { 0x00000018      , 0x00000003       , CPARSE_TYPE_LEAF, 0x02000010, "timeset",        }, // 1-65535 s
   { 0x00000018      , 0x00000003       , CPARSE_TYPE_LEAF, 0x02000011, "timeadd",        }, // 1-65535 s
   { 0x00000018      , 0x00000003       , CPARSE_TYPE_LEAF, 0x00000012, "timeabort",      },
-
-  { 0x00000018      , 0x000000C0       , CPARSE_TYPE_LEAF, 0x00000013, "timerondelayed", },
-  { 0x00000018      , 0x000000C0       , CPARSE_TYPE_LEAF, 0x00000014, "timeroffdelayed",},
-  { 0x00000018      , 0x000000C0       , CPARSE_TYPE_LEAF, 0x00000015, "timerontimed",   },
-  { 0x00000018      , 0x000000C0       , CPARSE_TYPE_LEAF, 0x00000016, "timerabort",     },
-
-  { 0x00000018      , 0x00000003       , CPARSE_TYPE_LEAF, 0x00000017, "blink",          },
-  { 0x00000018      , 0x00000003       , CPARSE_TYPE_LEAF, 0x02000018, "blinktimed",     }, // 1-65535 s
+  { 0x00000018      , 0x00000003       , CPARSE_TYPE_LEAF, 0x00000013, "blink",          },
+  { 0x00000018      , 0x00000003       , CPARSE_TYPE_LEAF, 0x02000014, "blinktimed",     }, // 1-65535 s
 
   { 0x00000000      , 0x00000000       , 0x00000000      , 0x00000000, "",               },
   };
@@ -126,7 +116,7 @@ tParseRsvd g_gpiodParseCmdOutput[] = {
 tParseRsvd g_gpiodParseCmdShutter[] = {
 //  dwMask0           dwMask1            dwTType           dwTVal      szTVal
 //  CGPIOD_ORIG_%     Num2Mask(cc)                         0xPPPPMMMM  params                
-  { 0x00000018      , 0x000000C1       , CPARSE_TYPE_LEAF, 0x00000001, "status",          },
+  { 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000001, "status",          },
   { 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00020002, "stop",            }, // 0-5
   { 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x04060003, "toggleUp",        }, // 0-5/0-1/R1-65535 1/10s
   { 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x04060004, "toggleDown",      }, // 0-5/0-1/R1-65535 1/10s
@@ -144,11 +134,6 @@ tParseRsvd g_gpiodParseCmdShutter[] = {
   { 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x0C160010, "tipdelayedup",    }, // 0-5/0-1/D1-65535/R1-65535/T1-65535
   { 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x04160011, "delayeddown",     }, // 0-5/0-1/D1-65535/R1-65535
   { 0x00000018      , 0x00000001       , CPARSE_TYPE_LEAF, 0x0C160012, "tipdelayeddown",  }, // 0-5/0-1/D1-65535/R1-65535/T1-65535
-                                                                                             //         1/10s    1/10s    1/10s
-  { 0x00000018      , 0x000000C0       , CPARSE_TYPE_LEAF, 0x04000013, "timerondelayed",  }, // R1-65535 1/10s
-  { 0x00000018      , 0x000000C0       , CPARSE_TYPE_LEAF, 0x04000014, "timeroffdelayed", }, // R1-65535 1/10s
-  { 0x00000018      , 0x000000C0       , CPARSE_TYPE_LEAF, 0x04000015, "timerontimed",    }, // R1-65535 1/10s
-  { 0x00000018      , 0x000000C0       , CPARSE_TYPE_LEAF, 0x00000016, "timerAbort",      }, //
 
   { 0x00000000      , 0x00000000       , 0x00000000      , 0x00000000, "",                },
   };
