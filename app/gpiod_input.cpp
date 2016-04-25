@@ -1,6 +1,6 @@
 
 //----------------------------------------------------------------------------
-// cgpiod_input.cpp : implementation of 2 inputs
+// cgpiod_input.cpp : implementation of 4 inputs
 //
 // Copyright (c) Jo Simons, 2016-2016, All Rights Reserved.
 //----------------------------------------------------------------------------
@@ -18,14 +18,14 @@
     Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0000, "CGpiod::_inputOnConfig");
     memset(m_input, 0, sizeof(m_input)); 
 
-    for (dwObj = 0; dwObj < CGPIOD_IN_COUNT; dwObj++, pObj++) {
+    for (dwObj = CGPIOD_IN_MIN; dwObj < CGPIOD_IN_MAX; dwObj++, pObj++) {
       // initialise defaults
       pObj->dwFlags     = CGPIOD_IN_FLG_MQTT_ALL; // all events to MQTT
       pObj->dwState     = CGPIOD_IN_STATE_OUT; 
-      pObj->dwPin       = (dwObj == 0) ? CGPIOD_IN0_PIN : 
-                          (dwObj == 1) ? CGPIOD_IN1_PIN : 
-                          (dwObj == 2) ? CGPIOD_IN2_PIN : CGPIOD_IN3_PIN; 
-      pObj->dwPol       = CGPIOD_IN_POL_INVERT;  
+      pObj->dwPin       = (dwObj ==  8) ? CGPIOD_IN8_PIN  : 
+                          (dwObj ==  9) ? CGPIOD_IN9_PIN  : 
+                          (dwObj == 10) ? CGPIOD_IN10_PIN : CGPIOD_IN11_PIN; 
+      pObj->dwPol       = CGPIOD_IO_POL_INVERT;  
       pObj->dwVal       = CGPIOD_IN_VAL_OUT; 
       pObj->tmrDebounce = CGPIOD_IN_TMR_DEBOUNCE; 
       pObj->msDebounce  = 0; 
@@ -44,9 +44,9 @@
     tGpiodInput *pObj = m_input; 
 
     Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0000, "CGpiod::_inputOnInit");
-    for (dwObj = 0; dwObj < CGPIOD_IN_COUNT; dwObj++, pObj++) {
-      _ioSetPinDir(pObj->dwPin, CGPIOD_PIN_DIR_INPUT);
-      _ioSetPinPullup(pObj->dwPin, (pObj->dwPol == CGPIOD_IN_POL_INVERT) ? 1 : 0);
+    for (dwObj = CGPIOD_IN_MIN; dwObj < CGPIOD_IN_MAX; dwObj++, pObj++) {
+      _ioSetPinDir(pObj->dwPin, CGPIOD_IO_DIR_INPUT);
+      _ioSetPinPullup(pObj->dwPin, (pObj->dwPol == CGPIOD_IO_POL_INVERT) ? 1 : 0);
       } // for
 
     return m_dwError;
@@ -62,7 +62,7 @@
     tGpiodEvt   evt = { msNow, 0, 0, 0, 0 };
 
     // loop all inputs
-    for (dwObj = 0; dwObj < CGPIOD_IN_COUNT; dwObj++, pObj++) {
+    for (dwObj = CGPIOD_IN_MIN; dwObj < CGPIOD_IN_MAX; dwObj++, pObj++) {
       // debounce input changes
       dwVal     = _inputGetPinVal(pObj, msNow);
       evt.dwObj = CGPIOD_OBJ_CLS_INPUT + dwObj;
@@ -155,14 +155,14 @@
   tUint32 CGpiod::_inputDoCmd(tGpiodCmd* pCmd) 
   { 
     tChar       str1[16], str2[16];
-    tGpiodInput *pObj = &m_input[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK]; 
+    tGpiodInput *pObj = &m_input[(pCmd->dwObj & CGPIOD_OBJ_NUM_MASK) - CGPIOD_IN_MIN]; 
     tGpiodEvt   evt   = { pCmd->msNow, pCmd->dwObj, 0, 0, 0 };
 
     PrintCmd(pCmd, CLSLVL_GPIOD_OUTPUT | 0x0000, "CGpiod::_inputDoCmd");
     switch (pCmd->dwCmd & CGPIOD_OBJ_CMD_MASK) {
       case CGPIOD_IN_CMD_STATUS: 
         if (pCmd->dwOrig == CGPIOD_ORIG_MQTT) {
-          evt.dwEvt = pObj->dwState;
+          evt.dwEvt     = pObj->dwState;
           DoSta(&evt);
           } // if
 

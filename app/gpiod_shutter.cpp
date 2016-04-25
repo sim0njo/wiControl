@@ -16,14 +16,14 @@
 
     // initialise all channels
     Debug.logTxt(CLSLVL_GPIOD_SHUTTER | 0x0000, "CGpiod::_shutterOnConfig");
-
     memset(m_shutter, 0, sizeof(m_shutter)); 
-    for (dwObj = 0; dwObj < CGPIOD_UDM_COUNT; dwObj++, pObj++) {
+
+    for (dwObj = CGPIOD_UDM_MIN; dwObj < CGPIOD_UDM_MAX; dwObj++, pObj++) {
       // initialise defaults
       pObj->dwFlags    = CGPIOD_UDM_FLG_MQTT_ALL;
-      pObj->dwPinUp    = CGPIOD_UDM0_PIN_UP;
-      pObj->dwPinDown  = CGPIOD_UDM0_PIN_DOWN;
-      pObj->dwPol      = CGPIOD_IN_POL_NORMAL; 
+      pObj->dwPinUp    = (dwObj == 0) ? CGPIOD_UDM0_PIN_UP   : CGPIOD_UDM1_PIN_UP;
+      pObj->dwPinDown  = (dwObj == 0) ? CGPIOD_UDM0_PIN_DOWN : CGPIOD_UDM1_PIN_DOWN;
+      pObj->dwPol      = CGPIOD_IO_POL_NORMAL; 
       pObj->dwRunDef   = CGPIOD_UDM_RUN_DEF;
       pObj->dwState    = CGPIOD_UDM_STATE_STOP;
       pObj->dwPrioLvl  = CGPIOD_UDM_PRIO_LVL_0; 
@@ -43,11 +43,11 @@
     tGpiodShutter *pObj = m_shutter; 
 
     Debug.logTxt(CLSLVL_GPIOD_SHUTTER | 0x0000, "CGpiod::_shutterOnInit");
-    for (dwObj = 0; dwObj < CGPIOD_UDM_COUNT; dwObj++, pObj++) {
+    for (dwObj = CGPIOD_UDM_MIN; dwObj < CGPIOD_UDM_MAX; dwObj++, pObj++) {
       _ioSetPinVal(pObj->dwPinUp,   ((pObj->dwState >> 0) & CGPIOD_OUT_STATE_ON) ^ pObj->dwPol);
       _ioSetPinVal(pObj->dwPinDown, ((pObj->dwState >> 1) & CGPIOD_OUT_STATE_ON) ^ pObj->dwPol);
-      _ioSetPinDir(pObj->dwPinUp,   CGPIOD_PIN_DIR_OUTPUT);
-      _ioSetPinDir(pObj->dwPinDown, CGPIOD_PIN_DIR_OUTPUT);
+      _ioSetPinDir(pObj->dwPinUp,   CGPIOD_IO_DIR_OUTPUT);
+      _ioSetPinDir(pObj->dwPinDown, CGPIOD_IO_DIR_OUTPUT);
       } // for
 
     return m_dwError;
@@ -62,7 +62,7 @@
     tGpiodShutter *pObj = m_shutter; 
     tGpiodEvt     evt = { msNow, 0, 0, 0, 0 };
 
-    for (dwObj = 0; dwObj < CGPIOD_UDM_COUNT; dwObj++, pObj++) {
+    for (dwObj = CGPIOD_UDM_MIN; dwObj < CGPIOD_UDM_MAX; dwObj++, pObj++) {
       evt.dwObj = CGPIOD_OBJ_CLS_SHUTTER + dwObj;
 
       switch (pObj->dwCmd) {
@@ -160,11 +160,11 @@
 
     // set outputs to off and switch to input
     Debug.logTxt(CLSLVL_GPIOD_SHUTTER | 0x0000, "CGpiod::_shutterOnExit");
-    for (dwObj = 0; dwObj < CGPIOD_UDM_COUNT; dwObj++, pObj++) {
-      _ioSetPinVal(pObj->dwPinUp,    CGPIOD_OUT_STATE_OFF ^ pObj->dwPol);
-      _ioSetPinVal(pObj->dwPinDown,  CGPIOD_OUT_STATE_OFF ^ pObj->dwPol);
-      pinMode(pObj->dwPinUp,   INPUT);
-      pinMode(pObj->dwPinDown, INPUT);
+    for (dwObj = CGPIOD_UDM_MIN; dwObj < CGPIOD_UDM_MAX; dwObj++, pObj++) {
+      _ioSetPinVal(pObj->dwPinUp,   CGPIOD_OUT_STATE_OFF ^ pObj->dwPol);
+      _ioSetPinVal(pObj->dwPinDown, CGPIOD_OUT_STATE_OFF ^ pObj->dwPol);
+      _ioSetPinDir(pObj->dwPinUp,   CGPIOD_IO_DIR_INPUT);
+      _ioSetPinDir(pObj->dwPinDown, CGPIOD_IO_DIR_INPUT);
       } // for
 
     return m_dwError;
@@ -240,7 +240,7 @@
   tUint32 CGpiod::_shutterDoCmd(tGpiodCmd* pCmd) 
   { 
     tChar         str1[16], str2[16];
-    tGpiodShutter *pObj = &m_shutter[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK]; 
+    tGpiodShutter *pObj = &m_shutter[(pCmd->dwObj & CGPIOD_OBJ_NUM_MASK) - CGPIOD_UDM_MIN]; 
     tGpiodEvt     evt   = { pCmd->msNow, pCmd->dwObj, 0, 0, 0 };
 
     PrintCmd(pCmd, CLSLVL_GPIOD_SHUTTER | 0x0000, "CGpiod::_shutterDoCmd");

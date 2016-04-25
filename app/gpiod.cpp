@@ -164,6 +164,7 @@ tUint32 CGpiod::DoSta(tGpiodEvt* pEvt)
     case CGPIOD_OBJ_CLS_INPUT:
     case CGPIOD_OBJ_CLS_OUTPUT:
     case CGPIOD_OBJ_CLS_SHUTTER:
+    case CGPIOD_OBJ_CLS_TIMER:
       if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
         mqttPublish(CGPIOD_STA_PFX, _printObj2String(str1, pEvt->dwObj), _printVal2String(str2, pEvt->dwEvt));
       else
@@ -190,6 +191,8 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
   switch (pEvt->dwObj & CGPIOD_OBJ_CLS_MASK) {
     case CGPIOD_OBJ_CLS_INPUT:
       // report event if configured
+      dwObj -= CGPIOD_IN_MIN;
+
       if ((m_dwMode & CGPIOD_MODE_MQTT) && (m_input[dwObj].dwFlags & (0x1 << pEvt->dwEvt))) {
         if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
           mqttPublish(CGPIOD_EVT_PFX, _printObj2String(str1, pEvt->dwObj), _printVal2String(str2, pEvt->dwEvt));
@@ -209,6 +212,8 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
 
     case CGPIOD_OBJ_CLS_OUTPUT:
       // report event if configured
+      dwObj -= CGPIOD_OUT_MIN;
+
       if ((m_dwMode & CGPIOD_MODE_MQTT) && (m_output[dwObj].dwFlags & (0x1 << pEvt->dwEvt))) {
         if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
           mqttPublish(CGPIOD_EVT_PFX, _printObj2String(str1, pEvt->dwObj), _printVal2String(str2, pEvt->dwEvt));
@@ -220,6 +225,8 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
 
     case CGPIOD_OBJ_CLS_SHUTTER:
       // report event if configured
+      dwObj -= CGPIOD_UDM_MIN;
+
       if ((m_dwMode & CGPIOD_MODE_MQTT) && (m_shutter[dwObj].dwFlags & (0x1 << pEvt->dwEvt))) {
         if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
           mqttPublish(CGPIOD_EVT_PFX, _printObj2String(str1, pEvt->dwObj), _printVal2String(str2, pEvt->dwEvt));
@@ -229,10 +236,17 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
 
       break;
 
-    case CGPIOD_OBJ_CLS_HBEAT:
-      // handle objects that require heartbeat
-      _systemDoEvt(pEvt);
-      _outputDoEvt(pEvt);
+    case CGPIOD_OBJ_CLS_TIMER:
+      // report event if configured
+      dwObj -= CGPIOD_TMR_MIN;
+
+      if ((m_dwMode & CGPIOD_MODE_MQTT) && (m_timer[dwObj].dwFlags & (0x1 << pEvt->dwEvt))) {
+        if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
+          mqttPublish(CGPIOD_EVT_PFX, _printObj2String(str1, pEvt->dwObj), _printVal2String(str2, pEvt->dwEvt));
+        else
+          mqttPublish(CGPIOD_EVT_PFX, _printObj2String(str1, pEvt->dwObj), _printObjEvt2String(str2, pEvt->dwObj, pEvt->dwEvt));
+        } // if
+
       break;
 
     case CGPIOD_OBJ_CLS_SYSTEM:
@@ -241,6 +255,13 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
         mqttPublish(CGPIOD_EVT_PFX, pEvt->szTopic ? pEvt->szTopic : "system", pEvt->szEvt);
 
       break;
+
+    case CGPIOD_OBJ_CLS_HBEAT:
+      // handle objects that require heartbeat
+      _systemDoEvt(pEvt);
+      _outputDoEvt(pEvt);
+      break;
+
     } // switch
 
   return XERROR_SUCCESS;
@@ -259,6 +280,8 @@ tUint32 CGpiod::DoCmd(tGpiodCmd* pCmd)
     case CGPIOD_OBJ_CLS_OUTPUT:  dwErr = _outputDoCmd(pCmd);
       break;
     case CGPIOD_OBJ_CLS_SHUTTER: dwErr = _shutterDoCmd(pCmd);
+      break;
+    case CGPIOD_OBJ_CLS_TIMER:   dwErr = _timerDoCmd(pCmd);
       break;
     case CGPIOD_OBJ_CLS_SYSTEM:  dwErr = _systemDoCmd(pCmd);
       break;
@@ -279,7 +302,7 @@ void CGpiod::begin()
   OnInit();
 
   m_timerMqtt.initializeMs(1000, TimerDelegate(&CGpiod::checkConnection, this)).start(true);
-  m_timer.initializeMs(50, TimerDelegate(&CGpiod::OnRun, this)).start(true);
+  m_timerRoot.initializeMs(50, TimerDelegate(&CGpiod::OnRun, this)).start(true);
   } // begin
 
 //----------------------------------------------------------------------------

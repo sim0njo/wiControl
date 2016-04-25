@@ -93,7 +93,7 @@ typedef unsigned long long                tUint64; //
 #define xmin(a,b)           (((a) < (b)) ? (a) : (b))
 #endif
 
-#define xNum2BitMask(dwNum)        (0x01 << dwNum) //
+#define xNum2BitMask(dwNum)        ( ((tUint32)0x01) << ((tUint32)(tUint8)dwNum) ) //
 
 #define xMakeUint32(a, b, c, d) \
   ((tUint32) ( ((tUint8)a) | (((tUint32)(tUint8)b) << 8) | (((tUint32)(tUint8)c) << 16) | (((tUint32)(tUint8)d) << 24) ))

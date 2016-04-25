@@ -17,14 +17,22 @@ tUint32 CGpiod::ParseCmd(tGpiodCmd* pOut, tChar* pObj, tChar* pCmd, tUint32 dwOr
 
   do {
     // parse object
+//  if (pObj)
+//    Debug.logTxt(CLSLVL_GPIOD_PARSE | 0x0010, "CGpiod::ParseCmd,obj=%s", pObj);
+
+//  if (pCmd)
+//    Debug.logTxt(CLSLVL_GPIOD_PARSE | 0x0020, "CGpiod::ParseCmd,cmd=%s", pCmd);
+
+//  Debug.logTxt(CLSLVL_GPIOD_PARSE | 0x0030, "CGpiod::ParseCmd,orig=%u,emul=%u", dwOrig, dwEmul);
     memset(pOut, 0, sizeof(tGpiodCmd));
     m_parse.SetReservedIdents(g_gpiodParseObj);
     m_parse.SetString(pObj ? pObj : pCmd);
-    if ((m_parse.NextToken(dwOrig, dwEmul) != CPARSE_TYPE_NODE) && (dwErr = XERROR_DATA))
+    if ((m_parse.NextToken(dwOrig, dwEmul) != CPARSE_TYPE_NODE) && (dwErr = XERROR_INPUT))
       break;
       
     pOut->dwOrig = dwOrig;
     pOut->dwObj  = m_parse.TVal();
+//  Debug.logTxt(CLSLVL_GPIOD_PARSE | 0x0040, "CGpiod::ParseCmd,obj=%08X", pOut->dwObj);
 
     // parse command and parms
     if (pObj)
@@ -39,6 +47,8 @@ tUint32 CGpiod::ParseCmd(tGpiodCmd* pOut, tChar* pObj, tChar* pCmd, tUint32 dwOr
         break;
       case CGPIOD_OBJ_CLS_SHUTTER: dwErr = _parseCmdShutter(pOut);
         break;
+      case CGPIOD_OBJ_CLS_TIMER:   dwErr = _parseCmdTimer(pOut);
+        break;
       case CGPIOD_OBJ_CLS_SYSTEM:  dwErr = _parseCmdSystem(pOut);
         break;
       default:
@@ -47,6 +57,7 @@ tUint32 CGpiod::ParseCmd(tGpiodCmd* pOut, tChar* pObj, tChar* pCmd, tUint32 dwOr
 
     } while (FALSE);
 
+//Debug.logTxt(CLSLVL_GPIOD_PARSE | 0x9999, "CGpiod::ParseCmd,err=%u", dwErr);
   return dwErr; 
   } // ParseCmd
 
@@ -58,6 +69,7 @@ tUint32 CGpiod::_parseCmdInput(tGpiodCmd* pOut)
   tUint32 dwErr = XERROR_SUCCESS;
 
   do {
+//    Debug.logTxt(CLSLVL_GPIOD_PARSE | 0x0000, "CGpiod::_parseCmdInput,bitMask=%08X", xNum2BitMask(pOut->dwObj & CGPIOD_OBJ_NUM_MASK));
     m_parse.SetReservedIdents(g_gpiodParseCmdInput);
     if ((m_parse.NextToken(pOut->dwOrig, xNum2BitMask(pOut->dwObj & CGPIOD_OBJ_NUM_MASK)) != CPARSE_TYPE_LEAF) && (dwErr = XERROR_DATA))
       break;
@@ -151,6 +163,37 @@ tUint32 CGpiod::_parseCmdShutter(tGpiodCmd* pOut)
   } // _parseCmdShutter
 
 //----------------------------------------------------------------------------
+// parse timer command
+//----------------------------------------------------------------------------
+tUint32 CGpiod::_parseCmdTimer(tGpiodCmd* pOut) 
+{
+  tUint32 dwErr = XERROR_SUCCESS;
+
+  do {
+    // parse command
+    m_parse.SetReservedIdents(g_gpiodParseCmdTimer);
+    if ((m_parse.NextToken(pOut->dwOrig, xNum2BitMask(pOut->dwObj & CGPIOD_OBJ_NUM_MASK)) != CPARSE_TYPE_LEAF) && (dwErr = XERROR_DATA))
+      break;
+
+    pOut->dwCmd = m_parse.TVal();
+
+    // parse parameters
+    if (pOut->dwCmd & 0x00080000) { // delay 1-65535 seconds or 1/10th seconds (6535s or 65535 1/10th s)
+      if (dwErr = m_parse.GetNumber(&pOut->parmsTimer.dwDelay, 1, 65535)) break;
+//    Debug.logTxt(CLSLVL_GPIOD_PARSE | 0x0010, "%s,delay=%u", pFunc, pOut->parmsOutput.dwDelay);
+      } // if
+
+    if (pOut->dwCmd & 0x02000000) { // runtime 1-65535 seconds or 1/10th seconds (6535s or 65535 1/10th s)
+      if (dwErr = m_parse.GetNumber(&pOut->parmsTimer.dwRun, 1, 65535)) break;
+//    Debug.logTxt(CLSLVL_GPIOD_PARSE | 0x0010, "%s,run=%u", pFunc, pOut->parmsOutput.dwRun);
+      } // if
+
+    } while (FALSE);
+
+  return dwErr; 
+  } // _parseCmdTimer
+
+//----------------------------------------------------------------------------
 // parse system command
 //----------------------------------------------------------------------------
 tUint32 CGpiod::_parseCmdSystem(tGpiodCmd* pOut) 
@@ -192,6 +235,11 @@ tUint32 CGpiod::_parseCmdSystem(tGpiodCmd* pOut)
       if (pOut->dwCmd & 0x00100000) { // lock | disable
         if (dwErr = m_parse.GetNumber(&pOut->parmsSystem.dwParm, 0, 1)) break;
         pOut->dwParms |= 0x00100000;
+        } // if
+
+      if (pOut->dwCmd & 0x00200000) { // pwm
+        if (dwErr = m_parse.GetNumber(&pOut->parmsSystem.dwParm, 0, 0xFFFFFFFF)) break;
+        pOut->dwParms |= 0x00200000;
         } // if
 
       if (pOut->dwCmd & 0x80000000) { // ack

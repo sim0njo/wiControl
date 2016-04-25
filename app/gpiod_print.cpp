@@ -140,6 +140,7 @@ tCChar* CGpiod::_printCmdParamVals(tChar* pOut, tUint32 cbOut, tGpiodCmd* pCmd)
         break;
 
       case CGPIOD_OBJ_CLS_OUTPUT:  
+      case CGPIOD_OBJ_CLS_TIMER:  
         if (pCmd->dwCmd & 0x00080000) { // delay 1-65535 seconds or 1/10th seconds (6535s or 65535 1/10th s)
           gsprintf(str, ".%u", pCmd->parmsOutput.dwDelay);
           xstrcatn(pOut, cbOut, str, 0);

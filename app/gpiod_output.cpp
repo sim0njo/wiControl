@@ -16,13 +16,15 @@
 
     // initialise all channels
     Debug.logTxt(CLSLVL_GPIOD_OUTPUT | 0x0000, "CGpiod::_outputOnConfig");
-
     memset(m_output, 0, sizeof(m_output)); 
-    for (dwObj = 0; dwObj < CGPIOD_OUT_COUNT; dwObj++, pObj++) {
+
+    for (dwObj = CGPIOD_OUT_MIN; dwObj < CGPIOD_OUT_MAX; dwObj++, pObj++) {
       // initialise defaults
       pObj->dwFlags  = CGPIOD_OUT_FLG_MQTT_ALL;
-      pObj->dwPin    = (dwObj == 0) ? CGPIOD_OUT0_PIN : CGPIOD_OUT1_PIN; 
-      pObj->dwPol    = CGPIOD_OUT_POL_NORMAL; 
+      pObj->dwPin    = (dwObj == 0) ? CGPIOD_OUT0_PIN : 
+                       (dwObj == 1) ? CGPIOD_OUT1_PIN : 
+                       (dwObj == 2) ? CGPIOD_OUT2_PIN : CGPIOD_OUT3_PIN; 
+      pObj->dwPol    = CGPIOD_IO_POL_NORMAL; 
       pObj->dwState  = CGPIOD_OUT_STATE_OFF; 
       pObj->dwCmd    = CGPIOD_OUT_CMD_NONE; 
       } // for
@@ -39,9 +41,9 @@
     tGpiodOutput *pObj = m_output; 
 
     Debug.logTxt(CLSLVL_GPIOD_OUTPUT | 0x0000, "CGpiod::_outputOnInit");
-    for (dwObj = 0; dwObj < CGPIOD_OUT_COUNT; dwObj++, pObj++) {
+    for (dwObj = CGPIOD_OUT_MIN; dwObj < CGPIOD_OUT_MAX; dwObj++, pObj++) {
       _ioSetPinVal(pObj->dwPin, pObj->dwState ^ pObj->dwPol);
-      _ioSetPinDir(pObj->dwPin, CGPIOD_PIN_DIR_OUTPUT);
+      _ioSetPinDir(pObj->dwPin, CGPIOD_IO_DIR_OUTPUT);
       } // for
 
     return m_dwError;
@@ -56,7 +58,8 @@
     tGpiodOutput *pObj = m_output; 
     tGpiodEvt    evt = { msNow, 0, 0, 0, 0 };
 
-    for (dwObj = 0; dwObj < CGPIOD_OUT_COUNT; dwObj++, pObj++) {
+    // handle regular output objects
+    for (dwObj = CGPIOD_OUT_MIN; dwObj < CGPIOD_OUT_MAX; dwObj++, pObj++) {
       evt.dwObj = CGPIOD_OBJ_CLS_OUTPUT + dwObj;
 
       switch (pObj->dwCmd) {
@@ -120,9 +123,9 @@
 
     // set outputs to off and switch to input
     Debug.logTxt(CLSLVL_GPIOD_OUTPUT | 0x0000, "CGpiod::_outputOnExit");
-    for (dwObj = 0; dwObj < CGPIOD_OUT_COUNT; dwObj++, pObj++) {
+    for (dwObj = CGPIOD_OUT_MIN; dwObj < CGPIOD_OUT_MAX; dwObj++, pObj++) {
       _ioSetPinVal(pObj->dwPin, (pObj->dwState = CGPIOD_OUT_STATE_OFF) ^ pObj->dwPol);
-      _ioSetPinDir(pObj->dwPin, CGPIOD_PIN_DIR_INPUT);
+      _ioSetPinDir(pObj->dwPin, CGPIOD_IO_DIR_INPUT);
       } // for
 
     return m_dwError;
@@ -145,18 +148,19 @@
 
       // handle input event
       if ((pEvt->dwObj & CGPIOD_OBJ_CLS_MASK) == CGPIOD_OBJ_CLS_INPUT) {
-        // only first 2 input channels
-        if ((pEvt->dwObj & CGPIOD_OBJ_NUM_MASK) >= CGPIOD_OUT_COUNT) break;
+        // in8 -> out0, ... in11 -> out3
+        dwObj = (pEvt->dwObj & CGPIOD_OBJ_NUM_MASK) - CGPIOD_IN_MIN;
+//      if ((pEvt->dwObj & CGPIOD_OBJ_NUM_MASK) >= CGPIOD_OUT_COUNT) break;
 
         switch (pEvt->dwEvt) {
           case CGPIOD_IN_EVT_OUTLT1:
-            cmd.dwObj = CGPIOD_OBJ_CLS_OUTPUT | (pEvt->dwObj & CGPIOD_OBJ_NUM_MASK);
+            cmd.dwObj = CGPIOD_OBJ_CLS_OUTPUT | dwObj;
             cmd.dwCmd = CGPIOD_OUT_CMD_TOGGLE;
             _outputDoCmd(&cmd);
             break;
 
           case CGPIOD_IN_EVT_INGT2:
-            cmd.dwObj = CGPIOD_OBJ_CLS_OUTPUT | (pEvt->dwObj & CGPIOD_OBJ_NUM_MASK);
+            cmd.dwObj = CGPIOD_OBJ_CLS_OUTPUT | dwObj;
             cmd.dwCmd = CGPIOD_OUT_CMD_BLINK;
             _outputDoCmd(&cmd);
             break;
@@ -167,7 +171,7 @@
 
       if ((pEvt->dwObj & CGPIOD_OBJ_CLS_MASK) == CGPIOD_OBJ_CLS_HBEAT) {
         // handle 1 second heartbeat for synchronous blinking outputs
-        for (dwObj = 0; dwObj < CGPIOD_OUT_COUNT; dwObj++, pObj++) {
+        for (dwObj = CGPIOD_OUT_MIN; dwObj < CGPIOD_OUT_MAX; dwObj++, pObj++) {
           evt.dwObj = CGPIOD_OBJ_CLS_OUTPUT | dwObj;
 
           if ((pObj->dwCmd == CGPIOD_OUT_CMD_BLINK) || (pObj->dwCmd == CGPIOD_OUT_CMD_BLINKTIMED))
@@ -187,7 +191,7 @@
   tUint32 CGpiod::_outputDoCmd(tGpiodCmd* pCmd) 
   { 
     tChar        str1[16], str2[16];
-    tGpiodOutput *pObj = &m_output[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK]; 
+    tGpiodOutput *pObj = &m_output[(pCmd->dwObj & CGPIOD_OBJ_NUM_MASK) - CGPIOD_OUT_MIN]; 
     tGpiodEvt    evt   = { pCmd->msNow, pCmd->dwObj, 0, 0, 0 };
 
     PrintCmd(pCmd, CLSLVL_GPIOD_OUTPUT | 0x0000, "CGpiod::_outputDoCmd");

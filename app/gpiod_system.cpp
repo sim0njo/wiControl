@@ -12,9 +12,6 @@
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_systemOnConfig() 
   {
-    tUint32      dwObj;
-    tGpiodOutput *pObj = m_led; 
-
     m_dwFlags = CGPIOD_FLG_NONE;
 
     m_dwEmul  = AppSettings.gpiodEmul;
@@ -28,17 +25,14 @@
 
     // configure heartbeat timer
     memset(&m_hbeat, 0, sizeof(m_hbeat));
-    m_hbeat.msPeriod = CGPIOD_HB0_PERIOD;
+    m_hbeat.msPeriod = CGPIOD_HB_PERIOD;
 
-    // configure system leds
-    memset(m_led, 0, sizeof(m_led)); 
-    for (dwObj = 0; dwObj < CGPIOD_LED_COUNT; dwObj++, pObj++) {
-      pObj->dwPin   = (dwObj == 0) ? CGPIOD_LED0_PIN : CGPIOD_LED1_PIN; 
-      pObj->dwPol   = CGPIOD_OUT_POL_NORMAL; 
-      pObj->dwState = CGPIOD_OUT_STATE_OFF; 
-      pObj->dwCmd   = CGPIOD_LED_CMD_NONE; 
-      } // for
-
+    // configure system led
+    memset(&m_led, 0, sizeof(m_led)); 
+    m_led.dwPin   = CGPIOD_LED_PIN; 
+    m_led.dwPol   = CGPIOD_IO_POL_NORMAL; 
+    m_led.dwState = CGPIOD_OUT_STATE_OFF; 
+    m_led.dwCmd   = CGPIOD_LED_CMD_NONE; 
     return m_dwError;
     } // _systemOnConfig
 
@@ -47,15 +41,9 @@
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_systemOnInit() 
   {
-    tUint32      dwObj;
-    tGpiodOutput *pObj = m_led; 
-
     Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0000, "CGpiod::_systemOnInit");
-    for (dwObj = 0; dwObj < CGPIOD_LED_COUNT; dwObj++, pObj++) {
-      _ioSetPinVal(pObj->dwPin, pObj->dwState ^ pObj->dwPol);
-      _ioSetPinDir(pObj->dwPin, CGPIOD_PIN_DIR_OUTPUT);
-      } // for
-
+    _ioSetPinVal(m_led.dwPin, m_led.dwState ^ m_led.dwPol);
+    _ioSetPinDir(m_led.dwPin, CGPIOD_IO_DIR_OUTPUT);
     return m_dwError;
     } // _systemOnInit
 
@@ -64,44 +52,40 @@
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_systemOnRun(tUint32 msNow) 
   {
-    tUint32      dwObj;
-    tGpiodOutput *pObj = m_led; 
     tGpiodEvt    evt = { msNow, 0, 0, 0, 0 };
 
     // handle heartbeat timer
     if (TimerExpired(msNow, m_hbeat.msStart + m_hbeat.msPeriod)) {
       m_hbeat.dwCntr++;
       m_hbeat.msStart = msNow;
-      evt.dwObj = CGPIOD_OBJ_CLS_HBEAT + dwObj;
+      evt.dwObj = CGPIOD_OBJ_CLS_HBEAT;
       evt.dwEvt = (m_hbeat.dwCntr & 1) ? CGPIOD_HB_EVT_ODD : CGPIOD_HB_EVT_EVEN;
       DoEvt(&evt);
       } // if
 
     // handle system leds
-    for (dwObj = 0; dwObj < CGPIOD_LED_COUNT; dwObj++, pObj++) {
-      switch (pObj->dwCmd) {
-        case CGPIOD_LED_CMD_ONTIMED:
-          if (msNow >= pObj->dwRun) {
-            _outputSetState(pObj, CGPIOD_OUT_STATE_OFF, 0);
-            pObj->dwCmd = CGPIOD_LED_CMD_NONE;
-            } // if
-          break;
+    switch (m_led.dwCmd) {
+      case CGPIOD_LED_CMD_ONTIMED:
+        if (msNow >= m_led.dwRun) {
+          _outputSetState(&m_led, CGPIOD_OUT_STATE_OFF, 0);
+          m_led.dwCmd = CGPIOD_LED_CMD_NONE;
+          } // if
+        break;
 
-        case CGPIOD_LED_CMD_BLINK:
-          // handled by _outputDoEvt() for multi-channel in phase operation
-          break;
+      case CGPIOD_LED_CMD_BLINK:
+        // handled by _outputDoEvt() for multi-channel in phase operation
+        break;
 
-        case CGPIOD_LED_CMD_BLINKTIMED:
-          if (msNow >= pObj->dwRun) {
-            _outputSetState(pObj, CGPIOD_OUT_STATE_OFF, 0);
-            pObj->dwCmd = CGPIOD_LED_CMD_NONE;
-            } // if
-          break;
+      case CGPIOD_LED_CMD_BLINKTIMED:
+        if (msNow >= m_led.dwRun) {
+          _outputSetState(&m_led, CGPIOD_OUT_STATE_OFF, 0);
+          m_led.dwCmd = CGPIOD_LED_CMD_NONE;
+          } // if
+        break;
 
-        default:
-          break;
-        } // switch
-      } // for
+      default:
+        break;
+      } // switch
 
     return m_dwError;
     } // CGpiod::_systemOnRun
@@ -111,16 +95,10 @@
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_systemOnExit() 
   {
-    tUint32      dwObj;
-    tGpiodOutput *pObj = m_led; 
-
     // set outputs to off and switch to input
     Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0000, "CGpiod::_systemOnExit");
-    for (dwObj = 0; dwObj < CGPIOD_LED_COUNT; dwObj++, pObj++) {
-      _ioSetPinVal(pObj->dwPin, (pObj->dwState = CGPIOD_OUT_STATE_OFF) ^ pObj->dwPol);
-      _ioSetPinDir(pObj->dwPin, CGPIOD_PIN_DIR_INPUT);
-      } // for
-
+    _ioSetPinVal(m_led.dwPin, (m_led.dwState = CGPIOD_OUT_STATE_OFF) ^ m_led.dwPol);
+    _ioSetPinDir(m_led.dwPin, CGPIOD_IO_DIR_INPUT);
     return m_dwError;
     } // CGpiod::_systemOnExit
 
@@ -129,18 +107,13 @@
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_systemDoEvt(tGpiodEvt* pEvt) 
   { 
-    tUint32      dwObj;
-    tGpiodOutput *pObj = m_led; 
-
     if ((pEvt->dwObj & CGPIOD_OBJ_CLS_MASK) == CGPIOD_OBJ_CLS_HBEAT) {
       
       // handle 1 second heartbeat for synchronous blinking leds
-      for (dwObj = 0; dwObj < CGPIOD_LED_COUNT; dwObj++, pObj++) {
-        if ((pObj->dwCmd == CGPIOD_LED_CMD_BLINK) || (pObj->dwCmd == CGPIOD_LED_CMD_BLINKTIMED))
-          _outputSetState(pObj, (pEvt->dwEvt == CGPIOD_HB_EVT_ODD) ? CGPIOD_OUT_STATE_ON : CGPIOD_OUT_STATE_OFF, 0);
-        } // for
+      if ((m_led.dwCmd == CGPIOD_LED_CMD_BLINK) || (m_led.dwCmd == CGPIOD_LED_CMD_BLINKTIMED))
+        _outputSetState(&m_led, (pEvt->dwEvt == CGPIOD_HB_EVT_ODD) ? CGPIOD_OUT_STATE_ON : CGPIOD_OUT_STATE_OFF, 0);
 
-      } // else if
+      } // if
 
     return m_dwError;
     } // CGpiod::_systemDoEvt
@@ -157,9 +130,9 @@
     PrintCmd(pCmd, CLSLVL_GPIOD_SYSTEM | 0x0000, "CGpiod::_systemDoCmd");
     switch (pCmd->dwCmd & CGPIOD_OBJ_CMD_MASK) {
       case CGPIOD_SYS_CMD_PING: // blink led @ D8 for x seconds
-        m_led[0].dwCmd   = CGPIOD_LED_CMD_BLINKTIMED;
-        m_led[0].dwRun   = pCmd->msNow + CGPIOD_LED_BLINKTIME;
-        _outputSetState(&m_led[0], m_led[0].dwState ^ CGPIOD_OUT_STATE_ON, 0);
+        m_led.dwCmd   = CGPIOD_LED_CMD_BLINKTIMED;
+        m_led.dwRun   = pCmd->msNow + CGPIOD_LED_BLINKTIME;
+        _outputSetState(&m_led, m_led.dwState ^ CGPIOD_OUT_STATE_ON, 0);
         break;
 
       case CGPIOD_SYS_CMD_VERSION: 
