@@ -152,8 +152,6 @@ typedef struct {
 // input definitions
 //----------------------------------------------------------------------------
 #define CGPIOD_IN_COUNT                          4 //
-#define CGPIOD_IN_MIN                            0 // 
-#define CGPIOD_IN_MAX                            4 // 
 
 #define CGPIOD_IN0                               0 //
 #define CGPIOD_IN1                               1 //
@@ -216,8 +214,6 @@ typedef struct {
 // output definitions
 //----------------------------------------------------------------------------
 #define CGPIOD_OUT_COUNT                         4 // 
-#define CGPIOD_OUT_MIN                           0 // 
-#define CGPIOD_OUT_MAX                           4 // 
 
 #define CGPIOD_OUT0                              0 //
 #define CGPIOD_OUT1                              1 //
@@ -278,8 +274,6 @@ typedef struct {
 // shutter definitions
 //----------------------------------------------------------------------------
 #define CGPIOD_UDM_COUNT                         2 //
-#define CGPIOD_UDM_MIN                           0 // 
-#define CGPIOD_UDM_MAX                           2 // 
 
 #define CGPIOD_UDM0                              0 //
 #define CGPIOD_UDM1                              1 //
@@ -372,18 +366,16 @@ typedef struct {
 // timer definitions
 //----------------------------------------------------------------------------
 #define CGPIOD_TMR_COUNT                         4 // 
-#define CGPIOD_TMR_MIN                           0 // 
-#define CGPIOD_TMR_MAX                           4 // 
 
 #define CGPIOD_TMR_STATE_OFF                     0 // 
 #define CGPIOD_TMR_STATE_ON                      1 // 
 
 #define CGPIOD_TMR_CMD_NONE                      0 //
-#define CGPIOD_TMR_CMD_STATUS                    1 // out6-7
-#define CGPIOD_TMR_CMD_TIMERONDELAYED           19 // out6-7
-#define CGPIOD_TMR_CMD_TIMEROFFDELAYED          20 // out6-7
-#define CGPIOD_TMR_CMD_TIMERONTIMED             21 // out6-7
-#define CGPIOD_TMR_CMD_TIMERABORT               22 // out6-7
+#define CGPIOD_TMR_CMD_STATUS                    1 //
+#define CGPIOD_TMR_CMD_TIMERONDELAYED           19 //
+#define CGPIOD_TMR_CMD_TIMEROFFDELAYED          20 //
+#define CGPIOD_TMR_CMD_TIMERONTIMED             21 //
+#define CGPIOD_TMR_CMD_TIMERABORT               22 //
 
 #define CGPIOD_TMR_EVT_TIMEROFF                  6 // 
 #define CGPIOD_TMR_EVT_TIMERON                   7 // 

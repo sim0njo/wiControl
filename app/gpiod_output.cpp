@@ -18,7 +18,7 @@
     Debug.logTxt(CLSLVL_GPIOD_OUTPUT | 0x0000, "CGpiod::_outputOnConfig");
     memset(m_output, 0, sizeof(m_output)); 
 
-    for (dwObj = CGPIOD_OUT_MIN; dwObj < CGPIOD_OUT_MAX; dwObj++, pObj++) {
+    for (dwObj = 0; dwObj < CGPIOD_OUT_COUNT; dwObj++, pObj++) {
       // initialise defaults
       pObj->dwFlags  = CGPIOD_OUT_FLG_MQTT_ALL;
       pObj->dwPin    = (dwObj == CGPIOD_OUT0) ? CGPIOD_OUT0_PIN : 
@@ -42,7 +42,7 @@
     tGpiodOutput *pObj = m_output; 
 
     Debug.logTxt(CLSLVL_GPIOD_OUTPUT | 0x0000, "CGpiod::_outputOnInit");
-    for (dwObj = CGPIOD_OUT_MIN; dwObj < CGPIOD_OUT_MAX; dwObj++, pObj++) {
+    for (dwObj = 0; dwObj < CGPIOD_OUT_COUNT; dwObj++, pObj++) {
       _ioSetPinVal(pObj->dwPin, pObj->dwState ^ pObj->dwPol);
       _ioSetPinDir(pObj->dwPin, CGPIOD_IO_DIR_OUTPUT);
       } // for
@@ -60,7 +60,7 @@
     tGpiodEvt    evt = { msNow, 0, 0, 0, 0 };
 
     // handle regular output objects
-    for (dwObj = CGPIOD_OUT_MIN; dwObj < CGPIOD_OUT_MAX; dwObj++, pObj++) {
+    for (dwObj = 0; dwObj < CGPIOD_OUT_COUNT; dwObj++, pObj++) {
       evt.dwObj = CGPIOD_OBJ_CLS_OUTPUT + dwObj;
 
       switch (pObj->dwCmd) {
@@ -124,7 +124,7 @@
 
     // set outputs to off and switch to input
     Debug.logTxt(CLSLVL_GPIOD_OUTPUT | 0x0000, "CGpiod::_outputOnExit");
-    for (dwObj = CGPIOD_OUT_MIN; dwObj < CGPIOD_OUT_MAX; dwObj++, pObj++) {
+    for (dwObj = 0; dwObj < CGPIOD_OUT_COUNT; dwObj++, pObj++) {
       _ioSetPinVal(pObj->dwPin, (pObj->dwState = CGPIOD_OUT_STATE_OFF) ^ pObj->dwPol);
       _ioSetPinDir(pObj->dwPin, CGPIOD_IO_DIR_INPUT);
       } // for
@@ -169,7 +169,7 @@
 
       if ((pEvt->dwObj & CGPIOD_OBJ_CLS_MASK) == CGPIOD_OBJ_CLS_HBEAT) {
         // handle 1 second heartbeat for synchronous blinking outputs
-        for (dwObj = CGPIOD_OUT_MIN; dwObj < CGPIOD_OUT_MAX; dwObj++, pObj++) {
+        for (dwObj = 0; dwObj < CGPIOD_OUT_COUNT; dwObj++, pObj++) {
           evt.dwObj = CGPIOD_OBJ_CLS_OUTPUT | dwObj;
 
           if ((pObj->dwCmd == CGPIOD_OUT_CMD_BLINK) || (pObj->dwCmd == CGPIOD_OUT_CMD_BLINKTIMED))
@@ -189,7 +189,7 @@
   tUint32 CGpiod::_outputDoCmd(tGpiodCmd* pCmd) 
   { 
     tChar        str1[16], str2[16];
-    tGpiodOutput *pObj = &m_output[(pCmd->dwObj & CGPIOD_OBJ_NUM_MASK) - CGPIOD_OUT_MIN]; 
+    tGpiodOutput *pObj = &m_output[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK]; 
     tGpiodEvt    evt   = { pCmd->msNow, pCmd->dwObj, 0, 0, 0 };
 
     PrintCmd(pCmd, CLSLVL_GPIOD_OUTPUT | 0x0000, "CGpiod::_outputDoCmd");

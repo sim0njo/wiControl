@@ -18,7 +18,7 @@
     Debug.logTxt(CLSLVL_GPIOD_TIMER | 0x0000, "CGpiod::_timerOnConfig");
     memset(m_timer, 0, sizeof(m_timer)); 
 
-    for (dwObj = CGPIOD_TMR_MIN; dwObj < CGPIOD_TMR_MAX; dwObj++, pObj++) {
+    for (dwObj = 0; dwObj < CGPIOD_TMR_COUNT; dwObj++, pObj++) {
       pObj->dwFlags = CGPIOD_TMR_FLG_MQTT_ALL;
       pObj->dwState = CGPIOD_TMR_STATE_OFF;
       pObj->dwCmd   = CGPIOD_TMR_CMD_NONE;
@@ -47,7 +47,7 @@
     tGpiodEvt   evt = { msNow, 0, 0, 0, 0 };
 
     // handle regular output objects
-    for (dwObj = CGPIOD_TMR_MIN; dwObj < CGPIOD_TMR_MAX; dwObj++, pObj++) {
+    for (dwObj = 0; dwObj < CGPIOD_TMR_COUNT; dwObj++, pObj++) {
       evt.dwObj = CGPIOD_OBJ_CLS_TIMER + dwObj;
 
       switch (pObj->dwCmd) {
@@ -98,7 +98,7 @@
   tUint32 CGpiod::_timerDoCmd(tGpiodCmd* pCmd) 
   { 
     tChar       str1[16], str2[16];
-    tGpiodTimer *pObj = &m_timer[(pCmd->dwObj & CGPIOD_OBJ_NUM_MASK) - CGPIOD_TMR_MIN]; 
+    tGpiodTimer *pObj = &m_timer[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK]; 
     tGpiodEvt   evt   = { pCmd->msNow, pCmd->dwObj, 0, 0, 0 };
 
     Debug.logTxt(CLSLVL_GPIOD_TIMER | 0x0000, "CGpiod::_timerDoCmd,obj=%08X", pCmd->dwObj);

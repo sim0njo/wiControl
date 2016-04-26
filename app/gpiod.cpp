@@ -195,8 +195,6 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
   switch (pEvt->dwObj & CGPIOD_OBJ_CLS_MASK) {
     case CGPIOD_OBJ_CLS_INPUT:
       // report event if configured
-      dwObj -= CGPIOD_IN_MIN;
-
       if ((m_dwMode & CGPIOD_MODE_MQTT) && (m_input[dwObj].dwFlags & (0x1 << pEvt->dwEvt))) {
         if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
           mqttPublish(CGPIOD_EVT_PFX, _printObj2String(str1, pEvt->dwObj), _printVal2String(str2, pEvt->dwEvt));
@@ -216,8 +214,6 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
 
     case CGPIOD_OBJ_CLS_OUTPUT:
       // report event if configured
-      dwObj -= CGPIOD_OUT_MIN;
-
       if ((m_dwMode & CGPIOD_MODE_MQTT) && (m_output[dwObj].dwFlags & (0x1 << pEvt->dwEvt))) {
         if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
           mqttPublish(CGPIOD_EVT_PFX, _printObj2String(str1, pEvt->dwObj), _printVal2String(str2, pEvt->dwEvt));
@@ -229,8 +225,6 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
 
     case CGPIOD_OBJ_CLS_SHUTTER:
       // report event if configured
-      dwObj -= CGPIOD_UDM_MIN;
-
       if ((m_dwMode & CGPIOD_MODE_MQTT) && (m_shutter[dwObj].dwFlags & (0x1 << pEvt->dwEvt))) {
         if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
           mqttPublish(CGPIOD_EVT_PFX, _printObj2String(str1, pEvt->dwObj), _printVal2String(str2, pEvt->dwEvt));
@@ -242,9 +236,6 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
 
     case CGPIOD_OBJ_CLS_TIMER:
       // report event if configured
-      dwObj -= CGPIOD_TMR_MIN;
-      Debug.logTxt(CLSLVL_GPIOD | 0x0400, "CGpiod::DoEvt,obj=%u,flags=%08X", dwObj, m_timer[dwObj].dwFlags);
-
       if ((m_dwMode & CGPIOD_MODE_MQTT) && (m_timer[dwObj].dwFlags & (0x1 << pEvt->dwEvt))) {
         if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
           mqttPublish(CGPIOD_EVT_PFX, _printObj2String(str1, pEvt->dwObj), _printVal2String(str2, pEvt->dwEvt));

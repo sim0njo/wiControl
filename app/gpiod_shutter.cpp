@@ -18,7 +18,7 @@
     Debug.logTxt(CLSLVL_GPIOD_SHUTTER | 0x0000, "CGpiod::_shutterOnConfig");
     memset(m_shutter, 0, sizeof(m_shutter)); 
 
-    for (dwObj = CGPIOD_UDM_MIN; dwObj < CGPIOD_UDM_MAX; dwObj++, pObj++) {
+    for (dwObj = 0; dwObj < CGPIOD_UDM_COUNT; dwObj++, pObj++) {
       // initialise defaults
       pObj->dwFlags    = CGPIOD_UDM_FLG_MQTT_ALL;
       pObj->dwPinUp    = (dwObj == CGPIOD_UDM0) ? CGPIOD_UDM0_PIN_UP   : 
@@ -45,7 +45,7 @@
     tGpiodShutter *pObj = m_shutter; 
 
     Debug.logTxt(CLSLVL_GPIOD_SHUTTER | 0x0000, "CGpiod::_shutterOnInit");
-    for (dwObj = CGPIOD_UDM_MIN; dwObj < CGPIOD_UDM_MAX; dwObj++, pObj++) {
+    for (dwObj = 0; dwObj < CGPIOD_UDM_COUNT; dwObj++, pObj++) {
       _ioSetPinVal(pObj->dwPinUp,   ((pObj->dwState >> 0) & CGPIOD_OUT_STATE_ON) ^ pObj->dwPol);
       _ioSetPinVal(pObj->dwPinDown, ((pObj->dwState >> 1) & CGPIOD_OUT_STATE_ON) ^ pObj->dwPol);
       _ioSetPinDir(pObj->dwPinUp,   CGPIOD_IO_DIR_OUTPUT);
@@ -64,7 +64,7 @@
     tGpiodShutter *pObj = m_shutter; 
     tGpiodEvt     evt = { msNow, 0, 0, 0, 0 };
 
-    for (dwObj = CGPIOD_UDM_MIN; dwObj < CGPIOD_UDM_MAX; dwObj++, pObj++) {
+    for (dwObj = 0; dwObj < CGPIOD_UDM_COUNT; dwObj++, pObj++) {
       evt.dwObj = CGPIOD_OBJ_CLS_SHUTTER + dwObj;
 
       switch (pObj->dwCmd) {
@@ -162,7 +162,7 @@
 
     // set outputs to off and switch to input
     Debug.logTxt(CLSLVL_GPIOD_SHUTTER | 0x0000, "CGpiod::_shutterOnExit");
-    for (dwObj = CGPIOD_UDM_MIN; dwObj < CGPIOD_UDM_MAX; dwObj++, pObj++) {
+    for (dwObj = 0; dwObj < CGPIOD_UDM_COUNT; dwObj++, pObj++) {
       _ioSetPinVal(pObj->dwPinUp,   CGPIOD_OUT_STATE_OFF ^ pObj->dwPol);
       _ioSetPinVal(pObj->dwPinDown, CGPIOD_OUT_STATE_OFF ^ pObj->dwPol);
       _ioSetPinDir(pObj->dwPinUp,   CGPIOD_IO_DIR_INPUT);
@@ -244,7 +244,7 @@
   tUint32 CGpiod::_shutterDoCmd(tGpiodCmd* pCmd) 
   { 
     tChar         str1[16], str2[16];
-    tGpiodShutter *pObj = &m_shutter[(pCmd->dwObj & CGPIOD_OBJ_NUM_MASK) - CGPIOD_UDM_MIN]; 
+    tGpiodShutter *pObj = &m_shutter[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK]; 
     tGpiodEvt     evt   = { pCmd->msNow, pCmd->dwObj, 0, 0, 0 };
 
     PrintCmd(pCmd, CLSLVL_GPIOD_SHUTTER | 0x0000, "CGpiod::_shutterDoCmd");
