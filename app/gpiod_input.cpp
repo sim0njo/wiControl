@@ -22,10 +22,10 @@
       // initialise defaults
       pObj->dwFlags     = CGPIOD_IN_FLG_MQTT_ALL; // all events to MQTT
       pObj->dwState     = CGPIOD_IN_STATE_OUT; 
-      pObj->dwPin       = (dwObj == CGPIOD_IN8 ) ? CGPIOD_IN8_PIN  : 
-                          (dwObj == CGPIOD_IN9 ) ? CGPIOD_IN9_PIN  : 
-                          (dwObj == CGPIOD_IN10) ? CGPIOD_IN10_PIN : 
-                          (dwObj == CGPIOD_IN11) ? CGPIOD_IN11_PIN : -1; 
+      pObj->dwPin       = (dwObj == CGPIOD_IN0) ? CGPIOD_IN0_PIN  : 
+                          (dwObj == CGPIOD_IN1) ? CGPIOD_IN1_PIN  : 
+                          (dwObj == CGPIOD_IN2) ? CGPIOD_IN2_PIN : 
+                          (dwObj == CGPIOD_IN3) ? CGPIOD_IN3_PIN : -1; 
       pObj->dwPol       = CGPIOD_IO_POL_INVERT;  
       pObj->dwVal       = CGPIOD_IN_VAL_OUT; 
       pObj->tmrDebounce = CGPIOD_IN_TMR_DEBOUNCE; 
@@ -72,7 +72,7 @@
       switch (pObj->dwState) {
         case CGPIOD_IN_STATE_OUT:
           if (pObj->dwVal != dwVal) {
-            // set new state
+            // input closed
             pObj->dwVal   = CGPIOD_IN_VAL_IN;
             pObj->msState = msNow;
             pObj->dwState = CGPIOD_IN_STATE_INGT0;
@@ -94,7 +94,7 @@
             } 
           else {
             // input still closed
-            if ((msNow - pObj->msState) < CGPIOD_IN_TMR_INGT1) break;
+            if (!TimerExpired(msNow, pObj->msState + CGPIOD_IN_TMR_INGT1)) break;
 
             pObj->dwState = CGPIOD_IN_STATE_INGT1;
             evt.dwEvt     = CGPIOD_IN_EVT_INGT1;
@@ -115,7 +115,7 @@
             } 
           else {
             // input still closed
-            if ((msNow - pObj->msState) < CGPIOD_IN_TMR_INGT2) break;
+            if (!TimerExpired(msNow, pObj->msState + CGPIOD_IN_TMR_INGT2)) break;
 
             pObj->dwState = CGPIOD_IN_STATE_INGT2;
             evt.dwEvt     = CGPIOD_IN_EVT_INGT2;
@@ -151,7 +151,7 @@
     } // CGpiod::_inputOnExit
 
   //--------------------------------------------------------------------------
-  // execute command for inputs, called by _DoCmd()
+  // execute command for inputs, called by DoCmd()
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_inputDoCmd(tGpiodCmd* pCmd) 
   { 
@@ -192,7 +192,7 @@
         pObj->msDebounce = msNow;
         
       // return old state till debounce period passed
-      if ((msNow - pObj->msDebounce) < pObj->tmrDebounce)
+      if (!TimerExpired(msNow, pObj->msDebounce + pObj->tmrDebounce))
         return pObj->dwVal;
 
       } // if

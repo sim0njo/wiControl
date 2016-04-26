@@ -130,8 +130,8 @@
     PrintCmd(pCmd, CLSLVL_GPIOD_SYSTEM | 0x0000, "CGpiod::_systemDoCmd");
     switch (pCmd->dwCmd & CGPIOD_CMD_NUM_MASK) {
       case CGPIOD_SYS_CMD_PING: // blink led @ D8 for x seconds
-        m_led.dwCmd   = CGPIOD_LED_CMD_BLINKTIMED;
-        m_led.dwRun   = pCmd->msNow + CGPIOD_LED_BLINKTIME;
+        m_led.dwCmd = CGPIOD_LED_CMD_BLINKTIMED;
+        m_led.dwRun = pCmd->msNow + CGPIOD_LED_BLINKTIME;
         _outputSetState(&m_led, m_led.dwState ^ CGPIOD_OUT_STATE_ON, 0);
         break;
 

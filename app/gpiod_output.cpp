@@ -149,19 +149,16 @@
 
       // handle input event
       if ((pEvt->dwObj & CGPIOD_OBJ_CLS_MASK) == CGPIOD_OBJ_CLS_INPUT) {
-        // in8 -> out0, ... in11 -> out3
-        dwObj = (pEvt->dwObj & CGPIOD_OBJ_NUM_MASK) - CGPIOD_IN_MIN;
-//      if ((pEvt->dwObj & CGPIOD_OBJ_NUM_MASK) >= CGPIOD_OUT_COUNT) break;
 
         switch (pEvt->dwEvt) {
           case CGPIOD_IN_EVT_OUTLT1:
-            cmd.dwObj = CGPIOD_OBJ_CLS_OUTPUT | dwObj;
+            cmd.dwObj = CGPIOD_OBJ_CLS_OUTPUT | (pEvt->dwObj & CGPIOD_OBJ_NUM_MASK);
             cmd.dwCmd = CGPIOD_OUT_CMD_TOGGLE;
             _outputDoCmd(&cmd);
             break;
 
           case CGPIOD_IN_EVT_INGT2:
-            cmd.dwObj = CGPIOD_OBJ_CLS_OUTPUT | dwObj;
+            cmd.dwObj = CGPIOD_OBJ_CLS_OUTPUT | (pEvt->dwObj & CGPIOD_OBJ_NUM_MASK);
             cmd.dwCmd = CGPIOD_OUT_CMD_BLINK;
             _outputDoCmd(&cmd);
             break;

@@ -182,34 +182,36 @@
     do {
       // initialise vars
       cmd.msNow = pEvt->msNow;
-
-      // only first 2 input channels
-      if ((pEvt->dwObj & CGPIOD_OBJ_NUM_MASK) > CGPIOD_UDM_COUNT) break;
-
 //    PrintEvt(pEvt, CLSLVL_GPIOD_SHUTTER | 0x0000, "CGpiod::_shutterDoEvt");
-      switch (pEvt->dwEvt) {
-        case CGPIOD_IN_EVT_INGT0:
-          // stop shutter
-          cmd.dwObj = CGPIOD_OBJ_CLS_SHUTTER | ((pEvt->dwObj & CGPIOD_OBJ_NUM_MASK) / 2);
-          cmd.dwCmd = CGPIOD_UDM_CMD_STOP;
-          _shutterDoCmd(&cmd);
-          break;
 
-        case CGPIOD_IN_EVT_INGT1:
-          // start shutter up/down
-          cmd.dwObj              = CGPIOD_OBJ_CLS_SHUTTER | ((pEvt->dwObj & CGPIOD_OBJ_NUM_MASK) / 2);
-          cmd.parmsShutter.dwRun = m_shutter[(pEvt->dwObj & CGPIOD_OBJ_NUM_MASK) / 2].dwRunDef; 
+      // handle input event
+      if ((pEvt->dwObj & CGPIOD_OBJ_CLS_MASK) == CGPIOD_OBJ_CLS_INPUT) {
 
-          if (pEvt->dwObj & 0x1)
-            // in1, in3
-            cmd.dwCmd = CGPIOD_UDM_CMD_DOWN;
-          else
-            // in0, in2
-            cmd.dwCmd = CGPIOD_UDM_CMD_UP;
+        switch (pEvt->dwEvt) {
+          case CGPIOD_IN_EVT_INGT0:
+            // stop shutter
+            cmd.dwObj = CGPIOD_OBJ_CLS_SHUTTER | ((pEvt->dwObj & CGPIOD_OBJ_NUM_MASK) / 2);
+            cmd.dwCmd = CGPIOD_UDM_CMD_STOP;
+            _shutterDoCmd(&cmd);
+            break;
+
+          case CGPIOD_IN_EVT_INGT1:
+            // start shutter up/down
+            cmd.dwObj              = CGPIOD_OBJ_CLS_SHUTTER | ((pEvt->dwObj & CGPIOD_OBJ_NUM_MASK) / 2);
+            cmd.parmsShutter.dwRun = m_shutter[(pEvt->dwObj & CGPIOD_OBJ_NUM_MASK) / 2].dwRunDef; 
+
+            if (pEvt->dwObj & 0x1)
+              // in1, in3
+              cmd.dwCmd = CGPIOD_UDM_CMD_DOWN;
+            else
+              // in0, in2
+              cmd.dwCmd = CGPIOD_UDM_CMD_UP;
  
-          _shutterDoCmd(&cmd);
-          break;
-        } // switch
+            _shutterDoCmd(&cmd);
+            break;
+          } // switch
+
+        } // if 
 
       } while (0);
 

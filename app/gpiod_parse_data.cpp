@@ -9,10 +9,10 @@
 tParseRsvd g_gpiodParseObj[] = {
 //  dwMask0           dwMask1            dwTType           dwTVal      szTVal
 //  CGPIOD_ORIG_%     CGPIOD_EMUL_%                        0x0000CCcc                                   
-  { 0x00000018      , 0x00000003       , CPARSE_TYPE_NODE, 0x00000108, "in8",       },
-  { 0x00000018      , 0x00000003       , CPARSE_TYPE_NODE, 0x00000109, "in9",       },
-  { 0x00000018      , 0x00000003       , CPARSE_TYPE_NODE, 0x0000010A, "in10",      },
-  { 0x00000018      , 0x00000003       , CPARSE_TYPE_NODE, 0x0000010B, "in11",      },
+  { 0x00000018      , 0x00000003       , CPARSE_TYPE_NODE, 0x00000100, "in0",       },
+  { 0x00000018      , 0x00000003       , CPARSE_TYPE_NODE, 0x00000101, "in1",       },
+  { 0x00000018      , 0x00000003       , CPARSE_TYPE_NODE, 0x00000102, "in2",       },
+  { 0x00000018      , 0x00000003       , CPARSE_TYPE_NODE, 0x00000103, "in3",       },
 
   { 0x00000018      , 0x00000001       , CPARSE_TYPE_NODE, 0x00000200, "out0",      },
   { 0x00000018      , 0x00000001       , CPARSE_TYPE_NODE, 0x00000201, "out1",      },
@@ -22,8 +22,10 @@ tParseRsvd g_gpiodParseObj[] = {
   { 0x00000018      , 0x00000002       , CPARSE_TYPE_NODE, 0x00000400, "out0",      },
   { 0x00000018      , 0x00000002       , CPARSE_TYPE_NODE, 0x00000401, "out1",      },
 
-  { 0x00000018      , 0x00000003       , CPARSE_TYPE_NODE, 0x00000806, "out6",      },
-  { 0x00000018      , 0x00000003       , CPARSE_TYPE_NODE, 0x00000807, "out7",      },
+  { 0x00000018      , 0x00000003       , CPARSE_TYPE_NODE, 0x00000800, "tmr0",      },
+  { 0x00000018      , 0x00000003       , CPARSE_TYPE_NODE, 0x00000801, "tmr1",      },
+  { 0x00000018      , 0x00000003       , CPARSE_TYPE_NODE, 0x00000802, "tmr2",      },
+  { 0x00000018      , 0x00000003       , CPARSE_TYPE_NODE, 0x00000803, "tmr3",      },
 
   { 0x00000010      , 0x00000003       , CPARSE_TYPE_NODE, 0x00001000, "system",    },
                                                                          
@@ -44,8 +46,8 @@ tParseRsvd g_gpiodParseObjSta[] = {
   { 0x00000A00      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000001, "on",        },
 
   { 0x80000400      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000000, "stop",      },
-  { 0x80000400      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000001, "upon",      },
-  { 0x80000400      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000002, "downon",    },
+  { 0x80000400      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000001, "up",        },
+  { 0x80000400      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000002, "down",      },
 
   { 0x00000000      , 0x00000000       , 0x00000000      , 0x00000000, "",          },
   };
@@ -63,7 +65,7 @@ tParseRsvd g_gpiodParseObjEvt[] = {
   { 0x80000200      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000000, "off",       },
   { 0x80000200      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000001, "on",        },
 
-  { 0x80000400      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000000, "stop",      },
+//{ 0x80000400      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000000, "stop",      },
   { 0x80000400      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000001, "upon",      },
   { 0x80000400      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000002, "downon",    },
   { 0x80000400      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000003, "upoff",     },
@@ -84,13 +86,13 @@ tParseRsvd g_gpiodParseObjEvt[] = {
 tParseRsvd g_gpiodParseCmdInput[] = {
 //  dwMask0           dwMask1            dwTType           dwTVal      szTVal
 //  CGPIOD_ORIG_%     Num2Mask(cc)                         0x0000EEEE  params                
-  { 0x00000018      , 0x00000F00       , CPARSE_TYPE_LEAF, 0x00000001, "status",    },
-  { 0x00000018      , 0x00000F00       , CPARSE_TYPE_LEAF, 0x00000002, "ingt0",     },
-  { 0x00000018      , 0x00000F00       , CPARSE_TYPE_LEAF, 0x00000003, "outlt1",    },
-  { 0x00000018      , 0x00000F00       , CPARSE_TYPE_LEAF, 0x00000004, "ingt1",     },
-  { 0x00000018      , 0x00000F00       , CPARSE_TYPE_LEAF, 0x00000005, "outgt1",    },
-  { 0x00000018      , 0x00000F00       , CPARSE_TYPE_LEAF, 0x00000006, "ingt2",     },
-  { 0x00000018      , 0x00000F00       , CPARSE_TYPE_LEAF, 0x00000007, "out",       },
+  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00000001, "status",    },
+  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00000002, "ingt0",     },
+  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00000003, "outlt1",    },
+  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00000004, "ingt1",     },
+  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00000005, "outgt1",    },
+  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00000006, "ingt2",     },
+  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00000007, "out",       },
 
   { 0x00000000      , 0x00000000       , 0x00000000      , 0x00000000, "",          },
   };
@@ -98,11 +100,11 @@ tParseRsvd g_gpiodParseCmdInput[] = {
 tParseRsvd g_gpiodParseCmdTimer[] = {
 //  dwMask0           dwMask1            dwTType           dwTVal      szTVal
 //  CGPIOD_ORIG_%     Num2Mask(cc)                         0xPPPPMMMM  params                
-  { 0x00000018      , 0x000000C0       , CPARSE_TYPE_LEAF, 0x00000001, "status",         },
-  { 0x00000018      , 0x000000C0       , CPARSE_TYPE_LEAF, 0x00080013, "ondelayed",      }, // 1-65535 s
-  { 0x00000018      , 0x000000C0       , CPARSE_TYPE_LEAF, 0x00080014, "offdelayed",     }, // 1-65535 s
-  { 0x00000018      , 0x000000C0       , CPARSE_TYPE_LEAF, 0x02000015, "ontimed",        }, // 1-65535 s
-  { 0x00000018      , 0x000000C0       , CPARSE_TYPE_LEAF, 0x00000016, "abort",          },
+  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00000001, "status",         },
+  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00080013, "ondelayed",      }, // 1-65535 s
+  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00080014, "offdelayed",     }, // 1-65535 s
+  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x02000015, "ontimed",        }, // 1-65535 s
+  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00000016, "abort",          },
 
   { 0x00000000      , 0x00000000       , 0x00000000      , 0x00000000, "",               },
   };

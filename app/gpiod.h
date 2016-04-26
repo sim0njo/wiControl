@@ -59,8 +59,8 @@ void                 gpiodOnMqttPublish(tChar* szTopic, tChar* szMsg);
 #define CGPIOD_MODE_BOTH                         3 // do both
 
 #define CGPIOD_EFMT_NONE                         0 // 
-#define CGPIOD_EFMT_NUMERICAL                    1 // 
-#define CGPIOD_EFMT_TEXTUAL                      2 // 
+#define CGPIOD_EFMT_TEXTUAL                      1 // 
+#define CGPIOD_EFMT_NUMERICAL                    2 // 
 
 //----------------------------------------------------------------------------
 #define CGPIOD_ORIG_INPUT               0x10000000 // 
@@ -152,18 +152,18 @@ typedef struct {
 // input definitions
 //----------------------------------------------------------------------------
 #define CGPIOD_IN_COUNT                          4 //
-#define CGPIOD_IN_MIN                            8 // 
-#define CGPIOD_IN_MAX                           12 // 
+#define CGPIOD_IN_MIN                            0 // 
+#define CGPIOD_IN_MAX                            4 // 
 
-#define CGPIOD_IN8                               8 //
-#define CGPIOD_IN9                               9 //
-#define CGPIOD_IN10                             10 //
-#define CGPIOD_IN11                             11 //
+#define CGPIOD_IN0                               0 //
+#define CGPIOD_IN1                               1 //
+#define CGPIOD_IN2                               2 //
+#define CGPIOD_IN3                               3 //
 
-#define CGPIOD_IN8_PIN                           0 // D3 x
-#define CGPIOD_IN9_PIN                           2 // D4 x
-#define CGPIOD_IN10_PIN                          5 // D1 x
-#define CGPIOD_IN11_PIN                          4 // D2 x
+#define CGPIOD_IN0_PIN                           0 // D3 x
+#define CGPIOD_IN1_PIN                           2 // D4 x
+#define CGPIOD_IN2_PIN                           5 // D1 x
+#define CGPIOD_IN3_PIN                           4 // D2 x
 
 #define CGPIOD_IN_TMR_DEBOUNCE                 100 // in ms
 #define CGPIOD_IN_TMR_INGT1                   1000 //
@@ -224,8 +224,8 @@ typedef struct {
 #define CGPIOD_OUT2                              2 //
 #define CGPIOD_OUT3                              3 //
 
-#define CGPIOD_OUT0_PIN                         15 // D8 x
-#define CGPIOD_OUT1_PIN                         13 // D7 x
+#define CGPIOD_OUT0_PIN                         15 // D8 
+#define CGPIOD_OUT1_PIN                         13 // D7 
 #define CGPIOD_OUT2_PIN                         12 // D6
 #define CGPIOD_OUT3_PIN                         14 // D5
 
@@ -330,7 +330,7 @@ typedef struct {
 #define CGPIOD_UDM_PRIO_MASK_4          0x00000010 //
 #define CGPIOD_UDM_PRIO_MASK_5          0x00000020 //
 
-#define CGPIOD_UDM_EVT_STOP                      0 //
+//#define CGPIOD_UDM_EVT_STOP                      0 //
 #define CGPIOD_UDM_EVT_UPON                      1 //
 #define CGPIOD_UDM_EVT_DOWNON                    2 //
 #define CGPIOD_UDM_EVT_UPOFF                     3 //
@@ -371,9 +371,9 @@ typedef struct {
 //----------------------------------------------------------------------------
 // timer definitions
 //----------------------------------------------------------------------------
-#define CGPIOD_TMR_COUNT                         2 // 
-#define CGPIOD_TMR_MIN                           6 // 
-#define CGPIOD_TMR_MAX                           8 // 
+#define CGPIOD_TMR_COUNT                         4 // 
+#define CGPIOD_TMR_MIN                           0 // 
+#define CGPIOD_TMR_MAX                           4 // 
 
 #define CGPIOD_TMR_STATE_OFF                     0 // 
 #define CGPIOD_TMR_STATE_ON                      1 // 
