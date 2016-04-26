@@ -22,9 +22,10 @@
       // initialise defaults
       pObj->dwFlags     = CGPIOD_IN_FLG_MQTT_ALL; // all events to MQTT
       pObj->dwState     = CGPIOD_IN_STATE_OUT; 
-      pObj->dwPin       = (dwObj ==  8) ? CGPIOD_IN8_PIN  : 
-                          (dwObj ==  9) ? CGPIOD_IN9_PIN  : 
-                          (dwObj == 10) ? CGPIOD_IN10_PIN : CGPIOD_IN11_PIN; 
+      pObj->dwPin       = (dwObj == CGPIOD_IN8 ) ? CGPIOD_IN8_PIN  : 
+                          (dwObj == CGPIOD_IN9 ) ? CGPIOD_IN9_PIN  : 
+                          (dwObj == CGPIOD_IN10) ? CGPIOD_IN10_PIN : 
+                          (dwObj == CGPIOD_IN11) ? CGPIOD_IN11_PIN : -1; 
       pObj->dwPol       = CGPIOD_IO_POL_INVERT;  
       pObj->dwVal       = CGPIOD_IN_VAL_OUT; 
       pObj->tmrDebounce = CGPIOD_IN_TMR_DEBOUNCE; 
@@ -159,7 +160,7 @@
     tGpiodEvt   evt   = { pCmd->msNow, pCmd->dwObj, 0, 0, 0 };
 
     PrintCmd(pCmd, CLSLVL_GPIOD_OUTPUT | 0x0000, "CGpiod::_inputDoCmd");
-    switch (pCmd->dwCmd & CGPIOD_OBJ_CMD_MASK) {
+    switch (pCmd->dwCmd & CGPIOD_CMD_NUM_MASK) {
       case CGPIOD_IN_CMD_STATUS: 
         if (pCmd->dwOrig == CGPIOD_ORIG_MQTT) {
           evt.dwEvt     = pObj->dwState;

@@ -21,8 +21,10 @@
     for (dwObj = CGPIOD_UDM_MIN; dwObj < CGPIOD_UDM_MAX; dwObj++, pObj++) {
       // initialise defaults
       pObj->dwFlags    = CGPIOD_UDM_FLG_MQTT_ALL;
-      pObj->dwPinUp    = (dwObj == 0) ? CGPIOD_UDM0_PIN_UP   : CGPIOD_UDM1_PIN_UP;
-      pObj->dwPinDown  = (dwObj == 0) ? CGPIOD_UDM0_PIN_DOWN : CGPIOD_UDM1_PIN_DOWN;
+      pObj->dwPinUp    = (dwObj == CGPIOD_UDM0) ? CGPIOD_UDM0_PIN_UP   : 
+                         (dwObj == CGPIOD_UDM1) ? CGPIOD_UDM1_PIN_UP   : -1;
+      pObj->dwPinDown  = (dwObj == CGPIOD_UDM0) ? CGPIOD_UDM0_PIN_DOWN :
+                         (dwObj == CGPIOD_UDM1) ? CGPIOD_UDM1_PIN_DOWN : -1;
       pObj->dwPol      = CGPIOD_IO_POL_NORMAL; 
       pObj->dwRunDef   = CGPIOD_UDM_RUN_DEF;
       pObj->dwState    = CGPIOD_UDM_STATE_STOP;
@@ -244,7 +246,7 @@
     tGpiodEvt     evt   = { pCmd->msNow, pCmd->dwObj, 0, 0, 0 };
 
     PrintCmd(pCmd, CLSLVL_GPIOD_SHUTTER | 0x0000, "CGpiod::_shutterDoCmd");
-    switch (pCmd->dwCmd & CGPIOD_OBJ_CMD_MASK) {
+    switch (pCmd->dwCmd & CGPIOD_CMD_NUM_MASK) {
       case CGPIOD_UDM_CMD_STATUS: 
         // only send status for non-session origins
         if (pCmd->dwOrig == CGPIOD_ORIG_MQTT) {

@@ -63,8 +63,9 @@ tCChar* CGpiod::_printObjSta2String(tChar* pOut, tUint32 dwObj, tUint32 dwSta)
   tParseRsvd *pRsvd = g_gpiodParseObjSta;
 
   for ( ; pRsvd->dwMask0; pRsvd++)
-    if (((pRsvd->dwMask0 & CGPIOD_OBJ_CLS_MASK) &  (dwObj & CGPIOD_OBJ_CLS_MASK)) &&
-        ( pRsvd->dwTVal                         ==  dwSta                       )) { 
+    if ( ( pRsvd->dwMask0                        &   dwObj                       ) &&
+         ( pRsvd->dwTVal                         ==  dwSta                       )
+       ) { 
       gstrcpy(pOut, pRsvd->szTVal);
       return pOut; 
       } // if
@@ -81,8 +82,9 @@ tCChar* CGpiod::_printObjEvt2String(tChar* pOut, tUint32 dwObj, tUint32 dwEvt)
   tParseRsvd *pRsvd = g_gpiodParseObjEvt;
 
   for ( ; pRsvd->dwMask0; pRsvd++)
-    if (((pRsvd->dwMask0 & CGPIOD_OBJ_CLS_MASK) &  (dwObj & CGPIOD_OBJ_CLS_MASK)) &&
-        ( pRsvd->dwTVal                         ==  dwEvt                       )) { 
+    if ( ( pRsvd->dwMask0                        &   dwObj                       ) &&
+         ( pRsvd->dwTVal                         ==  dwEvt                       )
+       ) { 
       gstrcpy(pOut, pRsvd->szTVal);
       return pOut; 
       } // if
@@ -99,12 +101,13 @@ tCChar* CGpiod::_printObjCmd2String(tChar* pOut, tUint32 dwObj, tUint32 dwCmd)
   tUint32    dwErr  = XERROR_SUCCESS;
   tParseRsvd *pRsvd = (dwObj & CGPIOD_OBJ_CLS_INPUT)   ? g_gpiodParseCmdInput   :
                       (dwObj & CGPIOD_OBJ_CLS_OUTPUT)  ? g_gpiodParseCmdOutput  :
+                      (dwObj & CGPIOD_OBJ_CLS_TIMER)   ? g_gpiodParseCmdTimer   :
                       (dwObj & CGPIOD_OBJ_CLS_SHUTTER) ? g_gpiodParseCmdShutter : g_gpiodParseCmdSystem;
 
   for ( ; pRsvd->dwMask0; pRsvd++)
     if (
-//      ((pRsvd->dwMask1 & CGPIOD_OBJ_CLS_MASK) &  (dwObj & CGPIOD_OBJ_CLS_MASK)) &&
-        ((pRsvd->dwTVal  & CGPIOD_OBJ_CMD_MASK) == (dwCmd & CGPIOD_OBJ_CMD_MASK))) {
+         ((pRsvd->dwTVal  & CGPIOD_CMD_NUM_MASK) == (dwCmd & CGPIOD_CMD_NUM_MASK))
+       ) {
       gstrcpy(pOut, pRsvd->szTVal);
       return pOut; 
       } // if

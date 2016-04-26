@@ -19,7 +19,10 @@
     memset(m_timer, 0, sizeof(m_timer)); 
 
     for (dwObj = CGPIOD_TMR_MIN; dwObj < CGPIOD_TMR_MAX; dwObj++, pObj++) {
-      pObj->dwFlags  = CGPIOD_TMR_FLG_MQTT_ALL;
+      pObj->dwFlags = CGPIOD_TMR_FLG_MQTT_ALL;
+      pObj->dwState = CGPIOD_TMR_STATE_OFF;
+      pObj->dwCmd   = CGPIOD_TMR_CMD_NONE;
+      pObj->dwRun   = 0;
       } // for
 
     return m_dwError;
@@ -77,7 +80,7 @@
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_timerOnExit() 
   {
-    Debug.logTxt(CLSLVL_GPIOD_TIMER | 0x0000, "CGpiod::_outputOnExit");
+    Debug.logTxt(CLSLVL_GPIOD_TIMER | 0x0000, "CGpiod::_timerOnExit");
     return m_dwError;
     } // CGpiod::_timerOnExit
 
@@ -98,8 +101,10 @@
     tGpiodTimer *pObj = &m_timer[(pCmd->dwObj & CGPIOD_OBJ_NUM_MASK) - CGPIOD_TMR_MIN]; 
     tGpiodEvt   evt   = { pCmd->msNow, pCmd->dwObj, 0, 0, 0 };
 
+    Debug.logTxt(CLSLVL_GPIOD_TIMER | 0x0000, "CGpiod::_timerDoCmd,obj=%08X", pCmd->dwObj);
+
     PrintCmd(pCmd, CLSLVL_GPIOD_TIMER | 0x0000, "CGpiod::_timerDoCmd");
-    switch (pCmd->dwCmd & CGPIOD_OBJ_CMD_MASK) {
+    switch (pCmd->dwCmd & CGPIOD_CMD_NUM_MASK) {
       case CGPIOD_TMR_CMD_STATUS: 
         // only send status for non-session origins
         if (pCmd->dwOrig == CGPIOD_ORIG_MQTT) {
@@ -148,6 +153,7 @@
   void CGpiod::_timerSetState(tGpiodTimer* pObj, tUint32 dwState, tGpiodEvt* pEvt) 
   {
     // exit if no state change
+    Debug.logTxt(CLSLVL_GPIOD_TIMER | 0x0000, "CGpiod::_timerSetState,state=%u", dwState);
     if (pObj->dwState == dwState) 
       return;
 
@@ -164,6 +170,10 @@
         break;
       } // switch
 
-    if (pEvt) DoEvt(pEvt);
+    if (pEvt) {
+      Debug.logTxt(CLSLVL_GPIOD_TIMER | 0x9999, "CGpiod::_timerSetState,obj=%08X,evt=%u", pEvt->dwObj, pEvt->dwEvt);
+      DoEvt(pEvt);
+      }
+
     } // _timerSetState
 

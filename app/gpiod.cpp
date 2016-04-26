@@ -85,6 +85,7 @@ tUint32 CGpiod::OnConfig()
 {
   _systemOnConfig();
   _inputOnConfig();
+  _timerOnConfig();
 
   if (m_dwEmul == CGPIOD_EMUL_OUTPUT)
     _outputOnConfig();
@@ -100,6 +101,7 @@ tUint32 CGpiod::OnInit()
 {
   _systemOnInit();
   _inputOnInit();
+  _timerOnInit();
 
   if (m_dwEmul == CGPIOD_EMUL_OUTPUT)
     _outputOnInit();
@@ -118,6 +120,7 @@ void CGpiod::OnRun()
 
   _systemOnRun(msNow);
   _inputOnRun(msNow);
+  _timerOnRun(msNow);
 
   if (m_dwEmul == CGPIOD_EMUL_OUTPUT)
     _outputOnRun(msNow);
@@ -133,6 +136,7 @@ tUint32 CGpiod::OnExit()
 {
   _systemOnExit();
   _inputOnExit();
+  _timerOnExit();
 
   if (m_dwEmul == CGPIOD_EMUL_OUTPUT)
     _outputOnExit();
@@ -239,6 +243,7 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
     case CGPIOD_OBJ_CLS_TIMER:
       // report event if configured
       dwObj -= CGPIOD_TMR_MIN;
+      Debug.logTxt(CLSLVL_GPIOD | 0x0400, "CGpiod::DoEvt,obj=%u,flags=%08X", dwObj, m_timer[dwObj].dwFlags);
 
       if ((m_dwMode & CGPIOD_MODE_MQTT) && (m_timer[dwObj].dwFlags & (0x1 << pEvt->dwEvt))) {
         if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)

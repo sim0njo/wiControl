@@ -8,6 +8,8 @@
 // in9  -> D4, out1 -> D7
 // in10 -> D1, out2 -> D6
 // in11 -> D2, out3 -> D5
+//             out6 -> timer
+//             out7 -> timer
 //             led0 -> D0
 //----------------------------------------------------------------------------
 #ifndef __cgpiod_hpp__
@@ -78,11 +80,14 @@ void                 gpiodOnMqttPublish(tChar* szTopic, tChar* szMsg);
 #define CGPIOD_IO_POL_NORMAL                     0 //
 #define CGPIOD_IO_POL_INVERT                     1 //
 
-//                                      0xPPPPCCNN //
-//efine CGPIOD_OBJ_EVT_MASK             0x0000FFFF //
-#define CGPIOD_OBJ_CMD_MASK             0x0000FFFF //
-//efine CGPIOD_OBJ_PRM_MASK             0xFFFF0000 //
+//      CGPIOD_EVT_                     0x0000NNNN //
+#define CGPIOD_EVT_NUM_MASK             0x0000FFFF //
 
+//      CGPIOD_CMD_                     0xPPPPNNNN //
+#define CGPIOD_CMD_NUM_MASK             0x0000FFFF //
+#define CGPIOD_CMD_PRM_MASK             0xFFFF0000 //
+
+//      CGPIOD_OBJ_                     0x0000CCNN //
 #define CGPIOD_OBJ_NUM_MASK             0x000000FF //
 #define CGPIOD_OBJ_CLS_MASK             0x0000FF00 //
 #define CGPIOD_OBJ_CLS_INPUT            0x00000100 // input
@@ -96,13 +101,13 @@ void                 gpiodOnMqttPublish(tChar* szTopic, tChar* szMsg);
 #define CGPIOD_OBJ_CLS_WBS              0x00001B00 // WBS = input + output  + timer + system
 #define CGPIOD_OBJ_CLS_WBR              0x00001D00 // WBR = input + shutter + timer + system
 
-#define CGPIOD_OBJ_SYSTEM               0x00001000 // system
-
 //----------------------------------------------------------------------------
 // system=ping   
 // system=loglevel [.<loglevel>.ack]
 // system=emul     [.<emul>.ack]
 //----------------------------------------------------------------------------
+#define CGPIOD_OBJ_SYSTEM               0x00001000 // system
+
 #define CGPIOD_SYS_CMD_NONE                      0 // 
 #define CGPIOD_SYS_CMD_PING                      1 // 
 #define CGPIOD_SYS_CMD_VERSION                   2 // 
@@ -149,6 +154,11 @@ typedef struct {
 #define CGPIOD_IN_COUNT                          4 //
 #define CGPIOD_IN_MIN                            8 // 
 #define CGPIOD_IN_MAX                           12 // 
+
+#define CGPIOD_IN8                               8 //
+#define CGPIOD_IN9                               9 //
+#define CGPIOD_IN10                             10 //
+#define CGPIOD_IN11                             11 //
 
 #define CGPIOD_IN8_PIN                           0 // D3 x
 #define CGPIOD_IN9_PIN                           2 // D4 x
@@ -209,6 +219,11 @@ typedef struct {
 #define CGPIOD_OUT_MIN                           0 // 
 #define CGPIOD_OUT_MAX                           4 // 
 
+#define CGPIOD_OUT0                              0 //
+#define CGPIOD_OUT1                              1 //
+#define CGPIOD_OUT2                              2 //
+#define CGPIOD_OUT3                              3 //
+
 #define CGPIOD_OUT0_PIN                         15 // D8 x
 #define CGPIOD_OUT1_PIN                         13 // D7 x
 #define CGPIOD_OUT2_PIN                         12 // D6
@@ -265,6 +280,9 @@ typedef struct {
 #define CGPIOD_UDM_COUNT                         2 //
 #define CGPIOD_UDM_MIN                           0 // 
 #define CGPIOD_UDM_MAX                           2 // 
+
+#define CGPIOD_UDM0                              0 //
+#define CGPIOD_UDM1                              1 //
 
 #define CGPIOD_UDM0_PIN_UP                      15 // out0 D8 
 #define CGPIOD_UDM0_PIN_DOWN                    13 // out1 D7

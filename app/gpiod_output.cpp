@@ -21,9 +21,10 @@
     for (dwObj = CGPIOD_OUT_MIN; dwObj < CGPIOD_OUT_MAX; dwObj++, pObj++) {
       // initialise defaults
       pObj->dwFlags  = CGPIOD_OUT_FLG_MQTT_ALL;
-      pObj->dwPin    = (dwObj == 0) ? CGPIOD_OUT0_PIN : 
-                       (dwObj == 1) ? CGPIOD_OUT1_PIN : 
-                       (dwObj == 2) ? CGPIOD_OUT2_PIN : CGPIOD_OUT3_PIN; 
+      pObj->dwPin    = (dwObj == CGPIOD_OUT0) ? CGPIOD_OUT0_PIN : 
+                       (dwObj == CGPIOD_OUT1) ? CGPIOD_OUT1_PIN : 
+                       (dwObj == CGPIOD_OUT2) ? CGPIOD_OUT2_PIN : 
+                       (dwObj == CGPIOD_OUT3) ? CGPIOD_OUT3_PIN : -1; 
       pObj->dwPol    = CGPIOD_IO_POL_NORMAL; 
       pObj->dwState  = CGPIOD_OUT_STATE_OFF; 
       pObj->dwCmd    = CGPIOD_OUT_CMD_NONE; 
@@ -195,7 +196,7 @@
     tGpiodEvt    evt   = { pCmd->msNow, pCmd->dwObj, 0, 0, 0 };
 
     PrintCmd(pCmd, CLSLVL_GPIOD_OUTPUT | 0x0000, "CGpiod::_outputDoCmd");
-    switch (pCmd->dwCmd & CGPIOD_OBJ_CMD_MASK) {
+    switch (pCmd->dwCmd & CGPIOD_CMD_NUM_MASK) {
       case CGPIOD_OUT_CMD_STATUS: 
         // only send status for non-session origins
         if (pCmd->dwOrig == CGPIOD_ORIG_MQTT) {
