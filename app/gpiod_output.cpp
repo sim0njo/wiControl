@@ -69,6 +69,7 @@
           if (TimerExpired(msNow, pObj->dwRun)) {
             _outputSetState(pObj, CGPIOD_OUT_STATE_ON, &evt);
             pObj->dwCmd = CGPIOD_OUT_CMD_NONE;
+            pObj->dwRun = 0;
             } // if
           break;
 
@@ -77,6 +78,7 @@
           if (TimerExpired(msNow, pObj->dwRun)) {
             _outputSetState(pObj, CGPIOD_OUT_STATE_OFF, &evt);
             pObj->dwCmd = CGPIOD_OUT_CMD_NONE;
+            pObj->dwRun = 0;
             } // if
           break;
 
@@ -85,12 +87,14 @@
           if (TimerExpired(msNow, pObj->dwRun)) {
             _outputSetState(pObj, pObj->dwState ^ CGPIOD_OUT_STATE_ON, &evt);
             pObj->dwCmd = CGPIOD_OUT_CMD_NONE;
+            pObj->dwRun = 0;
             } // if
           break;
 
         case CGPIOD_OUT_CMD_LOCKTIMED:
           if (TimerExpired(msNow, pObj->dwRun)) {
             pObj->dwCmd    = CGPIOD_OUT_CMD_NONE;
+            pObj->dwRun    = 0;
             pObj->dwFlags &= ~CGPIOD_OUT_FLG_LOCKED;
             } // if
           break;
@@ -285,9 +289,12 @@
         break;
 
       case CGPIOD_OUT_CMD_LOCKTIMED:
-        pObj->dwFlags |= CGPIOD_OUT_FLG_LOCKED;
-        pObj->dwCmd    = CGPIOD_OUT_CMD_LOCKTIMED;
-        pObj->dwRun    = pCmd->msNow + pCmd->parmsOutput.dwRun;
+        if (pObj->dwFlags & CGPIOD_OUT_FLG_LOCKED) break;
+        if (pObj->dwRun) {
+          pObj->dwFlags |= CGPIOD_OUT_FLG_LOCKED;
+          pObj->dwCmd    = CGPIOD_OUT_CMD_LOCKTIMED;
+//          pObj->dwRun    = pCmd->msNow + pCmd->parmsOutput.dwRun;
+          } // if
         break;
 
       case CGPIOD_OUT_CMD_TIMEADD:
@@ -296,8 +303,8 @@
         break;
 
       case CGPIOD_OUT_CMD_TIMESET:
-        if (pObj->dwRun) 
-          pObj->dwRun  = pCmd->msNow + pCmd->parmsOutput.dwRun;
+//        if (pObj->dwRun) 
+        pObj->dwRun  = pCmd->msNow + pCmd->parmsOutput.dwRun;
         break;
 
       case CGPIOD_OUT_CMD_TIMEABORT:

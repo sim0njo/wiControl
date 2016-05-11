@@ -9,7 +9,7 @@
 #include <gpiod.h>
 #include <cparse.hpp>
 
-FTPServer      g_ftp;
+//FTPServer      g_ftp;
 TelnetServer   g_telnet;
 static boolean g_firstTime = TRUE;
 int            g_isNetworkConnected = FALSE;
@@ -42,8 +42,8 @@ void startServers()
   if (!fileExist("index.html"))
     fileSetContent("index.html", "<h3>Please connect to FTP and upload files from folder 'web/build' (details in code)</h3>");
 
-  g_ftp.listen(21);
-  g_ftp.addUser("admin", "12345678"); // FTP account
+//g_ftp.listen(21);
+//g_ftp.addUser("admin", "12345678"); // FTP account
 
   g_telnet.listen(23);
 

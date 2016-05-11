@@ -90,10 +90,22 @@ tUint32 CGpiod::_parseCmdOutput(tGpiodCmd* pOut)
   do {
     // parse command
     m_parse.SetReservedIdents(g_gpiodParseCmdOutput);
-    if ((m_parse.NextToken(pOut->dwOrig, xNum2BitMask(pOut->dwObj & CGPIOD_OBJ_NUM_MASK)) != CPARSE_TYPE_LEAF) && (dwErr = XERROR_DATA))
-      break;
+    m_parse.NextToken(pOut->dwOrig, xNum2BitMask(pOut->dwObj & CGPIOD_OBJ_NUM_MASK));
+//  if ((m_parse.NextToken(pOut->dwOrig, xNum2BitMask(pOut->dwObj & CGPIOD_OBJ_NUM_MASK)) != CPARSE_TYPE_LEAF) && (dwErr = XERROR_DATA))
+//    break;
+    if      (m_parse.TType() == CPARSE_TYPE_NONE)
+      // no more token, revert to status command
+      pOut->dwCmd = CGPIOD_OUT_CMD_STATUS;
 
-    pOut->dwCmd = m_parse.TVal();
+    else if (m_parse.TType() == CPARSE_TYPE_LEAF)
+      // known command
+      pOut->dwCmd = m_parse.TVal();
+
+    else {
+      // input error
+      dwErr = XERROR_INPUT;
+      break;
+      } // else
 
     // parse parameters
     if (pOut->dwCmd & 0x00080000) { // delay 1-65535 seconds or 1/10th seconds (6535s or 65535 1/10th s)
