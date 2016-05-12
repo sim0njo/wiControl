@@ -86,8 +86,9 @@
         case CGPIOD_OUT_CMD_TOGGLETIMED:
           if (TimerExpired(msNow, pObj->dwRun)) {
             _outputSetState(pObj, pObj->dwState ^ CGPIOD_OUT_STATE_ON, &evt);
-            pObj->dwCmd = CGPIOD_OUT_CMD_NONE;
-            pObj->dwRun = 0;
+            pObj->dwCmd    = CGPIOD_OUT_CMD_NONE;
+            pObj->dwRun    = 0;
+            pObj->dwFlags &= ~CGPIOD_OUT_FLG_LOCKED;
             } // if
           break;
 
@@ -107,6 +108,7 @@
           if (TimerExpired(msNow, pObj->dwRun)) {
             _outputSetState(pObj, CGPIOD_OUT_STATE_OFF, &evt);
             pObj->dwCmd = CGPIOD_OUT_CMD_NONE;
+            pObj->dwRun = 0;
             } // if
           break;
 
@@ -235,7 +237,7 @@
 
       case CGPIOD_OUT_CMD_TOGGLE: 
         if (pObj->dwFlags & CGPIOD_OUT_FLG_LOCKED) break;
-        pObj->dwCmd    = CGPIOD_OUT_CMD_NONE;
+        pObj->dwCmd  = CGPIOD_OUT_CMD_NONE;
         _outputSetState(pObj, pObj->dwState ^ CGPIOD_OUT_STATE_ON, &evt);
         break;
 
@@ -246,40 +248,40 @@
       case CGPIOD_OUT_CMD_ONDELAYED: 
         if (pObj->dwFlags & CGPIOD_OUT_FLG_LOCKED) break;
         pObj->dwCmd = CGPIOD_OUT_CMD_ONDELAYED;
-        pObj->dwRun = pCmd->msNow + pCmd->parmsOutput.dwDelay;
+        pObj->dwRun = SetTimerSec(pCmd->msNow, pCmd->parmsOutput.dwDelay);
         break;
 
       case CGPIOD_OUT_CMD_OFFDELAYED: 
         if (pObj->dwFlags & CGPIOD_OUT_FLG_LOCKED) break;
         pObj->dwCmd = CGPIOD_OUT_CMD_OFFDELAYED;
-        pObj->dwRun = pCmd->msNow + pCmd->parmsOutput.dwDelay;
+        pObj->dwRun = SetTimerSec(pCmd->msNow, pCmd->parmsOutput.dwDelay);
         break;
 
       case CGPIOD_OUT_CMD_ONTIMED: 
         if (pObj->dwFlags & CGPIOD_OUT_FLG_LOCKED) break;
-        pObj->dwCmd   = CGPIOD_OUT_CMD_ONTIMED;
-        pObj->dwRun   = pCmd->msNow + pCmd->parmsOutput.dwRun;
+        pObj->dwCmd = CGPIOD_OUT_CMD_ONTIMED;
+        pObj->dwRun = SetTimerSec(pCmd->msNow, pCmd->parmsOutput.dwRun);
         _outputSetState(pObj, CGPIOD_OUT_STATE_ON, &evt);
         break;
 
       case CGPIOD_OUT_CMD_OFFTIMED: 
         if (pObj->dwFlags & CGPIOD_OUT_FLG_LOCKED) break;
-        pObj->dwCmd   = CGPIOD_OUT_CMD_OFFTIMED;
-        pObj->dwRun   = pCmd->msNow + pCmd->parmsOutput.dwRun;
+        pObj->dwCmd = CGPIOD_OUT_CMD_OFFTIMED;
+        pObj->dwRun = SetTimerSec(pCmd->msNow, pCmd->parmsOutput.dwRun);
         _outputSetState(pObj, CGPIOD_OUT_STATE_OFF, &evt);
         break;
 
       case CGPIOD_OUT_CMD_TOGGLEDELAYED: 
         if (pObj->dwFlags & CGPIOD_OUT_FLG_LOCKED) break;
         pObj->dwCmd    = CGPIOD_OUT_CMD_TOGGLEDELAYED;
-        pObj->dwRun    = pCmd->msNow + pCmd->parmsOutput.dwDelay;
+        pObj->dwRun    = SetTimerSec(pCmd->msNow, pCmd->parmsOutput.dwDelay);
         pObj->dwFlags |= CGPIOD_OUT_FLG_LOCKED;
         break;
 
       case CGPIOD_OUT_CMD_TOGGLETIMED: 
         if (pObj->dwFlags & CGPIOD_OUT_FLG_LOCKED) break;
         pObj->dwCmd    = CGPIOD_OUT_CMD_TOGGLETIMED;
-        pObj->dwRun    = pCmd->msNow + pCmd->parmsOutput.dwRun;
+        pObj->dwRun    = SetTimerSec(pCmd->msNow, pCmd->parmsOutput.dwRun);
         pObj->dwFlags |= CGPIOD_OUT_FLG_LOCKED;
         _outputSetState(pObj, CGPIOD_OUT_STATE_ON, &evt);
         break;
@@ -293,18 +295,16 @@
         if (pObj->dwRun) {
           pObj->dwFlags |= CGPIOD_OUT_FLG_LOCKED;
           pObj->dwCmd    = CGPIOD_OUT_CMD_LOCKTIMED;
-//          pObj->dwRun    = pCmd->msNow + pCmd->parmsOutput.dwRun;
           } // if
         break;
 
       case CGPIOD_OUT_CMD_TIMEADD:
         if (pObj->dwRun) 
-          pObj->dwRun += pCmd->parmsOutput.dwRun;
+          pObj->dwRun = SetTimerSec(pObj->dwRun, pCmd->parmsOutput.dwRun);
         break;
 
       case CGPIOD_OUT_CMD_TIMESET:
-//        if (pObj->dwRun) 
-        pObj->dwRun  = pCmd->msNow + pCmd->parmsOutput.dwRun;
+        pObj->dwRun = SetTimerSec(pCmd->msNow, pCmd->parmsOutput.dwRun);
         break;
 
       case CGPIOD_OUT_CMD_TIMEABORT:
@@ -321,7 +321,7 @@
       case CGPIOD_OUT_CMD_BLINKTIMED: 
         if (pObj->dwFlags & CGPIOD_OUT_FLG_LOCKED) break;
         pObj->dwCmd = CGPIOD_OUT_CMD_BLINKTIMED;
-        pObj->dwRun = pCmd->msNow + pCmd->parmsOutput.dwRun;
+        pObj->dwRun = SetTimerSec(pCmd->msNow, pCmd->parmsOutput.dwRun);
         _outputSetState(pObj, pObj->dwState ^ CGPIOD_OUT_STATE_ON, &evt);
         break;
 

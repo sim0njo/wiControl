@@ -32,7 +32,6 @@ tUint32 CGpiod::ParseCmd(tGpiodCmd* pOut, tChar* pObj, tChar* pCmd, tUint32 dwOr
       
     pOut->dwOrig = dwOrig;
     pOut->dwObj  = m_parse.TVal();
-//  Debug.logTxt(CLSLVL_GPIOD_PARSE | 0x0040, "CGpiod::ParseCmd,obj=%08X", pOut->dwObj);
 
     // parse command and parms
     if (pObj)
@@ -69,7 +68,6 @@ tUint32 CGpiod::_parseCmdInput(tGpiodCmd* pOut)
   tUint32 dwErr = XERROR_SUCCESS;
 
   do {
-//    Debug.logTxt(CLSLVL_GPIOD_PARSE | 0x0000, "CGpiod::_parseCmdInput,bitMask=%08X", xNum2BitMask(pOut->dwObj & CGPIOD_OBJ_NUM_MASK));
     m_parse.SetReservedIdents(g_gpiodParseCmdInput);
     if ((m_parse.NextToken(pOut->dwOrig, xNum2BitMask(pOut->dwObj & CGPIOD_OBJ_NUM_MASK)) != CPARSE_TYPE_LEAF) && (dwErr = XERROR_DATA))
       break;
@@ -91,8 +89,7 @@ tUint32 CGpiod::_parseCmdOutput(tGpiodCmd* pOut)
     // parse command
     m_parse.SetReservedIdents(g_gpiodParseCmdOutput);
     m_parse.NextToken(pOut->dwOrig, xNum2BitMask(pOut->dwObj & CGPIOD_OBJ_NUM_MASK));
-//  if ((m_parse.NextToken(pOut->dwOrig, xNum2BitMask(pOut->dwObj & CGPIOD_OBJ_NUM_MASK)) != CPARSE_TYPE_LEAF) && (dwErr = XERROR_DATA))
-//    break;
+
     if      (m_parse.TType() == CPARSE_TYPE_NONE)
       // no more token, revert to status command
       pOut->dwCmd = CGPIOD_OUT_CMD_STATUS;
@@ -108,13 +105,13 @@ tUint32 CGpiod::_parseCmdOutput(tGpiodCmd* pOut)
       } // else
 
     // parse parameters
-    if (pOut->dwCmd & 0x00080000) { // delay 1-65535 seconds or 1/10th seconds (6535s or 65535 1/10th s)
-      if (dwErr = m_parse.GetNumber(&pOut->parmsOutput.dwDelay, 1, 65535)) break;
+    if (pOut->dwCmd & 0x00080000) { // delay 1-3600 seconds
+      if (dwErr = m_parse.GetNumber(&pOut->parmsOutput.dwDelay, 1, 3600)) break;
 //    Debug.logTxt(CLSLVL_GPIOD_PARSE | 0x0010, "%s,delay=%u", pFunc, pOut->parmsOutput.dwDelay);
       } // if
 
-    if (pOut->dwCmd & 0x02000000) { // runtime 1-65535 seconds or 1/10th seconds (6535s or 65535 1/10th s)
-      if (dwErr = m_parse.GetNumber(&pOut->parmsOutput.dwRun, 1, 65535)) break;
+    if (pOut->dwCmd & 0x02000000) { // run 1-3600 seconds
+      if (dwErr = m_parse.GetNumber(&pOut->parmsOutput.dwRun, 1, 3600)) break;
 //    Debug.logTxt(CLSLVL_GPIOD_PARSE | 0x0010, "%s,run=%u", pFunc, pOut->parmsOutput.dwRun);
       } // if
 
@@ -154,18 +151,18 @@ tUint32 CGpiod::_parseCmdShutter(tGpiodCmd* pOut)
 //    Debug.logTxt(CLSLVL_GPIOD_PARSE | 0x0010, "%s,lock=%u", pFunc, pOut->parmsShutter.dwLock);
       } // if
 
-    if (pOut->dwCmd & 0x00100000) { // delay 1-65535 seconds or 1/10th seconds (6535s or 65535 1/10th s)
-      if (dwErr = m_parse.GetNumber(&pOut->parmsShutter.dwDelay, 1, 65535)) break;
+    if (pOut->dwCmd & 0x00100000) { // delay 0-3600 seconds
+      if (dwErr = m_parse.GetNumber(&pOut->parmsShutter.dwDelay, 0, 3600)) break;
 //    Debug.logTxt(CLSLVL_GPIOD_PARSE | 0x0010, "%s,delay=%u", pFunc, pOut->parmsShutter.dwDelay);
       } // if
 
-    if (pOut->dwCmd & 0x04000000) { // runtime 1-65535 seconds or 1/10th seconds (6535s or 65535 1/10th s)
-      if (dwErr = m_parse.GetNumber(&pOut->parmsShutter.dwRun, 1, 65535)) break;
+    if (pOut->dwCmd & 0x04000000) { // run 1-3600 seconds
+      if (dwErr = m_parse.GetNumber(&pOut->parmsShutter.dwRun, 1, 3600)) break;
 //    Debug.logTxt(CLSLVL_GPIOD_PARSE | 0x0010, "%s,run=%u", pFunc, pOut->parmsShutter.dwRun);
       } // if
 
-    if (pOut->dwCmd & 0x08000000) { // tiptime 1-65535 1/10th seconds (6535s or 65535 1/10th s)
-      if (dwErr = m_parse.GetNumber(&pOut->parmsShutter.dwTip, 1, 65535)) break;
+    if (pOut->dwCmd & 0x08000000) { // tip 0-3600 1/10th seconds
+      if (dwErr = m_parse.GetNumber(&pOut->parmsShutter.dwTip, 0, 3600)) break;
 //    Debug.logTxt(CLSLVL_GPIOD_PARSE | 0x0010, "%s,tip=%u", pFunc, pOut->parmsShutter.dwTip);
       } // if
 

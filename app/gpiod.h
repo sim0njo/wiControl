@@ -62,6 +62,9 @@ void                 gpiodOnMqttPublish(tChar* szTopic, tChar* szMsg);
 #define CGPIOD_EFMT_TEXTUAL                      1 // 
 #define CGPIOD_EFMT_NUMERICAL                    2 // 
 
+#define CGPIOD_SEC_2_MSEC                     1000 // multiplier for second to ms
+#define CGPIOD_DECISEC_2_MSEC                  100 // multiplier for decisecond to ms
+
 //----------------------------------------------------------------------------
 #define CGPIOD_ORIG_INPUT               0x10000000 // 
 #define CGPIOD_ORIG_OUTPUT              0x10000001 // 
@@ -470,6 +473,17 @@ class CGpiod {
   tUint32            GetFlags(tUint32 dwFlags)     { return m_dwFlags &   dwFlags; }
 //tUint32            SetFlags(tUint32 dwFlags)     { return m_dwFlags |=  dwFlags; }
 //tUint32            RstFlags(tUint32 dwFlags)     { return m_dwFlags &= ~dwFlags; }
+
+  //--------------------------------------------------------------------------
+  //
+  //--------------------------------------------------------------------------
+  tUint32            SetTimerSec(tUint32 msNow, tUint32 dwSec) {
+    return (msNow + (dwSec * CGPIOD_SEC_2_MSEC)) | 1; 
+    }
+
+  tUint32            SetTimerDeciSec(tUint32 msNow, tUint32 dwDeciSec) {
+    return (msNow + (dwDeciSec * CGPIOD_DECISEC_2_MSEC)) | 1; 
+    }
 
   //--------------------------------------------------------------------------
   // gpiod.cpp

@@ -101,9 +101,9 @@ tParseRsvd g_gpiodParseCmdTimer[] = {
 //  dwMask0           dwMask1            dwTType           dwTVal      szTVal
 //  CGPIOD_ORIG_%     Num2Mask(cc)                         0xPPPPMMMM  params                
   { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00000001, "status",         },
-  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00080013, "ondelayed",      }, // 1-65535 s
-  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00080014, "offdelayed",     }, // 1-65535 s
-  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x02000015, "ontimed",        }, // 1-65535 s
+  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00080013, "ondelayed",      }, // 1-36000 1/10th s
+  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00080014, "offdelayed",     }, // 1-36000 1/10th s
+  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x02000015, "ontimed",        }, // 1-36000 1/10th s
   { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00000016, "abort",          },
 
   { 0x00000000      , 0x00000000       , 0x00000000      , 0x00000000, "",               },
@@ -119,19 +119,19 @@ tParseRsvd g_gpiodParseCmdOutput[] = {
   { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00000005, "offlocked",      },
   { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00000006, "toggle",         },
   { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00000007, "unlock",         },
-  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00080008, "ondelayed",      }, // 1-65535 s
-  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00080009, "offdelayed",     }, // 1-65535 s
-  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x0200000A, "ontimed",        }, // 1-65535 s
-  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x0200000B, "offtimed",       }, // 1-65535 s
-  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x0008000C, "toggledelayed",  }, // 1-65535 s
-  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x0200000D, "toggletimed",    }, // 1-65535 s
+  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00080008, "ondelayed",      }, // 1-36000 1/10th s
+  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00080009, "offdelayed",     }, // 1-36000 1/10th s
+  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x0200000A, "ontimed",        }, // 1-36000 1/10th s
+  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x0200000B, "offtimed",       }, // 1-36000 1/10th s
+  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x0008000C, "toggledelayed",  }, // 1-36000 1/10th s
+  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x0200000D, "toggletimed",    }, // 1-36000 1/10th s
   { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x0000000E, "lock",           },
   { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x0000000F, "locktimed",      },
-  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x02000010, "timeset",        }, // 1-65535 s
-  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x02000011, "timeadd",        }, // 1-65535 s
+  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x02000010, "timeset",        }, // 1-36000 1/10th s
+  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x02000011, "timeadd",        }, // 1-36000 1/10th s
   { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00000012, "timeabort",      },
   { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00000017, "blink",          },
-  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x02000018, "blinktimed",     }, // 1-65535 s
+  { 0x00000018      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x02000018, "blinktimed",     }, // 1-36000 1/10th s
 
   { 0x00000000      , 0x00000000       , 0x00000000      , 0x00000000, "",               },
   };
@@ -145,12 +145,12 @@ tParseRsvd g_gpiodParseCmdShutter[] = {
   { 0x00000018      , 0x00000003       , CPARSE_TYPE_LEAF, 0x04060004, "toggleDown",      }, // 0-5/0-1/R1-65535 1/10s
   { 0x00000018      , 0x00000003       , CPARSE_TYPE_LEAF, 0x04060005, "up",              }, // 0-5/0-1/R1-65535 1/10s
   { 0x00000018      , 0x00000003       , CPARSE_TYPE_LEAF, 0x04060006, "down",            }, // 0-5/0-1/R1-65535 1/10s
-  { 0x00000018      , 0x00000003       , CPARSE_TYPE_LEAF, 0x04060007, "tipUp",           }, // 0-5/0-1/R1-65535 1/10s
-  { 0x00000018      , 0x00000003       , CPARSE_TYPE_LEAF, 0x04060008, "tipDown",         }, // 0-5/0-1/R1-65535 1/10s
+  { 0x00000018      , 0x00000003       , CPARSE_TYPE_LEAF, 0x08060007, "tipUp",           }, // 0-5/0-1/R1-65535 1/10s
+  { 0x00000018      , 0x00000003       , CPARSE_TYPE_LEAF, 0x08060008, "tipDown",         }, // 0-5/0-1/R1-65535 1/10s
   { 0x00000018      , 0x00000003       , CPARSE_TYPE_LEAF, 0x00010009, "priolock",        }, // 0-63
   { 0x00000018      , 0x00000003       , CPARSE_TYPE_LEAF, 0x0001000A, "priounlock",      }, // 0-63
-  { 0x00000018      , 0x00000003       , CPARSE_TYPE_LEAF, 0x0000000B, "learnon",         },
-  { 0x00000018      , 0x00000003       , CPARSE_TYPE_LEAF, 0x0000000C, "learnoff",        },
+//{ 0x00000018      , 0x00000003       , CPARSE_TYPE_LEAF, 0x0000000B, "learnon",         },
+//{ 0x00000018      , 0x00000003       , CPARSE_TYPE_LEAF, 0x0000000C, "learnoff",        },
   { 0x00000018      , 0x00000003       , CPARSE_TYPE_LEAF, 0x0001000D, "prioset",         }, // 0-63
   { 0x00000018      , 0x00000003       , CPARSE_TYPE_LEAF, 0x0001000E, "prioreset",       }, // 0-63
   { 0x00000018      , 0x00000003       , CPARSE_TYPE_LEAF, 0x0416000F, "delayedup",       }, // 0-5/0-1/D1-65535/R1-65535
