@@ -36,7 +36,7 @@ void                 gpiodOnHttpConfig(HttpRequest &request, HttpResponse &respo
 void                 gpiodOnMqttPublish(tChar* szTopic, tChar* szMsg);
 
 //----------------------------------------------------------------------------
-#define CGPIOD_VERSION                   "4.0.1.0" //                                   
+#define CGPIOD_VERSION                   "4.0.0.0" //                                   
 #define CGPIOD_DATE                       __DATE__ //
 
 #define CGPIOD_CMD_PFX                       "cmd" //
@@ -59,8 +59,8 @@ void                 gpiodOnMqttPublish(tChar* szTopic, tChar* szMsg);
 #define CGPIOD_MODE_BOTH                         3 // do both
 
 #define CGPIOD_EFMT_NONE                         0 // 
-#define CGPIOD_EFMT_TEXTUAL                      1 // 
-#define CGPIOD_EFMT_NUMERICAL                    2 // 
+#define CGPIOD_EFMT_NUMERICAL                    1 // 
+#define CGPIOD_EFMT_TEXTUAL                      2 // 
 
 #define CGPIOD_SEC_2_MSEC                     1000 // multiplier for second to ms
 #define CGPIOD_DECISEC_2_MSEC                  100 // multiplier for decisecond to ms
@@ -471,19 +471,30 @@ class CGpiod {
   //
   //--------------------------------------------------------------------------
   tUint32            GetFlags(tUint32 dwFlags)     { return m_dwFlags &   dwFlags; }
-//tUint32            SetFlags(tUint32 dwFlags)     { return m_dwFlags |=  dwFlags; }
-//tUint32            RstFlags(tUint32 dwFlags)     { return m_dwFlags &= ~dwFlags; }
+  tUint32            SetFlags(tUint32 dwFlags)     { return m_dwFlags |=  dwFlags; }
+  tUint32            RstFlags(tUint32 dwFlags)     { return m_dwFlags &= ~dwFlags; }
 
   //--------------------------------------------------------------------------
-  //
+  // calculate timer end time in ms, will be at least 1ms
   //--------------------------------------------------------------------------
   tUint32            SetTimerSec(tUint32 msNow, tUint32 dwSec) {
     return (msNow + (dwSec * CGPIOD_SEC_2_MSEC)) | 1; 
-    }
+    } //
 
   tUint32            SetTimerDeciSec(tUint32 msNow, tUint32 dwDeciSec) {
     return (msNow + (dwDeciSec * CGPIOD_DECISEC_2_MSEC)) | 1; 
-    }
+    } //
+
+  //--------------------------------------------------------------------------
+  // check if timer is expired
+  //--------------------------------------------------------------------------
+  tUint32            ChkTimer(tUint32 msNow, tUint32 msTimer) {
+    // handle clock wrap
+    if ((msTimer > ESP8266_MILLIS_MID) && (msNow < ESP8266_MILLIS_MID))
+      msNow += ESP8266_MILLIS_MAX;
+    
+    return (msNow > msTimer) ? 1 : 0;
+    } //
 
   //--------------------------------------------------------------------------
   // gpiod.cpp
@@ -500,8 +511,6 @@ class CGpiod {
   tUint32            DoCmd(tGpiodCmd* pCmd);
   tUint32            DoEvt(tGpiodEvt* pEvt);
   tUint32            DoSta(tGpiodEvt* pEvt);
-
-  tUint32            TimerExpired(tUint32 msNow, tUint32 msTimer);
 
   //--------------------------------------------------------------------------
   // gpiod_parse.cpp

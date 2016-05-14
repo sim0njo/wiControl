@@ -43,15 +43,9 @@ class ApplicationSettingsStorage
   String             mqttServer;
   int                mqttPort = 1883;
   String             mqttClientId;
-  String             mqttEvtPfx;
-  String             mqttCmdPfx;
 
   bool               cpuBoost = true;
   bool               useOwnBaseAddress = true;
-
-  String             cloudDeviceToken;
-  String             cloudLogin;
-  String             cloudPassword;
 
   String             webOtaBaseUrl;
 

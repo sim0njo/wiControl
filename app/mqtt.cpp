@@ -118,8 +118,6 @@ void mqttOnHttpConfig(HttpRequest &request, HttpResponse &response)
     AppSettings.mqttServer   = request.getPostParameter("server");
     AppSettings.mqttPort     = atoi(request.getPostParameter("port").c_str());
     AppSettings.mqttClientId = request.getPostParameter("clientId");
-    AppSettings.mqttEvtPfx   = request.getPostParameter("evtPfx");
-    AppSettings.mqttCmdPfx   = request.getPostParameter("cmdPfx");
     AppSettings.save();
 
     if (WifiStation.isConnected())
@@ -135,8 +133,6 @@ void mqttOnHttpConfig(HttpRequest &request, HttpResponse &response)
   vars["server"]   = AppSettings.mqttServer;
   vars["port"]     = AppSettings.mqttPort;
   vars["clientId"] = AppSettings.mqttClientId;
-  vars["evtPfx"]   = AppSettings.mqttEvtPfx;
-  vars["cmdPfx"]   = AppSettings.mqttCmdPfx;
   response.sendTemplate(tmpl); // will be automatically deleted
   } // mqttOnHttpConfig
 

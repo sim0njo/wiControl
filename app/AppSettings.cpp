@@ -54,8 +54,6 @@ void ApplicationSettingsStorage::load()
     mqttServer   = (const char *)mqtt["server"];
     mqttPort     = mqtt["port"];
     mqttClientId = (const char *)mqtt["clientId"];
-    mqttEvtPfx   = (const char *)mqtt["evtPfx"];
-    mqttCmdPfx   = (const char *)mqtt["cmdPfx"];
 
     if (mqttClientId.equals(String(""))) {
       sprintf(str, "ESP_%08X", system_get_chip_id());
@@ -69,10 +67,6 @@ void ApplicationSettingsStorage::load()
 
     cpuBoost = root["cpuBoost"];
     useOwnBaseAddress = root["useOwnBaseAddress"];
-
-    cloudDeviceToken = (const char *)root["cloudDeviceToken"];
-    cloudLogin = (const char *)root["cloudLogin"];
-    cloudPassword = (const char *)root["cloudPassword"];
 
     webOtaBaseUrl = (const char *)root["webOtaBaseUrl"];
 
@@ -115,8 +109,6 @@ void ApplicationSettingsStorage::save()
   mqtt.set("server", mqttServer);
   mqtt["port"] = mqttPort;
   mqtt.set("clientId", mqttClientId);
-  mqtt.set("evtPfx", mqttEvtPfx);
-  mqtt.set("cmdPfx", mqttCmdPfx);
 
   JsonObject& gpiod = jsonBuffer.createObject();
   root["gpiod"] = gpiod;
@@ -126,10 +118,6 @@ void ApplicationSettingsStorage::save()
 
   root["cpuBoost"] = cpuBoost;
   root["useOwnBaseAddress"] = useOwnBaseAddress;
-
-  root.set("cloudDeviceToken", cloudDeviceToken);
-  root.set("cloudLogin", cloudLogin);
-  root.set("cloudPassword", cloudPassword);
 
   root.set("webOtaBaseUrl", webOtaBaseUrl.c_str());
 

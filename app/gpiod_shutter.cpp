@@ -70,7 +70,7 @@
       switch (pObj->dwCmd) {
         case CGPIOD_UDM_CMD_UP:      // 5
         case CGPIOD_UDM_CMD_DOWN:    // 6
-          if (TimerExpired(msNow, pObj->dwRun)) {
+          if (ChkTimer(msNow, pObj->dwRun)) {
             _shutterSetState(pObj, CGPIOD_UDM_STATE_STOP, &evt);
             pObj->dwCmd = CGPIOD_UDM_CMD_NONE;
             } // if
@@ -78,7 +78,7 @@
 
         case CGPIOD_UDM_CMD_TIPUP:   // 7
         case CGPIOD_UDM_CMD_TIPDOWN: // 8
-          if (TimerExpired(msNow, pObj->dwTip)) {
+          if (ChkTimer(msNow, pObj->dwTip)) {
             _shutterSetState(pObj, CGPIOD_UDM_STATE_STOP, &evt);
             pObj->dwCmd = CGPIOD_UDM_CMD_NONE;
             } // if
@@ -88,7 +88,7 @@
         case CGPIOD_UDM_CMD_SENSJALUP:  // 16
           // handle delay time
           if (pObj->dwDelay) {
-            if (!TimerExpired(msNow, pObj->dwDelay))
+            if (!ChkTimer(msNow, pObj->dwDelay))
               break;
 
             // initiate up and recalculate run timer
@@ -99,7 +99,7 @@
           
           // handle run time
           if (pObj->dwRun) {
-            if (!TimerExpired(msNow, pObj->dwRun))
+            if (!ChkTimer(msNow, pObj->dwRun))
               break;
 
             // initiate stop
@@ -116,7 +116,7 @@
 
           // handle tip time
           if (pObj->dwTip) {
-            if (!TimerExpired(msNow, pObj->dwTip))
+            if (!ChkTimer(msNow, pObj->dwTip))
               break;
 
             // initiate stop
@@ -131,7 +131,7 @@
         case CGPIOD_UDM_CMD_SENSJALDOWN: // 18
           // handle delay time
           if (pObj->dwDelay) {
-            if (!TimerExpired(msNow, pObj->dwDelay))
+            if (!ChkTimer(msNow, pObj->dwDelay))
               break;
 
             // initiate down and recalculate run timer
@@ -142,7 +142,7 @@
 
           // handle run time
           if (pObj->dwRun) {
-            if (!TimerExpired(msNow, pObj->dwRun))
+            if (!ChkTimer(msNow, pObj->dwRun))
               break;
 
             // initiate stop
@@ -159,7 +159,7 @@
          
           // handle tip time
           if (pObj->dwTip) {
-            if (!TimerExpired(msNow, pObj->dwTip))
+            if (!ChkTimer(msNow, pObj->dwTip))
               break;
 
             // initiate stop
@@ -377,9 +377,8 @@
       case CGPIOD_UDM_CMD_SENSROLUP:
         if (_shutterCheckPrio(pObj, pCmd)) break;
           
-        // make sure to stop first, then move up
+        // make sure to stop first
         _shutterSetState(pObj, CGPIOD_UDM_STATE_STOP, &evt);
-        _shutterSetState(pObj, CGPIOD_UDM_STATE_UP, &evt);
         pObj->dwCmd   = CGPIOD_UDM_CMD_SENSROLUP;
         pObj->dwDelay = SetTimerSec(pCmd->msNow, pCmd->parmsShutter.dwDelay);
         pObj->dwRun   = pCmd->parmsShutter.dwRun;
@@ -389,9 +388,8 @@
       case CGPIOD_UDM_CMD_SENSJALUP: 
         if (_shutterCheckPrio(pObj, pCmd)) break;
           
-        // make sure to stop first, then move up
+        // make sure to stop first
         _shutterSetState(pObj, CGPIOD_UDM_STATE_STOP, &evt);
-        _shutterSetState(pObj, CGPIOD_UDM_STATE_UP, &evt);
         pObj->dwCmd   = CGPIOD_UDM_CMD_SENSJALUP;
         pObj->dwDelay = SetTimerSec(pCmd->msNow, pCmd->parmsShutter.dwDelay);
         pObj->dwRun   = pCmd->parmsShutter.dwRun;
@@ -401,9 +399,8 @@
       case CGPIOD_UDM_CMD_SENSROLDOWN: 
         if (_shutterCheckPrio(pObj, pCmd)) break;
           
-        // make sure to stop first, then move down
+        // make sure to stop first
         _shutterSetState(pObj, CGPIOD_UDM_STATE_STOP, &evt);
-        _shutterSetState(pObj, CGPIOD_UDM_STATE_DOWN, &evt);
         pObj->dwCmd   = CGPIOD_UDM_CMD_SENSROLDOWN;
         pObj->dwDelay = SetTimerSec(pCmd->msNow, pCmd->parmsShutter.dwDelay);
         pObj->dwRun   = pCmd->parmsShutter.dwRun;
@@ -413,9 +410,8 @@
       case CGPIOD_UDM_CMD_SENSJALDOWN: 
         if (_shutterCheckPrio(pObj, pCmd)) break;
           
-        // make sure to stop first, then move up
+        // make sure to stop first
         _shutterSetState(pObj, CGPIOD_UDM_STATE_STOP, &evt);
-        _shutterSetState(pObj, CGPIOD_UDM_STATE_DOWN, &evt);
         pObj->dwCmd   = CGPIOD_UDM_CMD_SENSJALDOWN;
         pObj->dwDelay = SetTimerSec(pCmd->msNow, pCmd->parmsShutter.dwDelay);
         pObj->dwRun   = pCmd->parmsShutter.dwRun;

@@ -53,7 +53,7 @@
       switch (pObj->dwCmd) {
         case CGPIOD_TMR_CMD_TIMERONDELAYED:
 //        case CGPIOD_OUT_CMD_OFFTIMED:
-          if (TimerExpired(msNow, pObj->dwRun)) {
+          if (ChkTimer(msNow, pObj->dwRun)) {
             _timerSetState(pObj, CGPIOD_TMR_STATE_ON, &evt);
             pObj->dwCmd = CGPIOD_TMR_CMD_NONE;
             } // if
@@ -61,7 +61,7 @@
 
         case CGPIOD_TMR_CMD_TIMEROFFDELAYED:
         case CGPIOD_TMR_CMD_TIMERONTIMED:
-          if (TimerExpired(msNow, pObj->dwRun)) {
+          if (ChkTimer(msNow, pObj->dwRun)) {
             _timerSetState(pObj, CGPIOD_TMR_STATE_OFF, &evt);
             pObj->dwCmd = CGPIOD_TMR_CMD_NONE;
             } // if

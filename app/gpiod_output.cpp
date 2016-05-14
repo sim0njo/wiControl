@@ -66,7 +66,7 @@
       switch (pObj->dwCmd) {
         case CGPIOD_OUT_CMD_ONDELAYED:
         case CGPIOD_OUT_CMD_OFFTIMED:
-          if (TimerExpired(msNow, pObj->dwRun)) {
+          if (ChkTimer(msNow, pObj->dwRun)) {
             _outputSetState(pObj, CGPIOD_OUT_STATE_ON, &evt);
             pObj->dwCmd = CGPIOD_OUT_CMD_NONE;
             pObj->dwRun = 0;
@@ -75,7 +75,7 @@
 
         case CGPIOD_OUT_CMD_OFFDELAYED:
         case CGPIOD_OUT_CMD_ONTIMED:
-          if (TimerExpired(msNow, pObj->dwRun)) {
+          if (ChkTimer(msNow, pObj->dwRun)) {
             _outputSetState(pObj, CGPIOD_OUT_STATE_OFF, &evt);
             pObj->dwCmd = CGPIOD_OUT_CMD_NONE;
             pObj->dwRun = 0;
@@ -84,7 +84,7 @@
 
         case CGPIOD_OUT_CMD_TOGGLEDELAYED:
         case CGPIOD_OUT_CMD_TOGGLETIMED:
-          if (TimerExpired(msNow, pObj->dwRun)) {
+          if (ChkTimer(msNow, pObj->dwRun)) {
             _outputSetState(pObj, pObj->dwState ^ CGPIOD_OUT_STATE_ON, &evt);
             pObj->dwCmd    = CGPIOD_OUT_CMD_NONE;
             pObj->dwRun    = 0;
@@ -93,7 +93,7 @@
           break;
 
         case CGPIOD_OUT_CMD_LOCKTIMED:
-          if (TimerExpired(msNow, pObj->dwRun)) {
+          if (ChkTimer(msNow, pObj->dwRun)) {
             pObj->dwCmd    = CGPIOD_OUT_CMD_NONE;
             pObj->dwRun    = 0;
             pObj->dwFlags &= ~CGPIOD_OUT_FLG_LOCKED;
@@ -105,7 +105,7 @@
           break;
 
         case CGPIOD_OUT_CMD_BLINKTIMED:
-          if (TimerExpired(msNow, pObj->dwRun)) {
+          if (ChkTimer(msNow, pObj->dwRun)) {
             _outputSetState(pObj, CGPIOD_OUT_STATE_OFF, &evt);
             pObj->dwCmd = CGPIOD_OUT_CMD_NONE;
             pObj->dwRun = 0;

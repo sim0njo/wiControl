@@ -80,7 +80,6 @@ void processInfoCommand(String commandLine, CommandOutput* pOut)
   pOut->printf("Version            : %s\r\n", build_git_sha);
   pOut->printf("Sming Version      : %s\r\n", SMING_VERSION);
   pOut->printf("ESP SDK version    : %s\r\n", system_get_sdk_version());
-  pOut->printf("Gpiod version      : %s\r\n", CGPIOD_VERSION);
   pOut->printf("\r\n");
 
   pOut->printf("Station SSID       : %s\r\n", AppSettings.ssid.c_str());
@@ -99,12 +98,15 @@ void processInfoCommand(String commandLine, CommandOutput* pOut)
   pOut->printf("Access Point Mode  : %s\r\n", apModeStr.c_str());
   pOut->printf("\r\n");
 
-  pOut->printf("Gpiod emulation    : %s\r\n", (g_gpiod.GetEmul() == CGPIOD_EMUL_OUTPUT)     ? "output"     : "shutter");
-  pOut->printf("Gpiod mode         : %s\r\n", (g_gpiod.GetMode() == CGPIOD_MODE_STANDALONE) ? "standalone" :
+  pOut->printf("wiControl\r\n");
+  pOut->printf(" Version           : %s\r\n", APP_VERSION);
+  pOut->printf(" Topology          : %s\r\n", APP_TOPOLOGY);
+  pOut->printf(" Emulation         : %s\r\n", (g_gpiod.GetEmul() == CGPIOD_EMUL_OUTPUT)     ? "output"     : "shutter");
+  pOut->printf(" Mode              : %s\r\n", (g_gpiod.GetMode() == CGPIOD_MODE_STANDALONE) ? "standalone" :
                                               (g_gpiod.GetMode() == CGPIOD_MODE_MQTT)       ? "MQTT"       : "both");
-  pOut->printf("Gpiod event format : %s\r\n", (g_gpiod.GetEfmt() == CGPIOD_EFMT_NUMERICAL)  ? "numerical"  : "textual");
-  pOut->printf("Gpiod lock state   : %s\r\n", (g_gpiod.GetFlags(CGPIOD_FLG_LOCK))           ? "locked"     : "unlocked");
-  pOut->printf("Gpiod disable state: %s\r\n", (g_gpiod.GetFlags(CGPIOD_FLG_DISABLE))        ? "disabled"   : "enabled");
+  pOut->printf(" Event format      : %s\r\n", (g_gpiod.GetEfmt() == CGPIOD_EFMT_NUMERICAL)  ? "numerical"  : "textual");
+  pOut->printf(" Lock state        : %s\r\n", (g_gpiod.GetFlags(CGPIOD_FLG_LOCK))           ? "locked"     : "unlocked");
+  pOut->printf(" Disable state     : %s\r\n", (g_gpiod.GetFlags(CGPIOD_FLG_DISABLE))        ? "disabled"   : "enabled");
   pOut->printf("\r\n");
 
   pOut->printf("System Time        : ");

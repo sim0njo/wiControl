@@ -94,7 +94,7 @@
             } 
           else {
             // input still closed
-            if (!TimerExpired(msNow, pObj->msState + CGPIOD_IN_TMR_INGT1)) break;
+            if (!ChkTimer(msNow, pObj->msState + CGPIOD_IN_TMR_INGT1)) break;
 
             pObj->dwState = CGPIOD_IN_STATE_INGT1;
             evt.dwEvt     = CGPIOD_IN_EVT_INGT1;
@@ -115,7 +115,7 @@
             } 
           else {
             // input still closed
-            if (!TimerExpired(msNow, pObj->msState + CGPIOD_IN_TMR_INGT2)) break;
+            if (!ChkTimer(msNow, pObj->msState + CGPIOD_IN_TMR_INGT2)) break;
 
             pObj->dwState = CGPIOD_IN_STATE_INGT2;
             evt.dwEvt     = CGPIOD_IN_EVT_INGT2;
@@ -192,7 +192,7 @@
         pObj->msDebounce = msNow;
         
       // return old state till debounce period passed
-      if (!TimerExpired(msNow, pObj->msDebounce + pObj->tmrDebounce))
+      if (!ChkTimer(msNow, pObj->msDebounce + pObj->tmrDebounce))
         return pObj->dwVal;
 
       } // if

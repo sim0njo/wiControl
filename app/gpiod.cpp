@@ -16,10 +16,10 @@ void                 gpiodOnHttpConfig(HttpRequest &request, HttpResponse &respo
 
   // handle new settings
   if (request.getRequestMethod() == RequestMethod::POST) {
-    AppSettings.gpiodEmul = (request.getPostParameter("gpiodEmul") == "1") ? CGPIOD_EMUL_OUTPUT     : CGPIOD_EMUL_SHUTTER;
+    AppSettings.gpiodEmul = (request.getPostParameter("gpiodEmul") == "2") ? CGPIOD_EMUL_SHUTTER    : CGPIOD_EMUL_OUTPUT;
     AppSettings.gpiodMode = (request.getPostParameter("gpiodMode") == "1") ? CGPIOD_MODE_STANDALONE : 
                             (request.getPostParameter("gpiodMode") == "2") ? CGPIOD_MODE_MQTT       : CGPIOD_MODE_BOTH;
-    AppSettings.gpiodEfmt = (request.getPostParameter("gpiodEfmt") == "0") ? CGPIOD_EFMT_NUMERICAL  : CGPIOD_EFMT_TEXTUAL;
+    AppSettings.gpiodEfmt = (request.getPostParameter("gpiodEfmt") == "2") ? CGPIOD_EFMT_TEXTUAL    : CGPIOD_EFMT_NUMERICAL;
     
     AppSettings.save();
 
@@ -39,8 +39,8 @@ void                 gpiodOnHttpConfig(HttpRequest &request, HttpResponse &respo
   vars["gpiodMode2"] = (AppSettings.gpiodMode == CGPIOD_MODE_MQTT)       ? "checked='checked'" : "";
   vars["gpiodMode3"] = (AppSettings.gpiodMode == CGPIOD_MODE_BOTH)       ? "checked='checked'" : "";
 
-  vars["gpiodEfmt0"] = (AppSettings.gpiodEfmt == CGPIOD_EFMT_NUMERICAL)  ? "checked='checked'" : "";
-  vars["gpiodEfmt1"] = (AppSettings.gpiodEfmt == CGPIOD_EFMT_TEXTUAL)    ? "checked='checked'" : "";
+  vars["gpiodEfmt1"] = (AppSettings.gpiodEfmt == CGPIOD_EFMT_NUMERICAL)  ? "checked='checked'" : "";
+  vars["gpiodEfmt2"] = (AppSettings.gpiodEfmt == CGPIOD_EFMT_TEXTUAL)    ? "checked='checked'" : "";
 
   response.sendTemplate(tmpl); // will be automatically deleted
   } // gpiodOnHttpConfig
@@ -144,18 +144,6 @@ tUint32 CGpiod::OnExit()
     _shutterOnExit();
 
   } // OnExit
-
-//--------------------------------------------------------------------------
-// check if timer is expired
-//--------------------------------------------------------------------------
-tUint32 CGpiod::TimerExpired(tUint32 msNow, tUint32 msTimer) 
-{
-  // handle clock wrap
-  if ((msTimer > ESP8266_MILLIS_MID) && (msNow < ESP8266_MILLIS_MID))
-    msNow += ESP8266_MILLIS_MAX;
-    
-  return (msNow > msTimer) ? 1 : 0;
-  } // TimerExpired
 
 //--------------------------------------------------------------------------
 // report status

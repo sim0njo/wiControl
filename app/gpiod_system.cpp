@@ -55,7 +55,7 @@
     tGpiodEvt    evt = { msNow, 0, 0, 0, 0 };
 
     // handle heartbeat timer
-    if (TimerExpired(msNow, m_hbeat.msStart + m_hbeat.msPeriod)) {
+    if (ChkTimer(msNow, m_hbeat.msStart + m_hbeat.msPeriod)) {
       m_hbeat.dwCntr++;
       m_hbeat.msStart = msNow;
       evt.dwObj = CGPIOD_OBJ_CLS_HBEAT;
