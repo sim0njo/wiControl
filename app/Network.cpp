@@ -63,7 +63,7 @@ void networkOnHttpConfig(HttpRequest &request, HttpResponse &response)
   TemplateFileStream *tmpl = new TemplateFileStream("network.html");
   auto &vars = tmpl->variables();
 
-  vars["appAlias"]   = APP_ALIAS;
+  vars["appAlias"]   = szAPP_ALIAS;
 
   vars["wiredon"]    = AppSettings.wired ? "checked='checked'" : "";
   vars["wiredoff"]   = AppSettings.wired ? "" : "checked='checked'";

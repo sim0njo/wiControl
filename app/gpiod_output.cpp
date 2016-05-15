@@ -26,8 +26,9 @@
                        (dwObj == CGPIOD_OUT2) ? CGPIOD_OUT2_PIN : 
                        (dwObj == CGPIOD_OUT3) ? CGPIOD_OUT3_PIN : -1; 
       pObj->dwPol    = CGPIOD_IO_POL_NORMAL; 
-      pObj->dwState  = CGPIOD_OUT_STATE_OFF; 
-      pObj->dwCmd    = CGPIOD_OUT_CMD_NONE; 
+      pObj->dwRunDef = CGPIOD_OUT_RUN_DEF;
+//    pObj->dwState  = CGPIOD_OUT_STATE_OFF; 
+//    pObj->dwCmd    = CGPIOD_OUT_CMD_NONE; 
       } // for
 
     return m_dwError;
@@ -43,6 +44,8 @@
 
     Debug.logTxt(CLSLVL_GPIOD_OUTPUT | 0x0000, "CGpiod::_outputOnInit");
     for (dwObj = 0; dwObj < CGPIOD_OUT_COUNT; dwObj++, pObj++) {
+      pObj->dwState  = CGPIOD_OUT_STATE_OFF; 
+      pObj->dwCmd    = CGPIOD_OUT_CMD_NONE; 
       _ioSetPinVal(pObj->dwPin, pObj->dwState ^ pObj->dwPol);
       _ioSetPinDir(pObj->dwPin, CGPIOD_IO_DIR_OUTPUT);
       } // for
@@ -57,7 +60,7 @@
   {
     tUint32      dwObj;
     tGpiodOutput *pObj = m_output; 
-    tGpiodEvt    evt = { msNow, 0, 0, 0, 0 };
+    tGpiodEvt    evt = { msNow, CGPIOD_ORIG_OUTPUT, 0, 0, 0, 0 };
 
     // handle regular output objects
     for (dwObj = 0; dwObj < CGPIOD_OUT_COUNT; dwObj++, pObj++) {
@@ -150,8 +153,9 @@
 
     do {
       // initialise vars
-      cmd.msNow = pEvt->msNow;
-      evt.msNow = pEvt->msNow;
+      cmd.msNow  = pEvt->msNow;
+      evt.msNow  = pEvt->msNow;
+      evt.dwOrig = pEvt->dwOrig;
 
       // handle input event
       if ((pEvt->dwObj & CGPIOD_OBJ_CLS_MASK) == CGPIOD_OBJ_CLS_INPUT) {
@@ -164,8 +168,9 @@
             break;
 
           case CGPIOD_IN_EVT_INGT2:
-            cmd.dwObj = CGPIOD_OBJ_CLS_OUTPUT | (pEvt->dwObj & CGPIOD_OBJ_NUM_MASK);
-            cmd.dwCmd = CGPIOD_OUT_CMD_BLINK;
+            cmd.dwObj             = CGPIOD_OBJ_CLS_OUTPUT | (pEvt->dwObj & CGPIOD_OBJ_NUM_MASK);
+            cmd.parmsOutput.dwRun = m_output[pEvt->dwObj & CGPIOD_OBJ_NUM_MASK].dwRunDef;
+            cmd.dwCmd             = (cmd.parmsOutput.dwRun) ? CGPIOD_OUT_CMD_BLINKTIMED : CGPIOD_OUT_CMD_BLINK;
             _outputDoCmd(&cmd);
             break;
           } // switch
@@ -196,17 +201,14 @@
   { 
     tChar        str1[16], str2[16];
     tGpiodOutput *pObj = &m_output[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK]; 
-    tGpiodEvt    evt   = { pCmd->msNow, pCmd->dwObj, 0, 0, 0 };
+    tGpiodEvt    evt   = { pCmd->msNow, pCmd->dwOrig, pCmd->dwObj, 0, 0, 0 };
 
     PrintCmd(pCmd, CLSLVL_GPIOD_OUTPUT | 0x0000, "CGpiod::_outputDoCmd");
     switch (pCmd->dwCmd & CGPIOD_CMD_NUM_MASK) {
       case CGPIOD_OUT_CMD_STATUS: 
-        // only send status for non-session origins
-        if (pCmd->dwOrig == CGPIOD_ORIG_MQTT) {
-          evt.dwEvt = pObj->dwState;
-          DoSta(&evt);
-          } // if
-
+        // report current value
+        evt.dwEvt = pObj->dwState;
+        DoSta(&evt);
         break;
 
       case CGPIOD_OUT_CMD_ON: 
@@ -325,13 +327,26 @@
         _outputSetState(pObj, pObj->dwState ^ CGPIOD_OUT_STATE_ON, &evt);
         break;
 
+      case CGPIOD_OUT_CMD_EMULTIME: 
+        // handle command
+        if (pCmd->dwParms & CGPIOD_OUT_PRM_EMULTIME)
+          pObj->dwRunDef = pCmd->parmsOutput.dwRun;
+        
+        pCmd->dwRsp = pObj->dwRunDef;   
+        evt.dwEvt   = pObj->dwRunDef;
+        DoSta(&evt);
+        break;
+
       default:
-        pCmd->dwError = XERROR_INPUT;
+        pCmd->dwError = XERROR_NOT_FOUND;
         Debug.logTxt(CLSLVL_GPIOD_OUTPUT | 0x9999, "CGpiod::_outputDoCmd,unknown cmd %u", pCmd->dwCmd);
         break;
       } // switch
 
-    pCmd->dwState = pObj->dwState;
+    // automatically copy state -> rsp
+    if (pCmd->dwCmd & CGPIOD_CMD_RSP_AUTO)
+      pCmd->dwRsp = pObj->dwState;
+
     return pCmd->dwError; 
     } // _outputDoCmd
 

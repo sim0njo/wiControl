@@ -27,10 +27,10 @@
                          (dwObj == CGPIOD_UDM1) ? CGPIOD_UDM1_PIN_DOWN : -1;
       pObj->dwPol      = CGPIOD_IO_POL_NORMAL; 
       pObj->dwRunDef   = CGPIOD_UDM_RUN_DEF;
-      pObj->dwState    = CGPIOD_UDM_STATE_STOP;
-      pObj->dwPrioLvl  = CGPIOD_UDM_PRIO_LVL_0; 
-      pObj->dwPrioMask = CGPIOD_UDM_PRIO_MASK_NONE; 
-      pObj->dwCmd      = CGPIOD_UDM_CMD_NONE; 
+//    pObj->dwState    = CGPIOD_UDM_STATE_STOP;
+//    pObj->dwPrioLvl  = CGPIOD_UDM_PRIO_LVL_0; 
+//    pObj->dwPrioMask = CGPIOD_UDM_PRIO_MASK_NONE; 
+//    pObj->dwCmd      = CGPIOD_UDM_CMD_NONE; 
       } // for
 
     return m_dwError;
@@ -46,6 +46,10 @@
 
     Debug.logTxt(CLSLVL_GPIOD_SHUTTER | 0x0000, "CGpiod::_shutterOnInit");
     for (dwObj = 0; dwObj < CGPIOD_UDM_COUNT; dwObj++, pObj++) {
+      pObj->dwState    = CGPIOD_UDM_STATE_STOP;
+      pObj->dwPrioLvl  = CGPIOD_UDM_PRIO_LVL_0; 
+      pObj->dwPrioMask = CGPIOD_UDM_PRIO_MASK_NONE; 
+      pObj->dwCmd      = CGPIOD_UDM_CMD_NONE; 
       _ioSetPinVal(pObj->dwPinUp,   ((pObj->dwState >> 0) & CGPIOD_OUT_STATE_ON) ^ pObj->dwPol);
       _ioSetPinVal(pObj->dwPinDown, ((pObj->dwState >> 1) & CGPIOD_OUT_STATE_ON) ^ pObj->dwPol);
       _ioSetPinDir(pObj->dwPinUp,   CGPIOD_IO_DIR_OUTPUT);
@@ -62,7 +66,7 @@
   {
     tUint32       dwObj;
     tGpiodShutter *pObj = m_shutter; 
-    tGpiodEvt     evt = { msNow, 0, 0, 0, 0 };
+    tGpiodEvt     evt = { msNow, CGPIOD_ORIG_SHUTTER, 0, 0, 0, 0 };
 
     for (dwObj = 0; dwObj < CGPIOD_UDM_COUNT; dwObj++, pObj++) {
       evt.dwObj = CGPIOD_OBJ_CLS_SHUTTER + dwObj;
@@ -271,20 +275,20 @@
   { 
     tChar         str1[16], str2[16];
     tGpiodShutter *pObj = &m_shutter[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK]; 
-    tGpiodEvt     evt   = { pCmd->msNow, pCmd->dwObj, 0, 0, 0 };
+    tGpiodEvt     evt   = { pCmd->msNow, pCmd->dwOrig, pCmd->dwObj, 0, 0, 0 };
 
     PrintCmd(pCmd, CLSLVL_GPIOD_SHUTTER | 0x0000, "CGpiod::_shutterDoCmd");
     switch (pCmd->dwCmd & CGPIOD_CMD_NUM_MASK) {
       case CGPIOD_UDM_CMD_STATUS: 
-        // only send status for non-session origins
-        if (pCmd->dwOrig == CGPIOD_ORIG_MQTT) {
-          evt.dwEvt = pObj->dwState;
-          DoSta(&evt);
-          } // if
-
+        // report current value
+        evt.dwEvt = pObj->dwState;
+        DoSta(&evt);
         break;
 
       case CGPIOD_UDM_CMD_STOP: 
+        if (!(pCmd->dwParms & CGPIOD_UDM_PRM_PRIOLEVEL) && (pCmd->dwError = XERROR_SYNTAX)) break;
+        if ((pCmd->dwParms & CGPIOD_UDM_PRM_PRIOLEVEL) == 0) break;
+
         if (_shutterCheckPrio(pObj, pCmd)) break;
         _shutterSetState(pObj, CGPIOD_UDM_STATE_STOP, &evt);
         pObj->dwCmd = CGPIOD_UDM_CMD_STOP;
@@ -418,12 +422,25 @@
         pObj->dwTip   = pCmd->parmsShutter.dwTip;
         break;
 
+      case CGPIOD_UDM_CMD_EMULTIME: 
+        // handle command
+        if (pCmd->dwParms & CGPIOD_UDM_PRM_EMULTIME)
+          pObj->dwRunDef = pCmd->parmsShutter.dwRun; 
+        
+        pCmd->dwRsp = pObj->dwRunDef;   
+        evt.dwEvt   = pObj->dwRunDef;
+        DoSta(&evt);
+        break;
+
       default:
         Debug.logTxt(CLSLVL_GPIOD_OUTPUT | 0x9999, "CGpiod::_shutterDoCmd,unknown cmd %u", pCmd->dwCmd);
         break;
       } // switch
 
-    pCmd->dwState = pObj->dwState;
+    // automatically copy state -> rsp
+    if (pCmd->dwCmd & CGPIOD_CMD_RSP_AUTO)
+      pCmd->dwRsp = pObj->dwState;
+   
     return XERROR_SUCCESS; 
     } // _shutterDoCmd
 

@@ -22,8 +22,8 @@
       // initialise defaults
       pObj->dwFlags     = CGPIOD_IN_FLG_MQTT_ALL; // all events to MQTT
       pObj->dwState     = CGPIOD_IN_STATE_OUT; 
-      pObj->dwPin       = (dwObj == CGPIOD_IN0) ? CGPIOD_IN0_PIN  : 
-                          (dwObj == CGPIOD_IN1) ? CGPIOD_IN1_PIN  : 
+      pObj->dwPin       = (dwObj == CGPIOD_IN0) ? CGPIOD_IN0_PIN : 
+                          (dwObj == CGPIOD_IN1) ? CGPIOD_IN1_PIN : 
                           (dwObj == CGPIOD_IN2) ? CGPIOD_IN2_PIN : 
                           (dwObj == CGPIOD_IN3) ? CGPIOD_IN3_PIN : -1; 
       pObj->dwPol       = CGPIOD_IO_POL_INVERT;  
@@ -60,7 +60,7 @@
   {
     tUint32     dwObj, dwVal;
     tGpiodInput *pObj = m_input; 
-    tGpiodEvt   evt = { msNow, 0, 0, 0, 0 };
+    tGpiodEvt   evt = { msNow, CGPIOD_ORIG_INPUT, 0, 0, 0, 0 };
 
     // loop all inputs
     for (dwObj = 0; dwObj < CGPIOD_IN_COUNT; dwObj++, pObj++) {
@@ -157,25 +157,38 @@
   { 
     tChar       str1[16], str2[16];
     tGpiodInput *pObj = &m_input[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK]; 
-    tGpiodEvt   evt   = { pCmd->msNow, pCmd->dwObj, 0, 0, 0 };
+    tGpiodEvt   evt   = { pCmd->msNow, pCmd->dwOrig, pCmd->dwObj, 0, 0, 0 };
 
     PrintCmd(pCmd, CLSLVL_GPIOD_OUTPUT | 0x0000, "CGpiod::_inputDoCmd");
     switch (pCmd->dwCmd & CGPIOD_CMD_NUM_MASK) {
       case CGPIOD_IN_CMD_STATUS: 
-        if (pCmd->dwOrig == CGPIOD_ORIG_MQTT) {
-          evt.dwEvt     = pObj->dwState;
-          DoSta(&evt);
-          } // if
+        // report current value
+        evt.dwEvt   = pObj->dwState;
+        DoSta(&evt);
+        break;
 
+      case CGPIOD_IN_CMD_DEBOUNCE:
+        // handle command
+        if (pCmd->dwParms & CGPIOD_IN_PRM_DEBOUNCE)
+          pObj->tmrDebounce = pCmd->parmsInput.dwDebounce; 
+
+        // report current value
+        pCmd->dwRsp = pObj->tmrDebounce;
+        evt.dwEvt   = pObj->tmrDebounce;
+        DoSta(&evt);
         break;
 
       default: // treat as event
+        // handle command
         evt.dwEvt = pCmd->dwCmd;
         DoEvt(&evt);
         break;
       } // switch
 
-    pCmd->dwState = pObj->dwState;
+    // automatically copy state -> rsp
+    if (pCmd->dwCmd & CGPIOD_CMD_RSP_AUTO)
+      pCmd->dwRsp = pObj->dwState;
+
     return pCmd->dwError; 
     } // _inputDoCmd
 

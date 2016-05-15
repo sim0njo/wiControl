@@ -66,15 +66,17 @@ void                 gpiodOnMqttPublish(tChar* szTopic, tChar* szMsg);
 #define CGPIOD_DECISEC_2_MSEC                  100 // multiplier for decisecond to ms
 
 //----------------------------------------------------------------------------
-#define CGPIOD_ORIG_INPUT               0x10000000 // 
-#define CGPIOD_ORIG_OUTPUT              0x10000001 // 
-#define CGPIOD_ORIG_SHUTTER             0x10000002 // 
-#define CGPIOD_ORIG_CLI                 0x10000004 // 
-#define CGPIOD_ORIG_HTTP                0x10000008 // 
-#define CGPIOD_ORIG_MQTT                0x00000010 // 
-#define CGPIOD_ORIG_INTERNAL            0x80000000 // 
+#define CGPIOD_ORIG_INPUT               0x80000001 // 
+#define CGPIOD_ORIG_OUTPUT              0x80000002 // 
+#define CGPIOD_ORIG_SHUTTER             0x80000004 // 
+#define CGPIOD_ORIG_SYSTEM              0x80000008 // 
+#define CGPIOD_ORIG_TIMER               0x80000010 // 
+#define CGPIOD_ORIG_CLI                 0x00000020 // 
+#define CGPIOD_ORIG_HTTP                0x00000040 // 
+#define CGPIOD_ORIG_MQTT                0x80000080 // 
+#define CGPIOD_ORIG_INTERNAL            0x40000000 // 
 
-#define CGPIOD_ORIG_FLG_PUBLISH         0x10000000 // 
+#define CGPIOD_ORIG_FLG_PUBLISH         0x80000000 // for which origs to publish status
 
 //----------------------------------------------------------------------------
 #define CGPIOD_IO_DIR_INPUT                      0 // 
@@ -104,6 +106,11 @@ void                 gpiodOnMqttPublish(tChar* szTopic, tChar* szMsg);
 #define CGPIOD_OBJ_CLS_WBS              0x00001B00 // WBS = input + output  + timer + system
 #define CGPIOD_OBJ_CLS_WBR              0x00001D00 // WBR = input + shutter + timer + system
 
+#define CGPIOD_CMD_PRM_OPTIONAL         0xFF000000 // optional parms mask
+#define CGPIOD_CMD_PRM_MANDATORY        0x00FF0000 // mandatory parms mask
+
+#define CGPIOD_CMD_RSP_AUTO             0x000000FF // cmd with auto response
+
 //----------------------------------------------------------------------------
 // system=ping   
 // system=loglevel [.<loglevel>.ack]
@@ -116,13 +123,20 @@ void                 gpiodOnMqttPublish(tChar* szTopic, tChar* szMsg);
 #define CGPIOD_SYS_CMD_VERSION                   2 // 
 #define CGPIOD_SYS_CMD_MEMORY                    3 // 
 #define CGPIOD_SYS_CMD_UPTIME                    4 // 
-#define CGPIOD_SYS_CMD_LOGLEVEL                  5 // 
-#define CGPIOD_SYS_CMD_EMUL                      6 // WBS/WBR
-#define CGPIOD_SYS_CMD_MODE                      7 // standalone/networked/both
-#define CGPIOD_SYS_CMD_EFMT                      8 // setefmt.0|1.ack
-#define CGPIOD_SYS_CMD_LOCK                      9 // 
-#define CGPIOD_SYS_CMD_DISABLE                  10 // 
-#define CGPIOD_SYS_CMD_RESTART                  11 // restart.ack
+#define CGPIOD_SYS_CMD_RESTART                   5 // restart.ack
+#define CGPIOD_SYS_CMD_LOGLEVEL         0x00000100 // 
+#define CGPIOD_SYS_CMD_EMUL             0x00000200 // WBS/WBR
+#define CGPIOD_SYS_CMD_MODE             0x00000300 // standalone/networked/both
+#define CGPIOD_SYS_CMD_EFMT             0x00000400 // setefmt.0|1.ack
+#define CGPIOD_SYS_CMD_LOCK             0x00000500 // 
+#define CGPIOD_SYS_CMD_DISABLE          0x00000600 // 
+
+#define CGPIOD_SYS_PRM_LOGLEVEL         0x01000000 //
+#define CGPIOD_SYS_PRM_EMUL             0x02000000 //
+#define CGPIOD_SYS_PRM_MODE             0x04000000 //
+#define CGPIOD_SYS_PRM_EFMT             0x08000000 //
+#define CGPIOD_SYS_PRM_OFFON            0x10000000 //
+#define CGPIOD_SYS_PRM_ACK              0x00800000 //
 
 //----------------------------------------------------------------------------
 // heartbeat definitions
@@ -185,6 +199,9 @@ typedef struct {
 #define CGPIOD_IN_CMD_OUTGT1                     5 // 
 #define CGPIOD_IN_CMD_INGT2                      6 // 
 #define CGPIOD_IN_CMD_OUT                        7 // 
+#define CGPIOD_IN_CMD_DEBOUNCE          0x00000100 // 
+
+#define CGPIOD_IN_PRM_DEBOUNCE          0x01000000 // optional
 
 #define CGPIOD_IN_EVT_INGT0                      2 // 
 #define CGPIOD_IN_EVT_OUTLT1                     3 // 
@@ -228,6 +245,8 @@ typedef struct {
 #define CGPIOD_OUT2_PIN                         12 // D6
 #define CGPIOD_OUT3_PIN                         14 // D5
 
+#define CGPIOD_OUT_RUN_DEF                       0 // infinite
+
 #define CGPIOD_OUT_STATE_OFF                     0 // 
 #define CGPIOD_OUT_STATE_ON                      1 // 
 
@@ -252,6 +271,11 @@ typedef struct {
 #define CGPIOD_OUT_CMD_TIMEABORT                18 // out0-1
 #define CGPIOD_OUT_CMD_BLINK                    23 // extended
 #define CGPIOD_OUT_CMD_BLINKTIMED               24 // extended
+#define CGPIOD_OUT_CMD_EMULTIME         0x00000100 // extended
+
+#define CGPIOD_OUT_PRM_DELAY            0x00010000 //
+#define CGPIOD_OUT_PRM_RUN              0x00020000 //
+#define CGPIOD_OUT_PRM_EMULTIME         0x01000000 // optional
 
 #define CGPIOD_OUT_EVT_OFF                       0 //
 #define CGPIOD_OUT_EVT_ON                        1 //
@@ -268,6 +292,7 @@ typedef struct {
   tUint32            dwFlags;                      //
   tUint32            dwPin;                        // GPIO pin number
   tUint32            dwPol;                        // polarity 0=normal, 1=invert
+  tUint32            dwRunDef;                     // default run time for standalone oper
   tUint32            dwState;                      //
   tUint32            dwCmd;                        // 
   tUint32            dwRun;                        // time 2
@@ -311,6 +336,15 @@ typedef struct {
 #define CGPIOD_UDM_CMD_SENSJALUP                16 // out0-1
 #define CGPIOD_UDM_CMD_SENSROLDOWN              17 // out0-1
 #define CGPIOD_UDM_CMD_SENSJALDOWN              18 // out0-1
+#define CGPIOD_UDM_CMD_EMULTIME         0x00000100 // extended
+
+#define CGPIOD_UDM_PRM_PRIOMASK         0x00010000 //
+#define CGPIOD_UDM_PRM_PRIOLEVEL        0x00020000 //
+#define CGPIOD_UDM_PRM_PRIOLOCK         0x00040000 //
+#define CGPIOD_UDM_PRM_DELAY            0x00080000 //
+#define CGPIOD_UDM_PRM_RUN              0x00100000 //
+#define CGPIOD_UDM_PRM_TIP              0x00200000 //
+#define CGPIOD_UDM_PRM_EMULTIME         0x01000000 // optional
 
 #define CGPIOD_UDM_PRIO_LVL_0                    0 //
 #define CGPIOD_UDM_PRIO_LVL_1                    1 //
@@ -380,6 +414,9 @@ typedef struct {
 #define CGPIOD_TMR_CMD_TIMERONTIMED             21 //
 #define CGPIOD_TMR_CMD_TIMERABORT               22 //
 
+#define CGPIOD_TMR_PRM_DELAY            0x00010000 //
+#define CGPIOD_TMR_PRM_RUN              0x00020000 //
+
 #define CGPIOD_TMR_EVT_TIMEROFF                  6 // 
 #define CGPIOD_TMR_EVT_TIMERON                   7 // 
 #define CGPIOD_TMR_EVT_TIMERABORT                8 // 
@@ -404,9 +441,12 @@ typedef struct {
   tUint32            dwCmd;                        // I
   tUint32            dwParms;                      // I
   tUint32            dwError;                      // O
-  tUint32            dwState;                      // O
+  tUint32            dwRsp;                        // O
 
   union {
+    struct {
+      tUint32        dwDebounce;                   //
+      } parmsInput; 
     struct {
       tUint32        dwDelay;                      //
       tUint32        dwRun;                        //
@@ -433,6 +473,7 @@ typedef struct {
 
 typedef struct {
   tUint32            msNow;                        // 
+  tUint32            dwOrig;                       // I
   tUint32            dwObj;                        // 
   tCChar*            szTopic;                      //
   tUint32            dwEvt;                        // 

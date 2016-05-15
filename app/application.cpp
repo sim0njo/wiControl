@@ -22,8 +22,9 @@ void appReportHeapUsage()
 {
   tGpiodCmd cmd = { 0 };
 
-  cmd.dwObj = CGPIOD_OBJ_SYSTEM;
-  cmd.dwCmd = CGPIOD_SYS_CMD_MEMORY;
+  cmd.dwOrig = CGPIOD_ORIG_MQTT;
+  cmd.dwObj  = CGPIOD_OBJ_SYSTEM;
+  cmd.dwCmd  = CGPIOD_SYS_CMD_MEMORY;
   g_gpiod.DoCmd(&cmd);
   } //
 
@@ -75,17 +76,16 @@ void processInfoCommand(String commandLine, CommandOutput* pOut)
 
   pOut->printf("\r\n");
     
-  pOut->printf("System information : ESP8266 based Wifi IO node\r\n");
-  pOut->printf("Build time         : %s\r\n", build_time);
-  pOut->printf("Version            : %s\r\n", build_git_sha);
-  pOut->printf("Sming Version      : %s\r\n", SMING_VERSION);
-  pOut->printf("ESP SDK version    : %s\r\n", system_get_sdk_version());
+  pOut->printf("System information  : ESP8266 based Wifi IO node\r\n");
+  pOut->printf("Build time          : %s\r\n", build_time);
+  pOut->printf("Version             : %s\r\n", build_git_sha);
+  pOut->printf("Sming Version       : %s\r\n", SMING_VERSION);
+  pOut->printf("ESP SDK version     : %s\r\n", system_get_sdk_version());
   pOut->printf("\r\n");
 
-  pOut->printf("Station SSID       : %s\r\n", AppSettings.ssid.c_str());
-  pOut->printf("Station DHCP       : %s\r\n", AppSettings.dhcp ? "TRUE" : "FALSE");
-  pOut->printf("Station IP         : %s\r\n", Network.getClientIP().toString().c_str());
-  pOut->printf("\r\n");
+  pOut->printf("Station SSID        : %s\r\n", AppSettings.ssid.c_str());
+  pOut->printf("Station DHCP        : %s\r\n", AppSettings.dhcp ? "TRUE" : "FALSE");
+  pOut->printf("Station IP          : %s\r\n", Network.getClientIP().toString().c_str());
 
   String apModeStr;
   if (AppSettings.apMode == apModeAlwaysOn)
@@ -95,30 +95,30 @@ void processInfoCommand(String commandLine, CommandOutput* pOut)
   else
     apModeStr= "whenDisconnected";
 
-  pOut->printf("Access Point Mode  : %s\r\n", apModeStr.c_str());
+  pOut->printf("Access Point Mode   : %s\r\n", apModeStr.c_str());
   pOut->printf("\r\n");
 
   pOut->printf("wiControl\r\n");
-  pOut->printf(" Version           : %s\r\n", APP_VERSION);
-  pOut->printf(" Topology          : %s\r\n", APP_TOPOLOGY);
-  pOut->printf(" Emulation         : %s\r\n", (g_gpiod.GetEmul() == CGPIOD_EMUL_OUTPUT)     ? "output"     : "shutter");
-  pOut->printf(" Mode              : %s\r\n", (g_gpiod.GetMode() == CGPIOD_MODE_STANDALONE) ? "standalone" :
-                                              (g_gpiod.GetMode() == CGPIOD_MODE_MQTT)       ? "MQTT"       : "both");
-  pOut->printf(" Event format      : %s\r\n", (g_gpiod.GetEfmt() == CGPIOD_EFMT_NUMERICAL)  ? "numerical"  : "textual");
-  pOut->printf(" Lock state        : %s\r\n", (g_gpiod.GetFlags(CGPIOD_FLG_LOCK))           ? "locked"     : "unlocked");
-  pOut->printf(" Disable state     : %s\r\n", (g_gpiod.GetFlags(CGPIOD_FLG_DISABLE))        ? "disabled"   : "enabled");
+  pOut->printf(" Version            : %s\r\n", szAPP_VERSION);
+  pOut->printf(" Topology           : %s\r\n", szAPP_TOPOLOGY);
+  pOut->printf(" Emulation          : %s\r\n", (g_gpiod.GetEmul() == CGPIOD_EMUL_OUTPUT)     ? "output"     : "shutter");
+  pOut->printf(" Mode               : %s\r\n", (g_gpiod.GetMode() == CGPIOD_MODE_STANDALONE) ? "standalone" :
+                                               (g_gpiod.GetMode() == CGPIOD_MODE_MQTT)       ? "MQTT"       : "both");
+  pOut->printf(" Event/status format: %s\r\n", (g_gpiod.GetEfmt() == CGPIOD_EFMT_NUMERICAL)  ? "numerical"  : "textual");
+  pOut->printf(" Lock state         : %s\r\n", (g_gpiod.GetFlags(CGPIOD_FLG_LOCK))           ? "locked"     : "unlocked");
+  pOut->printf(" Disable state      : %s\r\n", (g_gpiod.GetFlags(CGPIOD_FLG_DISABLE))        ? "disabled"   : "enabled");
+  pOut->printf(" Loglevel           : 0x%08X\r\n", Debug.logClsLevels(DEBUG_CLS_0));
   pOut->printf("\r\n");
 
-  pOut->printf("System Time        : ");
+  pOut->printf("System Time         : ");
   pOut->printf(SystemClock.getSystemTimeString().c_str());
   pOut->printf("\r\n");
 
-  pOut->printf("Loglevel           : 0x%08X\r\n", Debug.logClsLevels(DEBUG_CLS_0));
-  pOut->printf("Free Heap          : %d\r\n", system_get_free_heap_size());
-  pOut->printf("CPU Frequency      : %d MHz\r\n", system_get_cpu_freq());
-  pOut->printf("System Chip ID     : %x\r\n", system_get_chip_id());
-  pOut->printf("SPI Flash ID       : %x\r\n", spi_flash_get_id());
-  pOut->printf("SPI Flash Size     : %d\r\n", (1 << ((spi_flash_get_id() >> 16) & 0xff)));
+  pOut->printf("Free Heap           : %d\r\n", system_get_free_heap_size());
+  pOut->printf("CPU Frequency       : %d MHz\r\n", system_get_cpu_freq());
+  pOut->printf("System Chip ID      : %x\r\n", system_get_chip_id());
+  pOut->printf("SPI Flash ID        : %x\r\n", spi_flash_get_id());
+  pOut->printf("SPI Flash Size      : %d\r\n", (1 << ((spi_flash_get_id() >> 16) & 0xff)));
   pOut->printf("\r\n");
   } //
 
@@ -315,7 +315,7 @@ void init()
   Debug.start();
 
   // set prompt
-  sprintf(str, "%s/%s> ", APP_ALIAS, APP_TOPOLOGY); 
+  sprintf(str, "%s/%s> ", szAPP_ALIAS, szAPP_TOPOLOGY); 
   commandHandler.setCommandPrompt(str);
 
   // add new commands

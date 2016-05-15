@@ -514,7 +514,7 @@ tUint32 SkipSeparator(tUint32 dwTType, tBool bRequired)
     return XERROR_SUCCESS;
 
   if (bRequired)
-    return XERROR_INPUT;
+    return XERROR_SYNTAX;
 
   RestoreToken();
   return XERROR_SUCCESS; 
@@ -529,10 +529,10 @@ tUint32 GetNumber(tUint32* pdwNum, tUint32 dwLo, tUint32 dwHi)
   SkipSeparator(CPARSE_TYPE_PERIOD, FALSE);
 
   if (NextToken(0, 0) != CPARSE_TYPE_NUMBER)
-    return XERROR_INPUT;
+    return XERROR_SYNTAX;
 
   if ((m_dwTVal < dwLo) || (m_dwTVal > dwHi)) 
-    return XERROR_INPUT;
+    return XERROR_SYNTAX;
 
   if (pdwNum)
     *pdwNum = m_dwTVal;
@@ -549,13 +549,13 @@ tUint32 GetNumberMask(tUint32* pdwNum, tUint32 dwMask)
   SkipSeparator(CPARSE_TYPE_PERIOD, FALSE);
 
   if (NextToken(0, 0) != CPARSE_TYPE_NUMBER) 
-    return XERROR_INPUT;
+    return XERROR_SYNTAX;
 
   if ((m_dwTVal < 0) || (m_dwTVal > 31)) 
-    return XERROR_INPUT;
+    return XERROR_SYNTAX;
 
   if (!(dwMask & (0x1 << m_dwTVal))) 
-    return XERROR_INPUT;
+    return XERROR_SYNTAX;
 
   if (pdwNum)
     *pdwNum = m_dwTVal;
@@ -580,7 +580,7 @@ tUint32 DoOperNum(tUint32* pdwNum)
       break;
 
     // exit with error if no parameter for operator
-    if ((NextToken(0, 0) != CPARSE_TYPE_NUMBER) && (dwErr = XERROR_INPUT))
+    if ((NextToken(0, 0) != CPARSE_TYPE_NUMBER) && (dwErr = XERROR_SYNTAX))
       break;
 
     DoOper(pdwNum, dwOper, m_dwTVal);

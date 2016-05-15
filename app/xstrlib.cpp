@@ -283,7 +283,7 @@ tUint32 xstrToUint32(tUint32& dwOut, tCChar* pIn)
 //  for (dwOut = 0; gisdigit(*pIn); pIn++) 
 //    dwOut = (dwOut * 10) + (*pIn - '0');
 
-  return (*pIn) ? XERROR_INPUT : XERROR_SUCCESS;
+  return (*pIn) ? XERROR_SYNTAX : XERROR_SUCCESS;
   } // xstrToUint32
 
 //----------------------------------------------------------------------------

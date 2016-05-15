@@ -43,7 +43,7 @@ void CAtsReq::DoCcmd(String strCcmd)
       // parse object, cmd and optional parms
       if (g_gpiod.ParseCmd(&cmd, 0, sz, CGPIOD_ORIG_HTTP, g_gpiod.GetEmul())) {
         Debug.logTxt(CLSLVL_ATS | 0x0300, "CAtsReq::DoCmd,ParseCmd() failed,dropping");
-        dwErr = XERROR_INPUT;
+        dwErr = XERROR_SYNTAX;
         } // if
       else {
         cmd.msNow = msNow;
@@ -55,7 +55,7 @@ void CAtsReq::DoCcmd(String strCcmd)
         _AppendTerse(sz);
         } //
       else {
-        gsprintf(sz, "%u", cmd.dwState);
+        gsprintf(sz, "%u", cmd.dwRsp);
         _AppendTerse(sz);
         } // else
 

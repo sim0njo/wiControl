@@ -26,7 +26,7 @@ void httpOnStatus(HttpRequest &request, HttpResponse &response)
   TemplateFileStream *tmpl = new TemplateFileStream("status.html");
   auto &vars = tmpl->variables();
 
-  vars["appAlias"] = APP_ALIAS;
+  vars["appAlias"] = szAPP_ALIAS;
 
   vars["ssid"] = AppSettings.ssid;
   vars["wifiStatus"] = g_isNetworkConnected ? "Connected" : "Not connected";
@@ -134,7 +134,7 @@ void httpOnTools(HttpRequest &request, HttpResponse &response)
   TemplateFileStream *tmpl = new TemplateFileStream("tools.html");
   auto &vars = tmpl->variables();
 
-  vars["appAlias"] = APP_ALIAS;
+  vars["appAlias"] = szAPP_ALIAS;
   vars["webOtaBaseUrl"] = AppSettings.webOtaBaseUrl;
   response.sendTemplate(tmpl); // will be automatically deleted
   } //

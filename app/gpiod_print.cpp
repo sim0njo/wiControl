@@ -140,16 +140,26 @@ tCChar* CGpiod::_printCmdParamVals(tChar* pOut, tUint32 cbOut, tGpiodCmd* pCmd)
 
     switch (pCmd->dwObj & CGPIOD_OBJ_CLS_MASK) {
       case CGPIOD_OBJ_CLS_INPUT:   
+        if (pCmd->dwCmd & CGPIOD_IN_PRM_DEBOUNCE) { // debounce
+          gsprintf(str, ".%u", pCmd->parmsInput.dwDebounce);
+          xstrcatn(pOut, cbOut, str, 0);
+          } // if
+
         break;
 
       case CGPIOD_OBJ_CLS_OUTPUT:  
       case CGPIOD_OBJ_CLS_TIMER:  
-        if (pCmd->dwCmd & 0x00080000) { // delay 1-65535 seconds or 1/10th seconds (6535s or 65535 1/10th s)
+        if (pCmd->dwCmd & CGPIOD_OUT_PRM_DELAY) { 
           gsprintf(str, ".%u", pCmd->parmsOutput.dwDelay);
           xstrcatn(pOut, cbOut, str, 0);
           } // if
 
-        if (pCmd->dwCmd & 0x02000000) { // runtime 1-65535 seconds or 1/10th seconds (6535s or 65535 1/10th s)
+        if (pCmd->dwCmd & CGPIOD_OUT_PRM_RUN) { 
+          gsprintf(str, ".%u", pCmd->parmsOutput.dwRun);
+          xstrcatn(pOut, cbOut, str, 0);
+          } // if
+
+        if (pCmd->dwCmd & CGPIOD_OUT_PRM_EMULTIME) {
           gsprintf(str, ".%u", pCmd->parmsOutput.dwRun);
           xstrcatn(pOut, cbOut, str, 0);
           } // if
@@ -157,44 +167,50 @@ tCChar* CGpiod::_printCmdParamVals(tChar* pOut, tUint32 cbOut, tGpiodCmd* pCmd)
         break;
 
       case CGPIOD_OBJ_CLS_SHUTTER: 
-        if (pCmd->dwCmd & 0x00010000) { // prio-mask 0-63
+        if (pCmd->dwCmd & CGPIOD_UDM_PRM_PRIOMASK) { // prio-mask 0-63
           gsprintf(str, ".%u", pCmd->parmsShutter.dwPrioMask);
           xstrcatn(pOut, cbOut, str, 0);
           } // if
 
-        if (pCmd->dwCmd & 0x00020000) { // prio-level 0-5
+        if (pCmd->dwCmd & CGPIOD_UDM_PRM_PRIOLEVEL) { // prio-level 0-5
           gsprintf(str, ".%u", pCmd->parmsShutter.dwPrioLvl);
           xstrcatn(pOut, cbOut, str, 0);
           } // if
 
-        if (pCmd->dwCmd & 0x00040000) { // lock 0-1
+        if (pCmd->dwCmd & CGPIOD_UDM_PRM_PRIOLOCK) { // lock 0-1
           gsprintf(str, ".%u", pCmd->parmsShutter.dwLock);
           xstrcatn(pOut, cbOut, str, 0);
           } // if
 
-        if (pCmd->dwCmd & 0x00100000) { // delay 1-65535 seconds or 1/10th seconds (6535s or 65535 1/10th s)
+        if (pCmd->dwCmd & CGPIOD_UDM_PRM_DELAY) { // delay 1-65535 seconds or 1/10th seconds (6535s or 65535 1/10th s)
           gsprintf(str, ".%u", pCmd->parmsShutter.dwDelay);
           xstrcatn(pOut, cbOut, str, 0);
           } // if
 
-        if (pCmd->dwCmd & 0x04000000) { // runtime 1-65535 seconds or 1/10th seconds (6535s or 65535 1/10th s)
+        if (pCmd->dwCmd & CGPIOD_UDM_PRM_RUN) { // runtime 1-65535 seconds or 1/10th seconds (6535s or 65535 1/10th s)
           gsprintf(str, ".%u", pCmd->parmsShutter.dwRun);
           xstrcatn(pOut, cbOut, str, 0);
           } // if
 
-        if (pCmd->dwCmd & 0x08000000) { // tiptime 1-65535 1/10th seconds (6535s or 65535 1/10th s)
+        if (pCmd->dwCmd & CGPIOD_UDM_PRM_TIP) { // tiptime 1-65535 1/10th seconds (6535s or 65535 1/10th s)
           gsprintf(str, ".%u", pCmd->parmsShutter.dwTip);
           xstrcatn(pOut, cbOut, str, 0);
           } // if
+
+        if (pCmd->dwCmd & CGPIOD_UDM_PRM_EMULTIME) {
+          gsprintf(str, ".%u", pCmd->parmsShutter.dwRun);
+          xstrcatn(pOut, cbOut, str, 0);
+          } // if
+
         break;
 
 //    case CGPIOD_OBJ_CLS_DIMMER:  
-//      if (pCmd->dwCmd & 0x00600000) { // level 0-255 for dimmer
+//      if (pCmd->dwCmd & CGPIOD_DIM_PRM_LEVEL) { // level 0-255 for dimmer
 //        gsprintf(str, ".%u", pCmd->dwLevel);
 //        xstrcatn(pOut, cbOut, str, 0);
 //        } // if
 
-//      if (pCmd->dwCmd & 0x01800000) { // runtime 1-160 seconds
+//      if (pCmd->dwCmd & CGPIOD_DIM_PRM_RUN) { // runtime 1-160 seconds
 //        gsprintf(str, ".%u", pCmd->dwRun);
 //        xstrcatn(pOut, cbOut, str, 0);
 //        } // if
@@ -202,27 +218,27 @@ tCChar* CGpiod::_printCmdParamVals(tChar* pOut, tUint32 cbOut, tGpiodCmd* pCmd)
 //      break;
 
       case CGPIOD_OBJ_CLS_SYSTEM:  
-        if (pCmd->dwCmd & 0x00010000) { // loglevel
+        if (pCmd->dwCmd & CGPIOD_SYS_PRM_LOGLEVEL) { // loglevel
           gsprintf(str, ".0x%08X", pCmd->parmsSystem.dwParm);
           xstrcatn(pOut, cbOut, str, 0);
           } // if
 
-        if (pCmd->dwCmd & 0x00020000) { // emul
+        if (pCmd->dwCmd & CGPIOD_SYS_PRM_EMUL) { // emul
           gsprintf(str, ".%u", pCmd->parmsSystem.dwParm);
           xstrcatn(pOut, cbOut, str, 0);
           } // if
 
-        if (pCmd->dwCmd & 0x00040000) { // mode
+        if (pCmd->dwCmd & CGPIOD_SYS_PRM_MODE) { // mode
           gsprintf(str, ".%u", pCmd->parmsSystem.dwParm);
           xstrcatn(pOut, cbOut, str, 0);
           } // if
 
-        if (pCmd->dwCmd & 0x00080000) { // efmt
+        if (pCmd->dwCmd & CGPIOD_SYS_PRM_EFMT) { // efmt
           gsprintf(str, ".%u", pCmd->parmsSystem.dwParm);
           xstrcatn(pOut, cbOut, str, 0);
           } // if
 
-        if (pCmd->dwCmd & 0x80000000) { // ack
+        if (pCmd->dwCmd & CGPIOD_SYS_PRM_ACK) { // ack
           gsprintf(str, ".ack");
           xstrcatn(pOut, cbOut, str, 0);
           } // if

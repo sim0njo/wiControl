@@ -30,7 +30,7 @@ void                 gpiodOnHttpConfig(HttpRequest &request, HttpResponse &respo
   // send page
   TemplateFileStream *tmpl = new TemplateFileStream("gpiod.html");
   auto &vars = tmpl->variables();
-  vars["appAlias"] = APP_ALIAS;
+  vars["appAlias"] = szAPP_ALIAS;
 
   vars["gpiodEmul1"] = (AppSettings.gpiodEmul == CGPIOD_EMUL_OUTPUT)     ? "checked='checked'" : "";
   vars["gpiodEmul2"] = (AppSettings.gpiodEmul == CGPIOD_EMUL_SHUTTER)    ? "checked='checked'" : "";
@@ -86,12 +86,8 @@ tUint32 CGpiod::OnConfig()
   _systemOnConfig();
   _inputOnConfig();
   _timerOnConfig();
-
-  if (m_dwEmul == CGPIOD_EMUL_OUTPUT)
-    _outputOnConfig();
-  else
-    _shutterOnConfig();
-
+  _outputOnConfig();
+  _shutterOnConfig();
   } // OnConfig
 
 //--------------------------------------------------------------------------
@@ -152,23 +148,25 @@ tUint32 CGpiod::DoSta(tGpiodEvt* pEvt)
 {
   tChar str1[16], str2[16];
 
-  switch (pEvt->dwObj & CGPIOD_OBJ_CLS_MASK) {
-    case CGPIOD_OBJ_CLS_INPUT:
-    case CGPIOD_OBJ_CLS_OUTPUT:
-    case CGPIOD_OBJ_CLS_SHUTTER:
-    case CGPIOD_OBJ_CLS_TIMER:
-      if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
-        mqttPublish(CGPIOD_STA_PFX, _printObj2String(str1, pEvt->dwObj), _printVal2String(str2, pEvt->dwEvt));
-      else
-        mqttPublish(CGPIOD_STA_PFX, _printObj2String(str1, pEvt->dwObj), _printObjSta2String(str2, pEvt->dwObj, pEvt->dwEvt));
-      break;
+  if (pEvt->dwOrig & CGPIOD_ORIG_FLG_PUBLISH) {
+    switch (pEvt->dwObj & CGPIOD_OBJ_CLS_MASK) {
+      case CGPIOD_OBJ_CLS_INPUT:
+      case CGPIOD_OBJ_CLS_OUTPUT:
+      case CGPIOD_OBJ_CLS_SHUTTER:
+      case CGPIOD_OBJ_CLS_TIMER:
+        if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
+          mqttPublish(CGPIOD_STA_PFX, _printObj2String(str1, pEvt->dwObj), _printVal2String(str2, pEvt->dwEvt));
+        else
+          mqttPublish(CGPIOD_STA_PFX, _printObj2String(str1, pEvt->dwObj), _printObjSta2String(str2, pEvt->dwObj, pEvt->dwEvt));
+        break;
 
-    case CGPIOD_OBJ_CLS_SYSTEM:
-      if (pEvt->szEvt)
-        mqttPublish(CGPIOD_STA_PFX, pEvt->szTopic ? pEvt->szTopic : "system", pEvt->szEvt);
+      case CGPIOD_OBJ_CLS_SYSTEM:
+        if (pEvt->szEvt)
+          mqttPublish(CGPIOD_STA_PFX, pEvt->szTopic ? pEvt->szTopic : "system", pEvt->szEvt);
 
-      break;
-    } // switch
+        break;
+      } // switch
+    } // if
 
   } // DoSta
 
@@ -243,7 +241,9 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
     case CGPIOD_OBJ_CLS_HBEAT:
       // handle objects that require heartbeat
       _systemDoEvt(pEvt);
-      _outputDoEvt(pEvt);
+
+      if (m_dwEmul == CGPIOD_EMUL_OUTPUT)
+        _outputDoEvt(pEvt);
       break;
 
     } // switch
@@ -269,7 +269,7 @@ tUint32 CGpiod::DoCmd(tGpiodCmd* pCmd)
       break;
     case CGPIOD_OBJ_CLS_SYSTEM:  dwErr = _systemDoCmd(pCmd);
       break;
-    default:                     dwErr = XERROR_INPUT;
+    default:                     dwErr = XERROR_SYNTAX;
       break;
     } // switch
 
@@ -308,10 +308,10 @@ void CGpiod::checkConnection()
       
       // publish boot messages
       Debug.logTxt(CLSLVL_GPIOD | 0x0030, "CGpiod::checkConnection,publish <node-id>/boo/hw");
-      mqttPublish(CGPIOD_BOO_PFX, "hw", APP_TOPOLOGY);
+      mqttPublish(CGPIOD_BOO_PFX, "hw", szAPP_TOPOLOGY);
 
       Debug.logTxt(CLSLVL_GPIOD | 0x0040, "CGpiod::checkConnection,publish <node-id>/boo/sw");
-      sprintf(str, "%s/%s", APP_ALIAS, APP_VERSION);
+      sprintf(str, "%s/%s", szAPP_ALIAS, szAPP_VERSION);
       mqttPublish(CGPIOD_BOO_PFX, "sw", str);
       }
 

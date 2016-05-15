@@ -44,7 +44,7 @@
   {
     tUint32     dwObj;
     tGpiodTimer *pObj = m_timer; 
-    tGpiodEvt   evt = { msNow, 0, 0, 0, 0 };
+    tGpiodEvt   evt = { msNow, CGPIOD_ORIG_TIMER, 0, 0, 0, 0 };
 
     // handle regular output objects
     for (dwObj = 0; dwObj < CGPIOD_TMR_COUNT; dwObj++, pObj++) {
@@ -99,19 +99,16 @@
   { 
     tChar       str1[16], str2[16];
     tGpiodTimer *pObj = &m_timer[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK]; 
-    tGpiodEvt   evt   = { pCmd->msNow, pCmd->dwObj, 0, 0, 0 };
+    tGpiodEvt   evt   = { pCmd->msNow, pCmd->dwOrig, pCmd->dwObj, 0, 0, 0 };
 
     Debug.logTxt(CLSLVL_GPIOD_TIMER | 0x0000, "CGpiod::_timerDoCmd,obj=%08X", pCmd->dwObj);
 
     PrintCmd(pCmd, CLSLVL_GPIOD_TIMER | 0x0000, "CGpiod::_timerDoCmd");
     switch (pCmd->dwCmd & CGPIOD_CMD_NUM_MASK) {
       case CGPIOD_TMR_CMD_STATUS: 
-        // only send status for non-session origins
-        if (pCmd->dwOrig == CGPIOD_ORIG_MQTT) {
-          evt.dwEvt = pObj->dwState;
-          DoSta(&evt);
-          } // if
-
+        // report current value
+        evt.dwEvt = pObj->dwState;
+        DoSta(&evt);
         break;
 
       case CGPIOD_TMR_CMD_TIMERONDELAYED:
@@ -138,12 +135,12 @@
         break;
 
       default:
-        pCmd->dwError = XERROR_INPUT;
+        pCmd->dwError = XERROR_SYNTAX;
         Debug.logTxt(CLSLVL_GPIOD_TIMER | 0x9999, "CGpiod::_outputDoCmd,unknown cmd %u", pCmd->dwCmd);
         break;
       } // switch
 
-    pCmd->dwState = pObj->dwState;
+    pCmd->dwRsp = pObj->dwState;
     return pCmd->dwError; 
     } // _timerDoCmd
 

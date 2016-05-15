@@ -127,7 +127,7 @@ void mqttOnHttpConfig(HttpRequest &request, HttpResponse &response)
   TemplateFileStream *tmpl = new TemplateFileStream("mqtt.html");
   auto &vars = tmpl->variables();
 
-  vars["appAlias"] = APP_ALIAS;
+  vars["appAlias"] = szAPP_ALIAS;
   vars["user"]     = AppSettings.mqttUser;
   vars["password"] = AppSettings.mqttPass;
   vars["server"]   = AppSettings.mqttServer;

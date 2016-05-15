@@ -52,7 +52,7 @@
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_systemOnRun(tUint32 msNow) 
   {
-    tGpiodEvt    evt = { msNow, 0, 0, 0, 0 };
+    tGpiodEvt    evt = { msNow, CGPIOD_ORIG_SYSTEM, 0, 0, 0, 0 };
 
     // handle heartbeat timer
     if (ChkTimer(msNow, m_hbeat.msStart + m_hbeat.msPeriod)) {
@@ -73,7 +73,7 @@
         break;
 
       case CGPIOD_LED_CMD_BLINK:
-        // handled by _outputDoEvt() for multi-channel in phase operation
+        // handled by _systemDoEvt() for multi-channel in phase operation
         break;
 
       case CGPIOD_LED_CMD_BLINKTIMED:
@@ -124,7 +124,7 @@
   tUint32 CGpiod::_systemDoCmd(tGpiodCmd* pCmd) 
   { 
     tChar     str[32];
-    tGpiodEvt evt = { pCmd->msNow, pCmd->dwObj, 0, 0, 0 };
+    tGpiodEvt evt = { pCmd->msNow, pCmd->dwOrig, pCmd->dwObj, 0, 0, 0 };
     tGpiodCmd cmd = { 0 };
 
     PrintCmd(pCmd, CLSLVL_GPIOD_SYSTEM | 0x0000, "CGpiod::_systemDoCmd");
@@ -133,32 +133,50 @@
         m_led.dwCmd = CGPIOD_LED_CMD_BLINKTIMED;
         m_led.dwRun = pCmd->msNow + CGPIOD_LED_BLINKTIME;
         _outputSetState(&m_led, m_led.dwState ^ CGPIOD_OUT_STATE_ON, 0);
+        pCmd->dwRsp = 1;
         break;
 
       case CGPIOD_SYS_CMD_VERSION: 
+        // report current value
+        pCmd->dwRsp = APP_VERSION;
+
         evt.szTopic = "version";
-        evt.szEvt   = CGPIOD_VERSION;
+        evt.szEvt   = szAPP_VERSION;
         DoSta(&evt);
         break;
 
       case CGPIOD_SYS_CMD_MEMORY: 
-        gsprintf(str, "%u", system_get_free_heap_size());
+        // report current value
+        pCmd->dwRsp = system_get_free_heap_size();
+
+        gsprintf(str, "%u", pCmd->dwRsp);
         evt.szTopic = "memory";
         evt.szEvt   = str;
         DoSta(&evt);
         break;
 
       case CGPIOD_SYS_CMD_UPTIME: 
+        // report current value
+        pCmd->dwRsp = pCmd->msNow;
+
+        evt.szTopic = "uptime";
+        gsprintf(str, "%u", pCmd->dwRsp);
+        evt.szEvt   = str;
+        DoSta(&evt);
         break;
 
       case CGPIOD_SYS_CMD_LOGLEVEL:
-        if ((pCmd->dwParms & 0x00010000) && !_GetFlags(&m_dwFlags, CGPIOD_FLG_LOCK))
+        // handle set command
+        if ((pCmd->dwParms & CGPIOD_SYS_PRM_LOGLEVEL) && !_GetFlags(&m_dwFlags, CGPIOD_FLG_LOCK))
           Debug.logClsLevels(DEBUG_CLS_0, pCmd->parmsSystem.dwParm);
 
+        // report current value
+        pCmd->dwRsp = Debug.logClsLevels(DEBUG_CLS_0);
+
         if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
-          gsprintf(str, "%u",     Debug.logClsLevels(DEBUG_CLS_0));
+          gsprintf(str, "%u",     pCmd->dwRsp);
         else
-          gsprintf(str, "0x%08X", Debug.logClsLevels(DEBUG_CLS_0));
+          gsprintf(str, "0x%08X", pCmd->dwRsp);
 
         evt.szTopic = "loglevel";
         evt.szEvt   = str;
@@ -166,19 +184,22 @@
         break;
 
       case CGPIOD_SYS_CMD_EMUL:
-        if ((pCmd->dwParms & 0x00020000) && !_GetFlags(&m_dwFlags, CGPIOD_FLG_LOCK)) {
+        // handle set command
+        if ((pCmd->dwParms & CGPIOD_SYS_PRM_EMUL) && !_GetFlags(&m_dwFlags, CGPIOD_FLG_LOCK)) {
           Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0100, "CGpiod::_systemDoCmd,set emul to %u", pCmd->parmsSystem.dwParm);
-          AppSettings.gpiodEmul = pCmd->parmsSystem.dwParm;
+          
+          AppSettings.gpiodEmul = m_dwEmul = pCmd->parmsSystem.dwParm;
           AppSettings.save();
-//        m_dwEmul = pCmd->parmsSystem.dwParm;
-          OnConfig();
           OnInit();
           } // if
 
+        // report current value
+        pCmd->dwRsp = m_dwEmul;
+
         if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
-          gsprintf(str, "%u",  m_dwEmul);
+          gsprintf(str, "%u",  pCmd->dwRsp);
         else
-          gsprintf(str, "%s", (m_dwEmul == CGPIOD_EMUL_OUTPUT) ? "output" : "shutter");
+          gsprintf(str, "%s", (pCmd->dwRsp == CGPIOD_EMUL_OUTPUT) ? "output" : "shutter");
 
         evt.szTopic = "emul";
         evt.szEvt   = str;
@@ -186,18 +207,22 @@
         break;
 
       case CGPIOD_SYS_CMD_MODE: 
-        if ((pCmd->dwParms & 0x00040000) && !_GetFlags(&m_dwFlags, CGPIOD_FLG_LOCK)) {
+        // handle set command
+        if ((pCmd->dwParms & CGPIOD_SYS_PRM_MODE) && !_GetFlags(&m_dwFlags, CGPIOD_FLG_LOCK)) {
           Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0100, "CGpiod::_systemDoCmd,set mode to %u", pCmd->parmsSystem.dwParm);
-          AppSettings.gpiodMode = pCmd->parmsSystem.dwParm;
+          AppSettings.gpiodMode = m_dwMode = pCmd->parmsSystem.dwParm;
           AppSettings.save();
           m_dwMode = pCmd->parmsSystem.dwParm;
           } // if
 
+        // report current value
+        pCmd->dwRsp = m_dwMode;
+
         if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
-          gsprintf(str, "%u",  m_dwMode);
+          gsprintf(str, "%u",  pCmd->dwRsp);
         else
-          gsprintf(str, "%s", (m_dwMode == CGPIOD_MODE_STANDALONE) ? "standalone" :
-                              (m_dwMode == CGPIOD_MODE_MQTT)       ? "MQTT"       : "both");
+          gsprintf(str, "%s", (pCmd->dwRsp == CGPIOD_MODE_STANDALONE) ? "standalone" :
+                              (pCmd->dwRsp == CGPIOD_MODE_MQTT)       ? "MQTT"       : "both");
 
         evt.szTopic = "mode";
         evt.szEvt   = str;
@@ -205,17 +230,21 @@
         break;
 
       case CGPIOD_SYS_CMD_EFMT: 
-        if ((pCmd->dwParms & 0x00080000) && !_GetFlags(&m_dwFlags, CGPIOD_FLG_LOCK)) {
+        // handle set command
+        if ((pCmd->dwParms & CGPIOD_SYS_PRM_EFMT) && !_GetFlags(&m_dwFlags, CGPIOD_FLG_LOCK)) {
           Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0100, "CGpiod::_systemDoCmd,set efmt to %u", pCmd->parmsSystem.dwParm);
-          AppSettings.gpiodEfmt = pCmd->parmsSystem.dwParm;
+          AppSettings.gpiodEfmt = m_dwEfmt = pCmd->parmsSystem.dwParm;
           AppSettings.save();
           m_dwEfmt = pCmd->parmsSystem.dwParm;
           } // if
 
+        // report current value
+        pCmd->dwRsp = m_dwEfmt;
+
         if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
-          gsprintf(str, "%u",  m_dwEfmt);
+          gsprintf(str, "%u",  pCmd->dwRsp);
         else
-          gsprintf(str, "%s", (m_dwEfmt == CGPIOD_EFMT_NUMERICAL) ? "numerical" : "textual");
+          gsprintf(str, "%s", (pCmd->dwRsp == CGPIOD_EFMT_NUMERICAL) ? "numerical" : "textual");
 
         evt.szTopic = "efmt";
         evt.szEvt   = str;
@@ -223,13 +252,17 @@
         break;
 
       case CGPIOD_SYS_CMD_LOCK:
-        if (pCmd->dwParms & 0x00100000)
+        // handle set command
+        if (pCmd->dwParms & CGPIOD_SYS_PRM_OFFON)
           pCmd->parmsSystem.dwParm ? _SetFlags(&m_dwFlags, CGPIOD_FLG_LOCK) : _RstFlags(&m_dwFlags, CGPIOD_FLG_LOCK); 
 
+        // report current value
+        pCmd->dwRsp = _GetFlags(&m_dwFlags, CGPIOD_FLG_LOCK) ? 1 : 0;
+
         if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
-          gsprintf(str, "%u", _GetFlags(&m_dwFlags, CGPIOD_FLG_LOCK) ? 1 : 0);
+          gsprintf(str, "%u", pCmd->dwRsp);
         else
-          gsprintf(str, "%s", _GetFlags(&m_dwFlags, CGPIOD_FLG_LOCK) ? "on" : "off");
+          gsprintf(str, "%s", pCmd->dwRsp ? "on" : "off");
 
         evt.szTopic = "lock";
         evt.szEvt   = str;
@@ -237,22 +270,33 @@
         break;
 
       case CGPIOD_SYS_CMD_DISABLE: 
-        if ((pCmd->dwParms & 0x00100000) && !_GetFlags(&m_dwFlags, CGPIOD_FLG_LOCK)) 
+        // handle command
+        if ((pCmd->dwParms & CGPIOD_SYS_PRM_OFFON) && !_GetFlags(&m_dwFlags, CGPIOD_FLG_LOCK)) 
           pCmd->parmsSystem.dwParm ? _SetFlags(&m_dwFlags, CGPIOD_FLG_DISABLE) : _RstFlags(&m_dwFlags, CGPIOD_FLG_DISABLE); 
 
+        // report current value
+        pCmd->dwRsp = _GetFlags(&m_dwFlags, CGPIOD_FLG_DISABLE) ? 1 : 0;
+
         if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
-          gsprintf(str, "%u", _GetFlags(&m_dwFlags, CGPIOD_FLG_DISABLE) ? 1 : 0);
+          gsprintf(str, "%u", pCmd->dwRsp);
         else
-          gsprintf(str, "%s", _GetFlags(&m_dwFlags, CGPIOD_FLG_DISABLE) ? "on" : "off");
+          gsprintf(str, "%s", pCmd->dwRsp ? "on" : "off");
 
         evt.szTopic = "disable";
         evt.szEvt   = str;
         DoSta(&evt);
         break;
 
-      case CGPIOD_SYS_CMD_RESTART: 
-        if (!_GetFlags(&m_dwFlags, CGPIOD_FLG_LOCK)) 
+      case CGPIOD_SYS_CMD_RESTART:
+        // handle command
+        if ((pCmd->dwParms & CGPIOD_SYS_PRM_ACK) && !_GetFlags(&m_dwFlags, CGPIOD_FLG_LOCK)) {
+          evt.szTopic = "restart";
+          evt.szEvt   = "1";
+          DoEvt(&evt);
+
           System.restart();
+          } // if
+
         break;
 
       default:
