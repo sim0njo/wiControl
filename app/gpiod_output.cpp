@@ -1,10 +1,20 @@
 
 //----------------------------------------------------------------------------
-// cgpiod_output.hpp : implementation of 2 outputs
+// cgpiod_output.hpp : implementation of 4 outputs
 //
 // Copyright (c) Jo Simons, 2016-2016, All Rights Reserved.
 //----------------------------------------------------------------------------
 #include <gpiod.h>
+
+  //--------------------------------------------------------------------------
+  //
+  //--------------------------------------------------------------------------
+  tUint32 CGpiod::_outputGetState(tUint32 dwObj)
+  {
+    dwObj &= CGPIOD_OBJ_NUM_MASK;
+
+    return (dwObj < CGPIOD_OUT_COUNT) ? m_output[dwObj].dwState : CGPIOD_OUT_STATE_OFF;
+    } // _outputGetState
 
   //--------------------------------------------------------------------------
   // configure
@@ -27,8 +37,6 @@
                        (dwObj == CGPIOD_OUT3) ? CGPIOD_OUT3_PIN : -1; 
       pObj->dwPol    = CGPIOD_IO_POL_NORMAL; 
       pObj->dwRunDef = CGPIOD_OUT_RUN_DEF;
-//    pObj->dwState  = CGPIOD_OUT_STATE_OFF; 
-//    pObj->dwCmd    = CGPIOD_OUT_CMD_NONE; 
       } // for
 
     return m_dwError;
@@ -147,13 +155,16 @@
   tUint32 CGpiod::_outputDoEvt(tGpiodEvt* pEvt) 
   { 
     tUint32      dwObj;
-    tGpiodCmd    cmd = { 0 };
-    tGpiodEvt    evt = { 0 };
+    tGpiodCmd    cmd;
+    tGpiodEvt    evt;
     tGpiodOutput *pObj = m_output; 
 
     do {
       // initialise vars
+      memset(&cmd, 0, sizeof(cmd));
       cmd.msNow  = pEvt->msNow;
+
+      memset(&evt, 0, sizeof(evt));
       evt.msNow  = pEvt->msNow;
       evt.dwOrig = pEvt->dwOrig;
 

@@ -7,6 +7,16 @@
 #include <gpiod.h>
 
   //--------------------------------------------------------------------------
+  //
+  //--------------------------------------------------------------------------
+  tUint32 CGpiod::_inputGetState(tUint32 dwObj)
+  {
+    dwObj &= CGPIOD_OBJ_NUM_MASK;
+
+    return (dwObj < CGPIOD_IN_COUNT) ? m_input[dwObj].dwState : CGPIOD_IN_STATE_OUT;
+    } // GetState
+
+  //--------------------------------------------------------------------------
   // configure
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_inputOnConfig() 

@@ -311,7 +311,7 @@ typedef struct {
 #define CGPIOD_UDM1_PIN_UP                      12 // out2 D6
 #define CGPIOD_UDM1_PIN_DOWN                    14 // out3 D5
 
-#define CGPIOD_UDM_RUN_DEF                   30000 // 30s
+#define CGPIOD_UDM_RUN_DEF                      30 // 30s
 
 #define CGPIOD_UDM_STATE_STOP                    0 // 
 #define CGPIOD_UDM_STATE_UP                      1 // 
@@ -549,6 +549,8 @@ class CGpiod {
   void               OnRun();
   tUint32            OnExit();
 
+  tUint32            GetState(tUint32 dwObj);
+
   tUint32            DoCmd(tGpiodCmd* pCmd);
   tUint32            DoEvt(tGpiodEvt* pEvt);
   tUint32            DoSta(tGpiodEvt* pEvt);
@@ -590,6 +592,7 @@ class CGpiod {
   tUint32            _inputOnInit();
   tUint32            _inputOnRun(tUint32 msNow);
   tUint32            _inputOnExit();
+  tUint32            _inputGetState(tUint32 dwObj);
   tUint32            _inputDoCmd(tGpiodCmd* pCmd);
   tUint32            _inputGetPinVal(tGpiodInput* pObj, tUint32 msNow);
 
@@ -600,6 +603,7 @@ class CGpiod {
   tUint32            _timerOnInit();
   tUint32            _timerOnRun(tUint32 msNow);
   tUint32            _timerOnExit();
+  tUint32            _timerGetState(tUint32 dwObj);
   tUint32            _timerDoEvt(tGpiodEvt* pEvt);
   tUint32            _timerDoCmd(tGpiodCmd* pCmd);
   void               _timerSetState(tGpiodTimer* pObj, tUint32 dwState, tGpiodEvt* pEvt);
@@ -611,6 +615,7 @@ class CGpiod {
   tUint32            _outputOnInit();
   tUint32            _outputOnRun(tUint32 msNow);
   tUint32            _outputOnExit();
+  tUint32            _outputGetState(tUint32 dwObj);
   tUint32            _outputDoEvt(tGpiodEvt* pEvt);
   tUint32            _outputDoCmd(tGpiodCmd* pCmd);
   void               _outputSetState(tGpiodOutput* pObj, tUint32 dwState, tGpiodEvt* pEvt);
@@ -622,6 +627,7 @@ class CGpiod {
   tUint32            _shutterOnInit();
   tUint32            _shutterOnRun(tUint32 msNow);
   tUint32            _shutterOnExit();
+  tUint32            _shutterGetState(tUint32 dwObj);
   tUint32            _shutterDoEvt(tGpiodEvt* pEvt);
   tUint32            _shutterDoCmd(tGpiodCmd* pCmd);
   tUint32            _shutterCheckPrio(tGpiodShutter* pObj, tGpiodCmd* pCmd);

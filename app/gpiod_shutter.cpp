@@ -1,10 +1,20 @@
 
 //----------------------------------------------------------------------------
-// cgpiod_shutter.hpp : implementation of 1 shutter
+// cgpiod_shutter.hpp : implementation of 2 shutters
 //
 // Copyright (c) Jo Simons, 2016-2016, All Rights Reserved.
 //----------------------------------------------------------------------------
 #include <gpiod.h>
+
+  //--------------------------------------------------------------------------
+  //
+  //--------------------------------------------------------------------------
+  tUint32 CGpiod::_shutterGetState(tUint32 dwObj)
+  {
+    dwObj &= CGPIOD_OBJ_NUM_MASK;
+
+    return (dwObj < CGPIOD_UDM_COUNT) ? m_shutter[dwObj].dwState : CGPIOD_UDM_STATE_STOP;
+    } // _shutterGetState
 
   //--------------------------------------------------------------------------
   // configure
@@ -27,10 +37,6 @@
                          (dwObj == CGPIOD_UDM1) ? CGPIOD_UDM1_PIN_DOWN : -1;
       pObj->dwPol      = CGPIOD_IO_POL_NORMAL; 
       pObj->dwRunDef   = CGPIOD_UDM_RUN_DEF;
-//    pObj->dwState    = CGPIOD_UDM_STATE_STOP;
-//    pObj->dwPrioLvl  = CGPIOD_UDM_PRIO_LVL_0; 
-//    pObj->dwPrioMask = CGPIOD_UDM_PRIO_MASK_NONE; 
-//    pObj->dwCmd      = CGPIOD_UDM_CMD_NONE; 
       } // for
 
     return m_dwError;
@@ -207,10 +213,11 @@
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_shutterDoEvt(tGpiodEvt* pEvt) 
   { 
-    tGpiodCmd cmd = { 0 };
+    tGpiodCmd cmd;
 
     do {
       // initialise vars
+      memset(&cmd, 0, sizeof(cmd));
       cmd.msNow = pEvt->msNow;
 //    PrintEvt(pEvt, CLSLVL_GPIOD_SHUTTER | 0x0000, "CGpiod::_shutterDoEvt");
 
@@ -286,9 +293,6 @@
         break;
 
       case CGPIOD_UDM_CMD_STOP: 
-        if (!(pCmd->dwParms & CGPIOD_UDM_PRM_PRIOLEVEL) && (pCmd->dwError = XERROR_SYNTAX)) break;
-        if ((pCmd->dwParms & CGPIOD_UDM_PRM_PRIOLEVEL) == 0) break;
-
         if (_shutterCheckPrio(pObj, pCmd)) break;
         _shutterSetState(pObj, CGPIOD_UDM_STATE_STOP, &evt);
         pObj->dwCmd = CGPIOD_UDM_CMD_STOP;

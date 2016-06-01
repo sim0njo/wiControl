@@ -148,6 +148,9 @@
       case CGPIOD_SYS_CMD_MEMORY: 
         // report current value
         pCmd->dwRsp = system_get_free_heap_size();
+//      pCmd->dwRsp = system_get_vdd33();
+//      pCmd->dwRsp = system_adc_read();
+//      test_tout(0);
 
         gsprintf(str, "%u", pCmd->dwRsp);
         evt.szTopic = "memory";
@@ -173,12 +176,8 @@
         // report current value
         pCmd->dwRsp = Debug.logClsLevels(DEBUG_CLS_0);
 
-        if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
-          gsprintf(str, "%u",     pCmd->dwRsp);
-        else
-          gsprintf(str, "0x%08X", pCmd->dwRsp);
-
         evt.szTopic = "loglevel";
+        gsprintf(str, "%u",     pCmd->dwRsp);
         evt.szEvt   = str;
         DoSta(&evt);
         break;

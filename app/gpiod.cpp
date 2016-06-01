@@ -142,6 +142,26 @@ tUint32 CGpiod::OnExit()
   } // OnExit
 
 //--------------------------------------------------------------------------
+//
+//--------------------------------------------------------------------------
+tUint32 CGpiod::GetState(tUint32 dwObj)
+{
+  switch (dwObj & CGPIOD_OBJ_CLS_MASK) {
+    case CGPIOD_OBJ_CLS_INPUT:
+      return _inputGetState(dwObj);
+      break;
+    case CGPIOD_OBJ_CLS_OUTPUT:
+      return _outputGetState(dwObj);
+      break;
+    case CGPIOD_OBJ_CLS_SHUTTER:
+      return _shutterGetState(dwObj);
+      break;
+    } // switch
+
+  return 0;
+  } // GetState
+
+//--------------------------------------------------------------------------
 // report status
 //--------------------------------------------------------------------------
 tUint32 CGpiod::DoSta(tGpiodEvt* pEvt) 

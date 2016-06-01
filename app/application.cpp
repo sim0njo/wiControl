@@ -77,15 +77,22 @@ void processInfoCommand(String commandLine, CommandOutput* pOut)
   pOut->printf("\r\n");
     
   pOut->printf("System information  : ESP8266 based Wifi IO node\r\n");
-  pOut->printf("Build time          : %s\r\n", build_time);
-  pOut->printf("Version             : %s\r\n", build_git_sha);
-  pOut->printf("Sming Version       : %s\r\n", SMING_VERSION);
-  pOut->printf("ESP SDK version     : %s\r\n", system_get_sdk_version());
+  pOut->printf(" Build time         : %s\r\n", build_time);
+  pOut->printf(" Version            : %s\r\n", build_git_sha);
+  pOut->printf(" Sming Version      : %s\r\n", SMING_VERSION);
+  pOut->printf(" ESP SDK version    : %s\r\n", system_get_sdk_version());
+  pOut->printf(" System Time        : %s\r\n", SystemClock.getSystemTimeString().c_str());
+  pOut->printf(" Free Heap          : %d\r\n", system_get_free_heap_size());
+  pOut->printf(" CPU Frequency      : %d MHz\r\n", system_get_cpu_freq());
+  pOut->printf(" System Chip ID     : %x\r\n", system_get_chip_id());
+  pOut->printf(" SPI Flash ID       : %x\r\n", spi_flash_get_id());
+  pOut->printf(" SPI Flash Size     : %d\r\n", (1 << ((spi_flash_get_id() >> 16) & 0xff)));
   pOut->printf("\r\n");
 
-  pOut->printf("Station SSID        : %s\r\n", AppSettings.ssid.c_str());
-  pOut->printf("Station DHCP        : %s\r\n", AppSettings.dhcp ? "TRUE" : "FALSE");
-  pOut->printf("Station IP          : %s\r\n", Network.getClientIP().toString().c_str());
+  pOut->printf("Network\r\n");
+  pOut->printf(" Wifi SSID          : %s\r\n", AppSettings.ssid.c_str());
+  pOut->printf(" DHCP enabled       : %s\r\n", AppSettings.dhcp ? "TRUE" : "FALSE");
+  pOut->printf(" IP address         : %s\r\n", Network.getClientIP().toString().c_str());
 
   String apModeStr;
   if (AppSettings.apMode == apModeAlwaysOn)
@@ -95,31 +102,46 @@ void processInfoCommand(String commandLine, CommandOutput* pOut)
   else
     apModeStr= "whenDisconnected";
 
-  pOut->printf("Access Point Mode   : %s\r\n", apModeStr.c_str());
+  pOut->printf(" Access Point Mode  : %s\r\n", apModeStr.c_str());
+  pOut->printf("\r\n");
+
+  pOut->printf("MQTT\r\n");
+  pOut->printf(" Broker             : %s:%d\r\n", AppSettings.mqttServer.c_str(), AppSettings.mqttPort);
+  pOut->printf(" User/pswd          : %s:%s\r\n", AppSettings.mqttUser.c_str(), AppSettings.mqttPass.c_str());
+  pOut->printf(" ClientId           : %s\r\n", AppSettings.mqttClientId.c_str());
+  pOut->printf(" Connected          : %s\r\n", mqttIsConnected() ? "yes" : "no");
   pOut->printf("\r\n");
 
   pOut->printf("wiControl\r\n");
-  pOut->printf(" Version            : %s\r\n", szAPP_VERSION);
-  pOut->printf(" Topology           : %s\r\n", szAPP_TOPOLOGY);
+  pOut->printf(" Version            : %s/%s\r\n", szAPP_VERSION, szAPP_TOPOLOGY);
+//pOut->printf(" Topology           : %s\r\n", szAPP_TOPOLOGY);
   pOut->printf(" Emulation          : %s\r\n", (g_gpiod.GetEmul() == CGPIOD_EMUL_OUTPUT)     ? "output"     : "shutter");
   pOut->printf(" Mode               : %s\r\n", (g_gpiod.GetMode() == CGPIOD_MODE_STANDALONE) ? "standalone" :
                                                (g_gpiod.GetMode() == CGPIOD_MODE_MQTT)       ? "MQTT"       : "both");
   pOut->printf(" Event/status format: %s\r\n", (g_gpiod.GetEfmt() == CGPIOD_EFMT_NUMERICAL)  ? "numerical"  : "textual");
-  pOut->printf(" Lock state         : %s\r\n", (g_gpiod.GetFlags(CGPIOD_FLG_LOCK))           ? "locked"     : "unlocked");
-  pOut->printf(" Disable state      : %s\r\n", (g_gpiod.GetFlags(CGPIOD_FLG_DISABLE))        ? "disabled"   : "enabled");
+//pOut->printf(" Lock state         : %s\r\n", (g_gpiod.GetFlags(CGPIOD_FLG_LOCK))           ? "locked"     : "unlocked");
+//pOut->printf(" Disable state      : %s\r\n", (g_gpiod.GetFlags(CGPIOD_FLG_DISABLE))        ? "disabled"   : "enabled");
   pOut->printf(" Loglevel           : 0x%08X\r\n", Debug.logClsLevels(DEBUG_CLS_0));
+
+  pOut->printf(" Input states       : %u/%u/%u/%u\r\n",
+                                      g_gpiod.GetState(CGPIOD_OBJ_CLS_INPUT | 0),
+                                      g_gpiod.GetState(CGPIOD_OBJ_CLS_INPUT | 1),
+                                      g_gpiod.GetState(CGPIOD_OBJ_CLS_INPUT | 2),
+                                      g_gpiod.GetState(CGPIOD_OBJ_CLS_INPUT | 3));
+
+  if (g_gpiod.GetEmul() == CGPIOD_EMUL_OUTPUT)
+    pOut->printf(" Output states      : %u/%u/%u/%u\r\n",
+                                        g_gpiod.GetState(CGPIOD_OBJ_CLS_OUTPUT | 0),
+                                        g_gpiod.GetState(CGPIOD_OBJ_CLS_OUTPUT | 1),
+                                        g_gpiod.GetState(CGPIOD_OBJ_CLS_OUTPUT | 2),
+                                        g_gpiod.GetState(CGPIOD_OBJ_CLS_OUTPUT | 3));
+  else
+    pOut->printf(" Shutter states     : %u/%u\r\n",
+                                        g_gpiod.GetState(CGPIOD_OBJ_CLS_SHUTTER | 0),
+                                        g_gpiod.GetState(CGPIOD_OBJ_CLS_SHUTTER | 1));
+
   pOut->printf("\r\n");
 
-  pOut->printf("System Time         : ");
-  pOut->printf(SystemClock.getSystemTimeString().c_str());
-  pOut->printf("\r\n");
-
-  pOut->printf("Free Heap           : %d\r\n", system_get_free_heap_size());
-  pOut->printf("CPU Frequency       : %d MHz\r\n", system_get_cpu_freq());
-  pOut->printf("System Chip ID      : %x\r\n", system_get_chip_id());
-  pOut->printf("SPI Flash ID        : %x\r\n", spi_flash_get_id());
-  pOut->printf("SPI Flash Size      : %d\r\n", (1 << ((spi_flash_get_id() >> 16) & 0xff)));
-  pOut->printf("\r\n");
   } //
 
 //----------------------------------------------------------------------------
