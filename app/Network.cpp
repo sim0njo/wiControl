@@ -63,25 +63,28 @@ void networkOnHttpConfig(HttpRequest &request, HttpResponse &response)
   TemplateFileStream *tmpl = new TemplateFileStream("network.html");
   auto &vars = tmpl->variables();
 
-  vars["appAlias"]   = szAPP_ALIAS;
+  vars["appAlias"]     = szAPP_ALIAS;
+  vars["appAuthor"]    = szAPP_AUTHOR;
+  vars["appDesc"]      = szAPP_DESC;
+  vars["mqttClientId"] = AppSettings.mqttClientId;
 
-  vars["wiredon"]    = AppSettings.wired ? "checked='checked'" : "";
-  vars["wiredoff"]   = AppSettings.wired ? "" : "checked='checked'";
+  vars["wiredon"]      = AppSettings.wired ? "checked='checked'" : "";
+  vars["wiredoff"]     = AppSettings.wired ? "" : "checked='checked'";
 
-  vars["ssid"]       = AppSettings.ssid;
-  vars["password"]   = AppSettings.password;
-  vars["apPassword"] = AppSettings.apPassword;
+  vars["ssid"]         = AppSettings.ssid;
+  vars["password"]     = AppSettings.password;
+  vars["apPassword"]   = AppSettings.apPassword;
 
-  vars["portalUrl"]  = AppSettings.portalUrl;
-  vars["portalData"] = AppSettings.portalData;
+  vars["portalUrl"]    = AppSettings.portalUrl;
+  vars["portalData"]   = AppSettings.portalData;
 
-  bool dhcp          = AppSettings.dhcp;
-  vars["dhcpon"]     = dhcp  ? "checked='checked'" : "";
-  vars["dhcpoff"]    = !dhcp ? "checked='checked'" : "";
+  bool dhcp            = AppSettings.dhcp;
+  vars["dhcpon"]       = dhcp  ? "checked='checked'" : "";
+  vars["dhcpoff"]      = !dhcp ? "checked='checked'" : "";
 
-  vars["ip"]         = Network.getClientIP().toString();
-  vars["netmask"]    = Network.getClientMask().toString();
-  vars["gateway"]    = Network.getClientGW().toString();
+  vars["ip"]           = Network.getClientIP().toString();
+  vars["netmask"]      = Network.getClientMask().toString();
+  vars["gateway"]      = Network.getClientGW().toString();
 
   response.sendTemplate(tmpl); // will be automatically deleted
   } // networkOnHttpConfig

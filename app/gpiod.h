@@ -570,12 +570,12 @@ class CGpiod {
   //--------------------------------------------------------------------------
   void               PrintEvt(tGpiodEvt* pEvt, tUint32 dwClsLvl, tCChar* szPfx);
   void               PrintCmd(tGpiodCmd* pCmd, tUint32 dwClsLvl, tCChar* szPfx);
-  tCChar*            _printObj2String(tChar* pOut, tUint32 dwObj);
-  tCChar*            _printObjSta2String(tChar* pOut, tUint32 dwObj, tUint32 dwSta);
-  tCChar*            _printObjEvt2String(tChar* pOut, tUint32 dwObj, tUint32 dwEvt);
-  tCChar*            _printObjCmd2String(tChar* pOut, tUint32 dwObj, tUint32 dwCmd);
-  tCChar*            _printVal2String(tChar* pOut, tUint32 dwVal);
-  tCChar*            _printCmdParamVals(tChar* pOut, tUint32 cbOut, tGpiodCmd* pCmd);
+  tCChar*            PrintObj2String(tChar* pOut, tUint32 dwObj);
+  tCChar*            PrintObjSta2String(tChar* pOut, tUint32 dwObj, tUint32 dwSta);
+  tCChar*            PrintObjEvt2String(tChar* pOut, tUint32 dwObj, tUint32 dwEvt);
+  tCChar*            PrintObjCmd2String(tChar* pOut, tUint32 dwObj, tUint32 dwCmd);
+  tCChar*            PrintVal2String(tChar* pOut, tUint32 dwVal);
+  tCChar*            PrintCmdParamVals(tChar* pOut, tUint32 cbOut, tGpiodCmd* pCmd);
 
  private:
   //--------------------------------------------------------------------------

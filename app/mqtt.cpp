@@ -113,11 +113,11 @@ void mqttOnHttpConfig(HttpRequest &request, HttpResponse &response)
     return;
 
   if (request.getRequestMethod() == RequestMethod::POST) {
-    AppSettings.mqttUser     = request.getPostParameter("user");
-    AppSettings.mqttPass     = request.getPostParameter("password");
-    AppSettings.mqttServer   = request.getPostParameter("server");
-    AppSettings.mqttPort     = atoi(request.getPostParameter("port").c_str());
-    AppSettings.mqttClientId = request.getPostParameter("clientId");
+    AppSettings.mqttServer   = request.getPostParameter("mqttHost");
+    AppSettings.mqttPort     = atoi(request.getPostParameter("mqttPort").c_str());
+    AppSettings.mqttUser     = request.getPostParameter("mqttUser");
+    AppSettings.mqttPass     = request.getPostParameter("mqttPswd");
+    AppSettings.mqttClientId = request.getPostParameter("mqttClientId");
     AppSettings.save();
 
     if (WifiStation.isConnected())
@@ -127,12 +127,15 @@ void mqttOnHttpConfig(HttpRequest &request, HttpResponse &response)
   TemplateFileStream *tmpl = new TemplateFileStream("mqtt.html");
   auto &vars = tmpl->variables();
 
-  vars["appAlias"] = szAPP_ALIAS;
-  vars["user"]     = AppSettings.mqttUser;
-  vars["password"] = AppSettings.mqttPass;
-  vars["server"]   = AppSettings.mqttServer;
-  vars["port"]     = AppSettings.mqttPort;
-  vars["clientId"] = AppSettings.mqttClientId;
+  vars["appAlias"]     = szAPP_ALIAS;
+  vars["appAuthor"]    = szAPP_AUTHOR;
+  vars["appDesc"]      = szAPP_DESC;
+
+  vars["mqttHost"]     = AppSettings.mqttServer;
+  vars["mqttPort"]     = AppSettings.mqttPort;
+  vars["mqttUser"]     = AppSettings.mqttUser;
+  vars["mqttPswd"]     = AppSettings.mqttPass;
+  vars["mqttClientId"] = AppSettings.mqttClientId;
   response.sendTemplate(tmpl); // will be automatically deleted
   } // mqttOnHttpConfig
 

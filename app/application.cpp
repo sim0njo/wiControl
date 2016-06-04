@@ -72,6 +72,7 @@ void wifiCb(bool connected)
 //----------------------------------------------------------------------------
 void processInfoCommand(String commandLine, CommandOutput* pOut)
 {
+  char str0[16], str1[16], str2[16], str3[16];
 //  uint64_t rfBaseAddress = GW.getBaseAddress();
 
   pOut->printf("\r\n");
@@ -123,22 +124,22 @@ void processInfoCommand(String commandLine, CommandOutput* pOut)
 //pOut->printf(" Disable state      : %s\r\n", (g_gpiod.GetFlags(CGPIOD_FLG_DISABLE))        ? "disabled"   : "enabled");
   pOut->printf(" Loglevel           : 0x%08X\r\n", Debug.logClsLevels(DEBUG_CLS_0));
 
-  pOut->printf(" Input states       : %u/%u/%u/%u\r\n",
-                                      g_gpiod.GetState(CGPIOD_OBJ_CLS_INPUT | 0),
-                                      g_gpiod.GetState(CGPIOD_OBJ_CLS_INPUT | 1),
-                                      g_gpiod.GetState(CGPIOD_OBJ_CLS_INPUT | 2),
-                                      g_gpiod.GetState(CGPIOD_OBJ_CLS_INPUT | 3));
+  pOut->printf(" Input states       : %s/%s/%s/%s\r\n",
+               g_gpiod.PrintObjSta2String(str0, CGPIOD_OBJ_CLS_INPUT | 0, g_gpiod.GetState(CGPIOD_OBJ_CLS_INPUT | 0)),
+               g_gpiod.PrintObjSta2String(str1, CGPIOD_OBJ_CLS_INPUT | 1, g_gpiod.GetState(CGPIOD_OBJ_CLS_INPUT | 1)),
+               g_gpiod.PrintObjSta2String(str2, CGPIOD_OBJ_CLS_INPUT | 2, g_gpiod.GetState(CGPIOD_OBJ_CLS_INPUT | 2)),
+               g_gpiod.PrintObjSta2String(str3, CGPIOD_OBJ_CLS_INPUT | 3, g_gpiod.GetState(CGPIOD_OBJ_CLS_INPUT | 3)));
 
   if (g_gpiod.GetEmul() == CGPIOD_EMUL_OUTPUT)
-    pOut->printf(" Output states      : %u/%u/%u/%u\r\n",
-                                        g_gpiod.GetState(CGPIOD_OBJ_CLS_OUTPUT | 0),
-                                        g_gpiod.GetState(CGPIOD_OBJ_CLS_OUTPUT | 1),
-                                        g_gpiod.GetState(CGPIOD_OBJ_CLS_OUTPUT | 2),
-                                        g_gpiod.GetState(CGPIOD_OBJ_CLS_OUTPUT | 3));
+    pOut->printf(" Output states      : %s/%s/%s/%s\r\n",
+                 g_gpiod.PrintObjSta2String(str0, CGPIOD_OBJ_CLS_OUTPUT | 0, g_gpiod.GetState(CGPIOD_OBJ_CLS_OUTPUT | 0)),
+                 g_gpiod.PrintObjSta2String(str1, CGPIOD_OBJ_CLS_OUTPUT | 1, g_gpiod.GetState(CGPIOD_OBJ_CLS_OUTPUT | 1)),
+                 g_gpiod.PrintObjSta2String(str2, CGPIOD_OBJ_CLS_OUTPUT | 2, g_gpiod.GetState(CGPIOD_OBJ_CLS_OUTPUT | 2)),
+                 g_gpiod.PrintObjSta2String(str3, CGPIOD_OBJ_CLS_OUTPUT | 3, g_gpiod.GetState(CGPIOD_OBJ_CLS_OUTPUT | 3)));
   else
-    pOut->printf(" Shutter states     : %u/%u\r\n",
-                                        g_gpiod.GetState(CGPIOD_OBJ_CLS_SHUTTER | 0),
-                                        g_gpiod.GetState(CGPIOD_OBJ_CLS_SHUTTER | 1));
+    pOut->printf(" Shutter states     : %s/%s\r\n",
+                 g_gpiod.PrintObjSta2String(str0, CGPIOD_OBJ_CLS_SHUTTER | 0, g_gpiod.GetState(CGPIOD_OBJ_CLS_SHUTTER | 0)),
+                 g_gpiod.PrintObjSta2String(str1, CGPIOD_OBJ_CLS_SHUTTER | 1, g_gpiod.GetState(CGPIOD_OBJ_CLS_SHUTTER | 1)));
 
   pOut->printf("\r\n");
 

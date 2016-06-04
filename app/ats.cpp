@@ -23,7 +23,7 @@ void                 atsOnHttpQuery(HttpRequest &request, HttpResponse &response
   } // atsOnHttpQuery
 
 //----------------------------------------------------------------------------
-// ccmd=<obj> *[.<parm>] *[;<obj> *[;<parm>]]
+// ccmd=<obj> *[.<parm>] *[;<obj> *[.<parm>]]
 //----------------------------------------------------------------------------
 void CAtsReq::DoCcmd(String strCcmd)
 { 

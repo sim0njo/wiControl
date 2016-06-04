@@ -18,11 +18,11 @@ void CGpiod::PrintEvt(tGpiodEvt* pEvt, tUint32 dwClsLvl, tCChar* szPfx)
     Debug.logTxt(dwClsLvl, "%s,%s.%s", szPfx, szTopic, pEvt->szEvt);
 
   else if (pEvt->szEvt)
-    Debug.logTxt(dwClsLvl, "%s,%s.%s", szPfx, _printObj2String(str1, pEvt->dwObj), pEvt->szEvt);
+    Debug.logTxt(dwClsLvl, "%s,%s.%s", szPfx, PrintObj2String(str1, pEvt->dwObj), pEvt->szEvt);
 
   else 
     Debug.logTxt(dwClsLvl, "%s,%s.%s", szPfx, 
-                 _printObj2String(str1, pEvt->dwObj), _printObjEvt2String(str2, pEvt->dwObj, pEvt->dwEvt));
+                 PrintObj2String(str1, pEvt->dwObj), PrintObjEvt2String(str2, pEvt->dwObj, pEvt->dwEvt));
 
   } // PrintEvt
 
@@ -33,14 +33,14 @@ void CGpiod::PrintCmd(tGpiodCmd* pCmd, tUint32 dwClsLvl, tCChar* szPfx)
 {
   tChar  str1[16], str2[16], str3[32];
 
-  Debug.logTxt(dwClsLvl, "%s,%s.%s%s", szPfx, _printObj2String(str1, pCmd->dwObj),
-               _printObjCmd2String(str2, pCmd->dwObj, pCmd->dwCmd), _printCmdParamVals(str3, sizeof(str2), pCmd));
+  Debug.logTxt(dwClsLvl, "%s,%s.%s%s", szPfx, PrintObj2String(str1, pCmd->dwObj),
+               PrintObjCmd2String(str2, pCmd->dwObj, pCmd->dwCmd), PrintCmdParamVals(str3, sizeof(str2), pCmd));
   } // PrintCmd
 
 //----------------------------------------------------------------------------
 // print obj name or obj-id in hex if not found
 //----------------------------------------------------------------------------
-tCChar* CGpiod::_printObj2String(tChar* pOut, tUint32 dwObj) 
+tCChar* CGpiod::PrintObj2String(tChar* pOut, tUint32 dwObj) 
 {
   tUint32    dwErr = XERROR_SUCCESS;
   tParseRsvd *pRsvd = g_gpiodParseObj;
@@ -53,12 +53,12 @@ tCChar* CGpiod::_printObj2String(tChar* pOut, tUint32 dwObj)
 
   gsprintf(pOut, "%08X", dwObj);
   return pOut; 
-  } // _printObj2String
+  } // PrintObj2String
 
 //----------------------------------------------------------------------------
 // convert object status to string
 //----------------------------------------------------------------------------
-tCChar* CGpiod::_printObjSta2String(tChar* pOut, tUint32 dwObj, tUint32 dwSta) 
+tCChar* CGpiod::PrintObjSta2String(tChar* pOut, tUint32 dwObj, tUint32 dwSta) 
 {
   tParseRsvd *pRsvd = g_gpiodParseObjSta;
 
@@ -72,12 +72,12 @@ tCChar* CGpiod::_printObjSta2String(tChar* pOut, tUint32 dwObj, tUint32 dwSta)
 
   gsprintf(pOut, "%08X", dwSta);
   return pOut; 
-  } // _printObjSta2String
+  } // PrintObjSta2String
 
 //----------------------------------------------------------------------------
 // convert object event to string
 //----------------------------------------------------------------------------
-tCChar* CGpiod::_printObjEvt2String(tChar* pOut, tUint32 dwObj, tUint32 dwEvt) 
+tCChar* CGpiod::PrintObjEvt2String(tChar* pOut, tUint32 dwObj, tUint32 dwEvt) 
 {
   tParseRsvd *pRsvd = g_gpiodParseObjEvt;
 
@@ -91,12 +91,12 @@ tCChar* CGpiod::_printObjEvt2String(tChar* pOut, tUint32 dwObj, tUint32 dwEvt)
 
   gsprintf(pOut, "%08X", dwEvt);
   return pOut; 
-  } // _printObjEvt2String
+  } // PrintObjEvt2String
 
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-tCChar* CGpiod::_printObjCmd2String(tChar* pOut, tUint32 dwObj, tUint32 dwCmd) 
+tCChar* CGpiod::PrintObjCmd2String(tChar* pOut, tUint32 dwObj, tUint32 dwCmd) 
 {
   tUint32    dwErr  = XERROR_SUCCESS;
   tParseRsvd *pRsvd = (dwObj & CGPIOD_OBJ_CLS_INPUT)   ? g_gpiodParseCmdInput   :
@@ -114,21 +114,21 @@ tCChar* CGpiod::_printObjCmd2String(tChar* pOut, tUint32 dwObj, tUint32 dwCmd)
 
   gsprintf(pOut, "%08X", dwCmd);
   return pOut; 
-  } // _printObjCmd2String
+  } // PrintObjCmd2String
 
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-tCChar* CGpiod::_printVal2String(tChar* pOut, tUint32 dwVal) 
+tCChar* CGpiod::PrintVal2String(tChar* pOut, tUint32 dwVal) 
 {
   gsprintf(pOut, "%u", dwVal);
   return pOut;
-  } // _printVal2String
+  } // PrintVal2String
 
 //----------------------------------------------------------------------------
 // print all parameters to output buffer
 //----------------------------------------------------------------------------
-tCChar* CGpiod::_printCmdParamVals(tChar* pOut, tUint32 cbOut, tGpiodCmd* pCmd) 
+tCChar* CGpiod::PrintCmdParamVals(tChar* pOut, tUint32 cbOut, tGpiodCmd* pCmd) 
 {
   tChar str[32];
 

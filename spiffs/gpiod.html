@@ -5,21 +5,15 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <link rel="icon" href="favicon.ico">
+    <meta name="description" content="{appDesc}">
+    <meta name="author" content="{appAuthor}">
+    <link rel="icon" href="/favicon.ico">
 
     <title>Gpiod</title>
 
     <!-- Bootstrap core CSS -->
     <link href="bootstrap.css" rel="stylesheet">
     <script src="jquery.js"></script>
-	
-    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-    <!--[if lt IE 9]>
-      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-    <![endif]-->
   </head>
 
 <script>
@@ -49,47 +43,53 @@
     }
 </script>
 
-  <body>
+<body>
 
   <div class="container">
       <div class="header">
           <nav>
-              <ul class="nav nav-pills pull-right">
-                  <li role="presentation"><a href="/status">Status</a></li>
+            <ul class="nav nav-tabs">
+                <li role="presentation"><a href="/status"><b>{appAlias}@{mqttClientId}</b></a></li>
                   <li role="presentation"><a href="/network">Network</a></li>
                   <li role="presentation"><a href="/mqtt">MQTT</a></li>
                   <li role="presentation" class="active"><a href="/gpiod">Gpiod</a></li>
                   <li role="presentation"><a href="/tools">Tools</a></li>
               </ul>
           </nav>
-          <h3 class="text-muted">{appAlias}</h3>
       </div>
 
-      <div class="jumbotron">
-          <h1>Gpiod</h1>
-      </div>
+	<br>
 
     <div class="row">
         <div class="col-lg-6 col-md-offset-3">
             <form method="post" action="">
-                <fieldset>
-                    <legend>Emulation</legend>
+
+           <table class="table table-bordered">
+             <tbody>
+               <tr>
+                 <th colspan="2">Configuration</th>
+               </tr>
+               <tr>
+                 <td>Emulation</td>
+                 <td>
                     <div class="col-md-offset-2">
                         <div class="form-group">
                             <div class="checkbox">
                                 <label>
-                                    <input type="radio" value="1" name="gpiodEmul" {gpiodEmul1}> Output x2
+                                    <input type="radio" value="1" name="gpiodEmul" {gpiodEmul1}> Output x4
                                 </label>
                                 <label>
-                                    <input type="radio" value="2" name="gpiodEmul" {gpiodEmul2}> Shutter x1
+                                    <input type="radio" value="2" name="gpiodEmul" {gpiodEmul2}> Shutter x2
                                 </label>
                             </div>
                         </div>
                     </div>
-                </fieldset>
+				 </td>
+               </tr>
 
-                <fieldset>
-                    <legend>Mode</legend>
+               <tr>
+                 <td>Mode</td>
+                 <td>
                     <div class="col-md-offset-2">
                         <div class="form-group">
                             <div class="checkbox">
@@ -105,10 +105,12 @@
                             </div>
                         </div>
                     </div>
-			    </fieldset>
+				 </td>
+               </tr>
 
-                <fieldset>
-                    <legend>MQTT Event Format</legend>
+               <tr>
+                 <td>MQTT Event Format</td>
+                 <td>
                     <div class="col-md-offset-2">
                         <div class="form-group">
                             <div class="checkbox">
@@ -121,11 +123,15 @@
                             </div>
                         </div>
                     </div>
-                </fieldset>
-            
-			    <div class="col-md-offset-3">
-                    <input type="submit" class="btn btn-success">
-                </div>
+				 </td>
+               </tr>
+
+             </tbody>
+           </table>
+
+	       <div class="col-md-offset-3">
+            <input type="submit" class="btn btn-success">
+           </div>
             
 			</form>
         </div>

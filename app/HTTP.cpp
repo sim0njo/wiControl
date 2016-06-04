@@ -22,24 +22,23 @@ HTTPClass            g_http;
 //----------------------------------------------------------------------------
 void httpOnStatus(HttpRequest &request, HttpResponse &response)
 {
-  char buf [200];
+  char               buf[200], str0[16], str1[16], str2[16], str3[16];
   TemplateFileStream *tmpl = new TemplateFileStream("status.html");
-  auto &vars = tmpl->variables();
+  auto               &vars = tmpl->variables();
 
-  vars["appAlias"] = szAPP_ALIAS;
+  vars["appAlias"]     = szAPP_ALIAS;
+  vars["appAuthor"]    = szAPP_AUTHOR;
+  vars["appDesc"]      = szAPP_DESC;
+  vars["mqttClientId"] = AppSettings.mqttClientId;
 
   vars["ssid"] = AppSettings.ssid;
   vars["wifiStatus"] = g_isNetworkConnected ? "Connected" : "Not connected";
     
   bool dhcp = AppSettings.dhcp;
   if (dhcp)
-  {
-    vars["ipOrigin"] = "From DHCP";
-    }
+    vars["ipOrigin"] = "DHCP";
   else
-  {
     vars["ipOrigin"] = "Static";
-    }
 
   if (!Network.getClientIP().isNull())
   {
@@ -53,28 +52,48 @@ void httpOnStatus(HttpRequest &request, HttpResponse &response)
 
   if (AppSettings.mqttServer != "")
   {
-    vars["mqttIp"] = AppSettings.mqttServer;
+    vars["mqttHost"]   = AppSettings.mqttServer;
+    vars["mqttPort"]   = AppSettings.mqttPort;
     vars["mqttStatus"] = mqttIsConnected() ? "Connected":"Not connected";
     }
   else
   {
-    vars["mqttIp"] = "0.0.0.0";
+    vars["mqttHost"]   = "0.0.0.0";
+    vars["mqttPort"]   = "1883";
     vars["mqttStatus"] = "Not configured";
     }
 
-  uint64_t rfBaseAddress = 0; // GW.getBaseAddress();
-  uint32_t rfBaseLow = (rfBaseAddress & 0xffffffff);
-  uint8_t  rfBaseHigh = ((rfBaseAddress >> 32) & 0xff);
-  if (AppSettings.useOwnBaseAddress)
-    sprintf (buf, "%02x%08x (private)", rfBaseHigh, rfBaseLow);
+  vars["gpiodVersion"]  = szAPP_VERSION;
+  vars["gpiodTopology"] = szAPP_TOPOLOGY;
+
+  vars["gpiodEmul"] = (AppSettings.gpiodEmul == CGPIOD_EMUL_OUTPUT)     ? "output"     :
+                      (AppSettings.gpiodEmul == CGPIOD_EMUL_SHUTTER)    ? "shutter"    : "<unknown>";
+  vars["gpiodMode"] = (AppSettings.gpiodMode == CGPIOD_MODE_STANDALONE) ? "standalone" :
+                      (AppSettings.gpiodMode == CGPIOD_MODE_MQTT)       ? "MQTT"       :
+                      (AppSettings.gpiodMode == CGPIOD_MODE_BOTH)       ? "both"       : "<unknown>";
+  vars["gpiodEfmt"] = (AppSettings.gpiodEfmt == CGPIOD_EFMT_NUMERICAL)  ? "numerical"  :
+                      (AppSettings.gpiodEfmt == CGPIOD_EFMT_TEXTUAL)    ? "textual"    : "<unknown>";
+
+  sprintf(buf, "%s/%s/%s/%s",
+          g_gpiod.PrintObjSta2String(str0, CGPIOD_OBJ_CLS_INPUT | 0, g_gpiod.GetState(CGPIOD_OBJ_CLS_INPUT | 0)),
+          g_gpiod.PrintObjSta2String(str1, CGPIOD_OBJ_CLS_INPUT | 1, g_gpiod.GetState(CGPIOD_OBJ_CLS_INPUT | 1)),
+          g_gpiod.PrintObjSta2String(str2, CGPIOD_OBJ_CLS_INPUT | 2, g_gpiod.GetState(CGPIOD_OBJ_CLS_INPUT | 2)),
+          g_gpiod.PrintObjSta2String(str3, CGPIOD_OBJ_CLS_INPUT | 3, g_gpiod.GetState(CGPIOD_OBJ_CLS_INPUT | 3)));
+  vars["gpiodInputs"] = buf;
+
+  if (AppSettings.gpiodEmul == CGPIOD_EMUL_OUTPUT)
+    sprintf(buf, "%s/%s/%s/%s",
+            g_gpiod.PrintObjSta2String(str0, CGPIOD_OBJ_CLS_OUTPUT | 0, g_gpiod.GetState(CGPIOD_OBJ_CLS_OUTPUT | 0)),
+            g_gpiod.PrintObjSta2String(str1, CGPIOD_OBJ_CLS_OUTPUT | 1, g_gpiod.GetState(CGPIOD_OBJ_CLS_OUTPUT | 1)),
+            g_gpiod.PrintObjSta2String(str2, CGPIOD_OBJ_CLS_OUTPUT | 2, g_gpiod.GetState(CGPIOD_OBJ_CLS_OUTPUT | 2)),
+            g_gpiod.PrintObjSta2String(str3, CGPIOD_OBJ_CLS_OUTPUT | 3, g_gpiod.GetState(CGPIOD_OBJ_CLS_OUTPUT | 3)));
   else
-    sprintf (buf, "%02x%08x (default)", rfBaseHigh, rfBaseLow);
-  vars["baseAddress"] = buf;
-//    vars["radioStatus"] = getRadioStatus();
-//    vars["detNodes"] = GW.getNumDetectedNodes();
-//    vars["detSensors"] = GW.getNumDetectedSensors();
-    
-    
+    sprintf(buf, "%s/%s",
+            g_gpiod.PrintObjSta2String(str0, CGPIOD_OBJ_CLS_SHUTTER | 0, g_gpiod.GetState(CGPIOD_OBJ_CLS_SHUTTER | 0)),
+            g_gpiod.PrintObjSta2String(str1, CGPIOD_OBJ_CLS_SHUTTER | 1, g_gpiod.GetState(CGPIOD_OBJ_CLS_SHUTTER | 1)));
+  vars["gpiodOutputs"] = buf;
+
+   
   // --- System info -------------------------------------------------
   sprintf (buf, "%x", system_get_chip_id());
   vars["systemVersion"]  = build_git_sha;
@@ -88,8 +107,6 @@ void httpOnStatus(HttpRequest &request, HttpResponse &response)
 
 
   // --- Statistics --------------------------------------------------
-//    vars["nrfRx"] = rfPacketsRx; //TODO check counters at MySensor.cpp
-//    vars["nrfTx"] = rfPacketsTx;
   vars["mqttRx"]        = g_mqttPktRx;
   vars["mqttRxDropped"] = g_mqttPktRxDropped;
   vars["mqttTx"]        = g_mqttPktTx;
@@ -134,8 +151,13 @@ void httpOnTools(HttpRequest &request, HttpResponse &response)
   TemplateFileStream *tmpl = new TemplateFileStream("tools.html");
   auto &vars = tmpl->variables();
 
-  vars["appAlias"] = szAPP_ALIAS;
+  vars["appAlias"]     = szAPP_ALIAS;
+  vars["appAuthor"]    = szAPP_AUTHOR;
+  vars["appDesc"]      = szAPP_DESC;
+  vars["mqttClientId"] = AppSettings.mqttClientId;
+
   vars["webOtaBaseUrl"] = AppSettings.webOtaBaseUrl;
+
   response.sendTemplate(tmpl); // will be automatically deleted
   } //
 

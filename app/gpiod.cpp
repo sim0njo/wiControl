@@ -30,17 +30,20 @@ void                 gpiodOnHttpConfig(HttpRequest &request, HttpResponse &respo
   // send page
   TemplateFileStream *tmpl = new TemplateFileStream("gpiod.html");
   auto &vars = tmpl->variables();
-  vars["appAlias"] = szAPP_ALIAS;
+  vars["appAlias"]     = szAPP_ALIAS;
+  vars["appAuthor"]    = szAPP_AUTHOR;
+  vars["appDesc"]      = szAPP_DESC;
+  vars["mqttClientId"] = AppSettings.mqttClientId;
 
-  vars["gpiodEmul1"] = (AppSettings.gpiodEmul == CGPIOD_EMUL_OUTPUT)     ? "checked='checked'" : "";
-  vars["gpiodEmul2"] = (AppSettings.gpiodEmul == CGPIOD_EMUL_SHUTTER)    ? "checked='checked'" : "";
+  vars["gpiodEmul1"]   = (AppSettings.gpiodEmul == CGPIOD_EMUL_OUTPUT)     ? "checked='checked'" : "";
+  vars["gpiodEmul2"]   = (AppSettings.gpiodEmul == CGPIOD_EMUL_SHUTTER)    ? "checked='checked'" : "";
 
-  vars["gpiodMode1"] = (AppSettings.gpiodMode == CGPIOD_MODE_STANDALONE) ? "checked='checked'" : "";
-  vars["gpiodMode2"] = (AppSettings.gpiodMode == CGPIOD_MODE_MQTT)       ? "checked='checked'" : "";
-  vars["gpiodMode3"] = (AppSettings.gpiodMode == CGPIOD_MODE_BOTH)       ? "checked='checked'" : "";
+  vars["gpiodMode1"]   = (AppSettings.gpiodMode == CGPIOD_MODE_STANDALONE) ? "checked='checked'" : "";
+  vars["gpiodMode2"]   = (AppSettings.gpiodMode == CGPIOD_MODE_MQTT)       ? "checked='checked'" : "";
+  vars["gpiodMode3"]   = (AppSettings.gpiodMode == CGPIOD_MODE_BOTH)       ? "checked='checked'" : "";
 
-  vars["gpiodEfmt1"] = (AppSettings.gpiodEfmt == CGPIOD_EFMT_NUMERICAL)  ? "checked='checked'" : "";
-  vars["gpiodEfmt2"] = (AppSettings.gpiodEfmt == CGPIOD_EFMT_TEXTUAL)    ? "checked='checked'" : "";
+  vars["gpiodEfmt1"]   = (AppSettings.gpiodEfmt == CGPIOD_EFMT_NUMERICAL)  ? "checked='checked'" : "";
+  vars["gpiodEfmt2"]   = (AppSettings.gpiodEfmt == CGPIOD_EFMT_TEXTUAL)    ? "checked='checked'" : "";
 
   response.sendTemplate(tmpl); // will be automatically deleted
   } // gpiodOnHttpConfig
@@ -175,9 +178,9 @@ tUint32 CGpiod::DoSta(tGpiodEvt* pEvt)
       case CGPIOD_OBJ_CLS_SHUTTER:
       case CGPIOD_OBJ_CLS_TIMER:
         if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
-          mqttPublish(CGPIOD_STA_PFX, _printObj2String(str1, pEvt->dwObj), _printVal2String(str2, pEvt->dwEvt));
+          mqttPublish(CGPIOD_STA_PFX, PrintObj2String(str1, pEvt->dwObj), PrintVal2String(str2, pEvt->dwEvt));
         else
-          mqttPublish(CGPIOD_STA_PFX, _printObj2String(str1, pEvt->dwObj), _printObjSta2String(str2, pEvt->dwObj, pEvt->dwEvt));
+          mqttPublish(CGPIOD_STA_PFX, PrintObj2String(str1, pEvt->dwObj), PrintObjSta2String(str2, pEvt->dwObj, pEvt->dwEvt));
         break;
 
       case CGPIOD_OBJ_CLS_SYSTEM:
@@ -203,9 +206,9 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
       // report event if configured
       if ((m_dwMode & CGPIOD_MODE_MQTT) && (m_input[dwObj].dwFlags & (0x1 << pEvt->dwEvt))) {
         if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
-          mqttPublish(CGPIOD_EVT_PFX, _printObj2String(str1, pEvt->dwObj), _printVal2String(str2, pEvt->dwEvt));
+          mqttPublish(CGPIOD_EVT_PFX, PrintObj2String(str1, pEvt->dwObj), PrintVal2String(str2, pEvt->dwEvt));
         else
-          mqttPublish(CGPIOD_EVT_PFX, _printObj2String(str1, pEvt->dwObj), _printObjEvt2String(str2, pEvt->dwObj, pEvt->dwEvt));
+          mqttPublish(CGPIOD_EVT_PFX, PrintObj2String(str1, pEvt->dwObj), PrintObjEvt2String(str2, pEvt->dwObj, pEvt->dwEvt));
         } // if
 
       // handle standalone emulation
@@ -222,9 +225,9 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
       // report event if configured
       if ((m_dwMode & CGPIOD_MODE_MQTT) && (m_output[dwObj].dwFlags & (0x1 << pEvt->dwEvt))) {
         if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
-          mqttPublish(CGPIOD_EVT_PFX, _printObj2String(str1, pEvt->dwObj), _printVal2String(str2, pEvt->dwEvt));
+          mqttPublish(CGPIOD_EVT_PFX, PrintObj2String(str1, pEvt->dwObj), PrintVal2String(str2, pEvt->dwEvt));
         else
-          mqttPublish(CGPIOD_EVT_PFX, _printObj2String(str1, pEvt->dwObj), _printObjEvt2String(str2, pEvt->dwObj, pEvt->dwEvt));
+          mqttPublish(CGPIOD_EVT_PFX, PrintObj2String(str1, pEvt->dwObj), PrintObjEvt2String(str2, pEvt->dwObj, pEvt->dwEvt));
         } // if
 
       break;
@@ -233,9 +236,9 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
       // report event if configured
       if ((m_dwMode & CGPIOD_MODE_MQTT) && (m_shutter[dwObj].dwFlags & (0x1 << pEvt->dwEvt))) {
         if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
-          mqttPublish(CGPIOD_EVT_PFX, _printObj2String(str1, pEvt->dwObj), _printVal2String(str2, pEvt->dwEvt));
+          mqttPublish(CGPIOD_EVT_PFX, PrintObj2String(str1, pEvt->dwObj), PrintVal2String(str2, pEvt->dwEvt));
         else
-          mqttPublish(CGPIOD_EVT_PFX, _printObj2String(str1, pEvt->dwObj), _printObjEvt2String(str2, pEvt->dwObj, pEvt->dwEvt));
+          mqttPublish(CGPIOD_EVT_PFX, PrintObj2String(str1, pEvt->dwObj), PrintObjEvt2String(str2, pEvt->dwObj, pEvt->dwEvt));
         } // if
 
       break;
@@ -244,9 +247,9 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
       // report event if configured
       if ((m_dwMode & CGPIOD_MODE_MQTT) && (m_timer[dwObj].dwFlags & (0x1 << pEvt->dwEvt))) {
         if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
-          mqttPublish(CGPIOD_EVT_PFX, _printObj2String(str1, pEvt->dwObj), _printVal2String(str2, pEvt->dwEvt));
+          mqttPublish(CGPIOD_EVT_PFX, PrintObj2String(str1, pEvt->dwObj), PrintVal2String(str2, pEvt->dwEvt));
         else
-          mqttPublish(CGPIOD_EVT_PFX, _printObj2String(str1, pEvt->dwObj), _printObjEvt2String(str2, pEvt->dwObj, pEvt->dwEvt));
+          mqttPublish(CGPIOD_EVT_PFX, PrintObj2String(str1, pEvt->dwObj), PrintObjEvt2String(str2, pEvt->dwObj, pEvt->dwEvt));
         } // if
 
       break;
