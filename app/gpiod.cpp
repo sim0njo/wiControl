@@ -171,16 +171,19 @@ tUint32 CGpiod::DoSta(tGpiodEvt* pEvt)
 {
   tChar str1[16], str2[16];
 
-  if (pEvt->dwOrig & CGPIOD_ORIG_FLG_PUBLISH) {
+//Debug.logTxt(CLSLVL_GPIOD | 0x0000, "CGpiod::DoSta");
+//if (pEvt->dwOrig & CGPIOD_ORIG_FLG_PUBLISH) {
     switch (pEvt->dwObj & CGPIOD_OBJ_CLS_MASK) {
       case CGPIOD_OBJ_CLS_INPUT:
       case CGPIOD_OBJ_CLS_OUTPUT:
       case CGPIOD_OBJ_CLS_SHUTTER:
       case CGPIOD_OBJ_CLS_TIMER:
+        PrintObj2String(str1, pEvt->dwObj);
+
         if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
-          mqttPublish(CGPIOD_STA_PFX, PrintObj2String(str1, pEvt->dwObj), PrintVal2String(str2, pEvt->dwEvt));
+          mqttPublish(CGPIOD_STA_PFX, pEvt->szTopic ? pEvt->szTopic : str1, PrintVal2String(str2, pEvt->dwEvt));
         else
-          mqttPublish(CGPIOD_STA_PFX, PrintObj2String(str1, pEvt->dwObj), PrintObjSta2String(str2, pEvt->dwObj, pEvt->dwEvt));
+          mqttPublish(CGPIOD_STA_PFX, pEvt->szTopic ? pEvt->szTopic : str1, PrintObjSta2String(str2, pEvt->dwObj, pEvt->dwEvt));
         break;
 
       case CGPIOD_OBJ_CLS_SYSTEM:
@@ -189,8 +192,8 @@ tUint32 CGpiod::DoSta(tGpiodEvt* pEvt)
 
         break;
       } // switch
-    } // if
-
+//  } // if
+                          
   } // DoSta
 
 //--------------------------------------------------------------------------
@@ -281,6 +284,7 @@ tUint32 CGpiod::DoCmd(tGpiodCmd* pCmd)
 {
   tUint32 dwErr = XERROR_SUCCESS;
 
+  PrintCmd(pCmd, CLSLVL_GPIOD | 0x0000, "CGpiod::DoCmd");
   switch (pCmd->dwObj & CGPIOD_OBJ_CLS_MASK) {
     case CGPIOD_OBJ_CLS_INPUT:   dwErr = _inputDoCmd(pCmd);
       break;

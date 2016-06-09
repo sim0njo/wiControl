@@ -16,33 +16,6 @@
     <script src="jquery.js"></script>
 </head>
 
-<script>
-    $(document).ready(function () {
-        ToggleReadonly($('input[checked=checked]').val());
-        $('input[name=dhcp]').on('click', function(){
-            $('input[name=dhcp]').each(function(e){
-                $(e).removeAttr('checked');
-            })
-            $(this).attr('checked', 'checked');
-            ToggleReadonly($(this).val());
-        })
-    });
-
-    function ToggleReadonly(value){
-        /*if(value == '1'){
-            $('.form-control').each(function(){
-                $(this).attr('readonly', 'readonly');
-            })
-        }
-        else*/
-        {
-            $('.form-control').each(function(){
-                $(this).removeAttr('readonly');
-            })
-        }
-    }
-</script>
-
 <body>
 <div class="container">
     <div class="header">
@@ -135,7 +108,6 @@
     </div>
 
     <footer class="footer">
-        <!--<p>&copy; WSN 2016</p>-->
     </footer>
 
 </div> <!-- /container -->

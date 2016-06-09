@@ -15,7 +15,7 @@ extern int         g_isNetworkConnected;
 #define APP_VERSION                     0x04000000 //
 #define szAPP_VERSION                    "4.0.0.0" //
 #define szAPP_TOPOLOGY                      "4I4O" // 4 input,4 output,2 shutter,1 led
-#define szAPP_TOPOVER                        "1.0" // 
+#define szAPP_TOPOVER                          "1" // 
 
 #define PLATFORM_TYPE_GENERIC                    1 //
 #define PLATFORM_TYPE_SDSHIELD                   2 //

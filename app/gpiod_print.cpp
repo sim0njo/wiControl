@@ -159,7 +159,7 @@ tCChar* CGpiod::PrintCmdParamVals(tChar* pOut, tUint32 cbOut, tGpiodCmd* pCmd)
           xstrcatn(pOut, cbOut, str, 0);
           } // if
 
-        if (pCmd->dwCmd & CGPIOD_OUT_PRM_EMULTIME) {
+        if (pCmd->dwCmd & CGPIOD_OUT_PRM_DEFTIME) {
           gsprintf(str, ".%u", pCmd->parmsOutput.dwRun);
           xstrcatn(pOut, cbOut, str, 0);
           } // if
@@ -197,7 +197,7 @@ tCChar* CGpiod::PrintCmdParamVals(tChar* pOut, tUint32 cbOut, tGpiodCmd* pCmd)
           xstrcatn(pOut, cbOut, str, 0);
           } // if
 
-        if (pCmd->dwCmd & CGPIOD_UDM_PRM_EMULTIME) {
+        if (pCmd->dwCmd & CGPIOD_UDM_PRM_DEFTIME) {
           gsprintf(str, ".%u", pCmd->parmsShutter.dwRun);
           xstrcatn(pOut, cbOut, str, 0);
           } // if

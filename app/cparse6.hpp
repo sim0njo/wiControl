@@ -528,16 +528,27 @@ tUint32 GetNumber(tUint32* pdwNum, tUint32 dwLo, tUint32 dwHi)
   // skip optional separator
   SkipSeparator(CPARSE_TYPE_PERIOD, FALSE);
 
-  if (NextToken(0, 0) != CPARSE_TYPE_NUMBER)
-    return XERROR_SYNTAX;
+  switch (NextToken(0, 0)) {
+    case CPARSE_TYPE_NUMBER:
+      if ((m_dwTVal < dwLo) || (m_dwTVal > dwHi)) 
+        return XERROR_SYNTAX;
 
-  if ((m_dwTVal < dwLo) || (m_dwTVal > dwHi)) 
-    return XERROR_SYNTAX;
+      if (pdwNum)
+        *pdwNum = m_dwTVal;
 
-  if (pdwNum)
-    *pdwNum = m_dwTVal;
+      return XERROR_SUCCESS; 
+      break;
 
-  return XERROR_SUCCESS; 
+    case CPARSE_TYPE_NONE:
+      return XERROR_NO_DATA; 
+      break;
+
+    } // switch
+
+//  if (NextToken(0, 0) != CPARSE_TYPE_NUMBER)
+//    return XERROR_SYNTAX;
+
+  return XERROR_SYNTAX;
   } // GetNumber
 
 //--------------------------------------------------------------------

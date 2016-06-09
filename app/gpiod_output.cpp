@@ -150,7 +150,7 @@
     } // CGpiod::_outputOnExit
 
   //--------------------------------------------------------------------------
-  // local emulation handler, called by DoEvt() or DoCmd()
+  // local emulation handler, called by DoEvt()
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_outputDoEvt(tGpiodEvt* pEvt) 
   { 
@@ -163,7 +163,8 @@
       // initialise vars
       memset(&cmd, 0, sizeof(cmd));
       cmd.msNow  = pEvt->msNow;
-
+      cmd.dwOrig = pEvt->dwOrig;
+      
       memset(&evt, 0, sizeof(evt));
       evt.msNow  = pEvt->msNow;
       evt.dwOrig = pEvt->dwOrig;
@@ -338,12 +339,15 @@
         _outputSetState(pObj, pObj->dwState ^ CGPIOD_OUT_STATE_ON, &evt);
         break;
 
-      case CGPIOD_OUT_CMD_EMULTIME: 
+      case CGPIOD_OUT_CMD_DEFTIME: 
         // handle command
-        if (pCmd->dwParms & CGPIOD_OUT_PRM_EMULTIME)
+        if (pCmd->dwParms & CGPIOD_OUT_PRM_DEFTIME)
           pObj->dwRunDef = pCmd->parmsOutput.dwRun;
         
         pCmd->dwRsp = pObj->dwRunDef;   
+
+        gsprintf(str1, "%s/deftime", PrintObj2String(str2, pCmd->dwObj));
+        evt.szTopic = str1;
         evt.dwEvt   = pObj->dwRunDef;
         DoSta(&evt);
         break;
@@ -367,8 +371,8 @@
   void CGpiod::_outputSetState(tGpiodOutput* pObj, tUint32 dwState, tGpiodEvt* pEvt) 
   {
     // exit if no state change
-    if (pObj->dwState == dwState) 
-      return;
+//  if (pObj->dwState == dwState) 
+//    return;
 
     // pObj->dwState dwState evt 
     // off           on      on
@@ -376,15 +380,15 @@
     switch (pObj->dwState = dwState) {
       case CGPIOD_OUT_STATE_OFF:
         _ioSetPinVal(pObj->dwPin, CGPIOD_OUT_STATE_OFF ^ pObj->dwPol);
-        if (pEvt) pEvt->dwEvt = CGPIOD_OUT_EVT_OFF;
+        if (pEvt) pEvt->dwEvt = CGPIOD_OUT_STATE_OFF;
         break;
 
       case CGPIOD_OUT_STATE_ON:
         _ioSetPinVal(pObj->dwPin, CGPIOD_OUT_STATE_ON ^ pObj->dwPol);
-        if (pEvt) pEvt->dwEvt = CGPIOD_OUT_EVT_ON;
+        if (pEvt) pEvt->dwEvt = CGPIOD_OUT_STATE_ON;
         break;
       } // switch
 
-    if (pEvt) DoEvt(pEvt);
+    if (pEvt) DoSta(pEvt);
     } // _outputSetState
 

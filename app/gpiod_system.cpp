@@ -5,6 +5,7 @@
 // Copyright (c) Jo Simons, 2016-2016, All Rights Reserved.
 //----------------------------------------------------------------------------
 #include <AppSettings.h>
+#include <Network.h>
 #include <gpiod.h>
 
   //--------------------------------------------------------------------------
@@ -127,13 +128,21 @@
     tGpiodEvt evt = { pCmd->msNow, pCmd->dwOrig, pCmd->dwObj, 0, 0, 0 };
     tGpiodCmd cmd = { 0 };
 
-    PrintCmd(pCmd, CLSLVL_GPIOD_SYSTEM | 0x0000, "CGpiod::_systemDoCmd");
+//  PrintCmd(pCmd, CLSLVL_GPIOD_SYSTEM | 0x0000, "CGpiod::_systemDoCmd");
+    Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0000, "CGpiod::_systemDoCmd,obj=%08X,cmd=%08X,parms=%08X", 
+                 pCmd->dwObj, pCmd->dwCmd & CGPIOD_CMD_NUM_MASK, pCmd->dwParms);
+
     switch (pCmd->dwCmd & CGPIOD_CMD_NUM_MASK) {
       case CGPIOD_SYS_CMD_PING: // blink led @ D8 for x seconds
         m_led.dwCmd = CGPIOD_LED_CMD_BLINKTIMED;
         m_led.dwRun = pCmd->msNow + CGPIOD_LED_BLINKTIME;
         _outputSetState(&m_led, m_led.dwState ^ CGPIOD_OUT_STATE_ON, 0);
         pCmd->dwRsp = 1;
+
+        evt.szTopic = "pong";
+        gsprintf(str, "%s", Network.getClientIP().toString().c_str());
+        evt.szEvt   = str;
+        DoEvt(&evt);
         break;
 
       case CGPIOD_SYS_CMD_VERSION: 
@@ -141,16 +150,17 @@
         pCmd->dwRsp = APP_VERSION;
 
         evt.szTopic = "version";
-        evt.szEvt   = szAPP_VERSION;
+        gsprintf(str, "%s;%s/%s", szAPP_VERSION, szAPP_TOPOLOGY, szAPP_TOPOVER);
+        evt.szEvt   = str;
         DoSta(&evt);
         break;
 
       case CGPIOD_SYS_CMD_MEMORY: 
         // report current value
         pCmd->dwRsp = system_get_free_heap_size();
-//      pCmd->dwRsp = system_get_vdd33();
-//      pCmd->dwRsp = system_adc_read();
-//      test_tout(0);
+//      pCmd->dwRsp = system_get_vdd33(); // 3000..3307
+//      pCmd->dwRsp = system_adc_read(); // always 65535
+//      pCmd->dwRsp = analogRead(A0);
 
         gsprintf(str, "%u", pCmd->dwRsp);
         evt.szTopic = "memory";
@@ -298,8 +308,20 @@
 
         break;
 
+      case CGPIOD_SYS_CMD_SAVE:
+        // handle command
+        if ((pCmd->dwParms & CGPIOD_SYS_PRM_ACK) && !_GetFlags(&m_dwFlags, CGPIOD_FLG_LOCK)) {
+          evt.szTopic = "saved";
+          evt.szEvt   = "1";
+          DoEvt(&evt);
+
+          // save settings to nvram
+          } // if
+
+        break;
+
       default:
-        Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x9999, "CGpiod::_systemDoCmd,unknown cmd %u", pCmd->dwCmd);
+        Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x9999, "CGpiod::_systemDoCmd,unknown cmd %08X", pCmd->dwCmd & CGPIOD_CMD_NUM_MASK);
         break;
       } // switch
 

@@ -184,6 +184,9 @@
 
         // report current value
         pCmd->dwRsp = pObj->tmrDebounce;
+
+        gsprintf(str1, "%s/debounce", PrintObj2String(str2, pCmd->dwObj));
+        evt.szTopic = str1;
         evt.dwEvt   = pObj->tmrDebounce;
         DoSta(&evt);
         break;
