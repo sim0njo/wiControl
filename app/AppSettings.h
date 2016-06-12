@@ -49,9 +49,14 @@ class ApplicationSettingsStorage
 
   String             webOtaBaseUrl;
 
-  int                gpiodEmul = 0;
-  int                gpiodMode = 1;
-  int                gpiodEfmt = 0;
+  unsigned int       gpiodEmul = 0;
+  unsigned int       gpiodMode = 3;
+  unsigned int       gpiodLock = 0;
+  unsigned int       gpiodDisable = 0;
+
+  unsigned int       gpiodInDebounce[4] = { 100, 100, 100, 100 };
+  unsigned int       gpiodOutDefRun[4]  = {   0,   0,   0,   0 };
+  unsigned int       gpiodUdmDefRun[4]  = {  30,  30,  30,  30 };
 
   unsigned int       dwLogLevel = 0x3FFF;
 

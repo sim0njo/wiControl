@@ -2,7 +2,7 @@
 //----------------------------------------------------------------------------
 // cgpiod_print.hpp : command printer
 //
-// Copyright (c) Jo Simons, 2016-2016, All Rights Reserved.
+// Copyright (c) Jo Simons, 2015-2016, All Rights Reserved.
 //----------------------------------------------------------------------------
 #include <gpiod.h>
 
@@ -33,8 +33,12 @@ void CGpiod::PrintCmd(tGpiodCmd* pCmd, tUint32 dwClsLvl, tCChar* szPfx)
 {
   tChar  str1[16], str2[16], str3[32];
 
-  Debug.logTxt(dwClsLvl, "%s,%s.%s%s", szPfx, PrintObj2String(str1, pCmd->dwObj),
-               PrintObjCmd2String(str2, pCmd->dwObj, pCmd->dwCmd), PrintCmdParamVals(str3, sizeof(str2), pCmd));
+  if ((pCmd->dwObj & CGPIOD_OBJ_CLS_MASK) == CGPIOD_OBJ_CLS_SYSTEM)
+    Debug.logTxt(dwClsLvl, "%s,%s%s", szPfx, PrintObj2String(str1, pCmd->dwObj),
+                 PrintCmdParamVals(str3, sizeof(str2), pCmd));
+  else
+    Debug.logTxt(dwClsLvl, "%s,%s.%s%s", szPfx, PrintObj2String(str1, pCmd->dwObj),
+                 PrintObjCmd2String(str2, pCmd->dwObj, pCmd->dwCmd), PrintCmdParamVals(str3, sizeof(str2), pCmd));
   } // PrintCmd
 
 //----------------------------------------------------------------------------
@@ -135,12 +139,12 @@ tCChar* CGpiod::PrintCmdParamVals(tChar* pOut, tUint32 cbOut, tGpiodCmd* pCmd)
   do {
     *pOut = '\0';
 
-    if ((pCmd->dwCmd & 0xFFFF0000) == 0)
+    if (pCmd->dwParms == 0)
       break;
 
     switch (pCmd->dwObj & CGPIOD_OBJ_CLS_MASK) {
       case CGPIOD_OBJ_CLS_INPUT:   
-        if (pCmd->dwCmd & CGPIOD_IN_PRM_DEBOUNCE) { // debounce
+        if (pCmd->dwParms & CGPIOD_IN_PRM_DEBOUNCE) { // debounce
           gsprintf(str, ".%u", pCmd->parmsInput.dwDebounce);
           xstrcatn(pOut, cbOut, str, 0);
           } // if
@@ -149,17 +153,17 @@ tCChar* CGpiod::PrintCmdParamVals(tChar* pOut, tUint32 cbOut, tGpiodCmd* pCmd)
 
       case CGPIOD_OBJ_CLS_OUTPUT:  
       case CGPIOD_OBJ_CLS_TIMER:  
-        if (pCmd->dwCmd & CGPIOD_OUT_PRM_DELAY) { 
+        if (pCmd->dwParms & CGPIOD_OUT_PRM_DELAY) { 
           gsprintf(str, ".%u", pCmd->parmsOutput.dwDelay);
           xstrcatn(pOut, cbOut, str, 0);
           } // if
 
-        if (pCmd->dwCmd & CGPIOD_OUT_PRM_RUN) { 
+        if (pCmd->dwParms & CGPIOD_OUT_PRM_RUN) { 
           gsprintf(str, ".%u", pCmd->parmsOutput.dwRun);
           xstrcatn(pOut, cbOut, str, 0);
           } // if
 
-        if (pCmd->dwCmd & CGPIOD_OUT_PRM_DEFTIME) {
+        if (pCmd->dwParms & CGPIOD_OUT_PRM_DEFRUN) {
           gsprintf(str, ".%u", pCmd->parmsOutput.dwRun);
           xstrcatn(pOut, cbOut, str, 0);
           } // if
@@ -167,37 +171,37 @@ tCChar* CGpiod::PrintCmdParamVals(tChar* pOut, tUint32 cbOut, tGpiodCmd* pCmd)
         break;
 
       case CGPIOD_OBJ_CLS_SHUTTER: 
-        if (pCmd->dwCmd & CGPIOD_UDM_PRM_PRIOMASK) { // prio-mask 0-63
+        if (pCmd->dwParms & CGPIOD_UDM_PRM_PRIOMASK) { // prio-mask 0-63
           gsprintf(str, ".%u", pCmd->parmsShutter.dwPrioMask);
           xstrcatn(pOut, cbOut, str, 0);
           } // if
 
-        if (pCmd->dwCmd & CGPIOD_UDM_PRM_PRIOLEVEL) { // prio-level 0-5
+        if (pCmd->dwParms & CGPIOD_UDM_PRM_PRIOLEVEL) { // prio-level 0-5
           gsprintf(str, ".%u", pCmd->parmsShutter.dwPrioLvl);
           xstrcatn(pOut, cbOut, str, 0);
           } // if
 
-        if (pCmd->dwCmd & CGPIOD_UDM_PRM_PRIOLOCK) { // lock 0-1
+        if (pCmd->dwParms & CGPIOD_UDM_PRM_PRIOLOCK) { // lock 0-1
           gsprintf(str, ".%u", pCmd->parmsShutter.dwLock);
           xstrcatn(pOut, cbOut, str, 0);
           } // if
 
-        if (pCmd->dwCmd & CGPIOD_UDM_PRM_DELAY) { // delay 1-65535 seconds or 1/10th seconds (6535s or 65535 1/10th s)
+        if (pCmd->dwParms & CGPIOD_UDM_PRM_DELAY) { // delay 1-65535 seconds or 1/10th seconds (6535s or 65535 1/10th s)
           gsprintf(str, ".%u", pCmd->parmsShutter.dwDelay);
           xstrcatn(pOut, cbOut, str, 0);
           } // if
 
-        if (pCmd->dwCmd & CGPIOD_UDM_PRM_RUN) { // runtime 1-65535 seconds or 1/10th seconds (6535s or 65535 1/10th s)
+        if (pCmd->dwParms & CGPIOD_UDM_PRM_RUN) { // runtime 1-65535 seconds or 1/10th seconds (6535s or 65535 1/10th s)
           gsprintf(str, ".%u", pCmd->parmsShutter.dwRun);
           xstrcatn(pOut, cbOut, str, 0);
           } // if
 
-        if (pCmd->dwCmd & CGPIOD_UDM_PRM_TIP) { // tiptime 1-65535 1/10th seconds (6535s or 65535 1/10th s)
+        if (pCmd->dwParms & CGPIOD_UDM_PRM_TIP) { // tiptime 1-65535 1/10th seconds (6535s or 65535 1/10th s)
           gsprintf(str, ".%u", pCmd->parmsShutter.dwTip);
           xstrcatn(pOut, cbOut, str, 0);
           } // if
 
-        if (pCmd->dwCmd & CGPIOD_UDM_PRM_DEFTIME) {
+        if (pCmd->dwParms & CGPIOD_UDM_PRM_DEFRUN) {
           gsprintf(str, ".%u", pCmd->parmsShutter.dwRun);
           xstrcatn(pOut, cbOut, str, 0);
           } // if
@@ -218,27 +222,27 @@ tCChar* CGpiod::PrintCmdParamVals(tChar* pOut, tUint32 cbOut, tGpiodCmd* pCmd)
 //      break;
 
       case CGPIOD_OBJ_CLS_SYSTEM:  
-        if (pCmd->dwCmd & CGPIOD_SYS_PRM_LOGLEVEL) { // loglevel
+        if (pCmd->dwParms & CGPIOD_SYS_PRM_LOGLEVEL) { // loglevel
           gsprintf(str, ".0x%08X", pCmd->parmsSystem.dwParm);
           xstrcatn(pOut, cbOut, str, 0);
           } // if
 
-        if (pCmd->dwCmd & CGPIOD_SYS_PRM_EMUL) { // emul
+        if (pCmd->dwParms & CGPIOD_SYS_PRM_EMUL) { // emul
           gsprintf(str, ".%u", pCmd->parmsSystem.dwParm);
           xstrcatn(pOut, cbOut, str, 0);
           } // if
 
-        if (pCmd->dwCmd & CGPIOD_SYS_PRM_MODE) { // mode
+        if (pCmd->dwParms & CGPIOD_SYS_PRM_MODE) { // mode
           gsprintf(str, ".%u", pCmd->parmsSystem.dwParm);
           xstrcatn(pOut, cbOut, str, 0);
           } // if
 
-        if (pCmd->dwCmd & CGPIOD_SYS_PRM_EFMT) { // efmt
+        if (pCmd->dwParms & CGPIOD_SYS_PRM_OFFON) { // 0|1
           gsprintf(str, ".%u", pCmd->parmsSystem.dwParm);
           xstrcatn(pOut, cbOut, str, 0);
           } // if
 
-        if (pCmd->dwCmd & CGPIOD_SYS_PRM_ACK) { // ack
+        if (pCmd->dwParms & CGPIOD_SYS_PRM_ACK) { // ack
           gsprintf(str, ".ack");
           xstrcatn(pOut, cbOut, str, 0);
           } // if

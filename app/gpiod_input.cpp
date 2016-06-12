@@ -2,8 +2,9 @@
 //----------------------------------------------------------------------------
 // cgpiod_input.cpp : implementation of 4 inputs
 //
-// Copyright (c) Jo Simons, 2016-2016, All Rights Reserved.
+// Copyright (c) Jo Simons, 2015-2016, All Rights Reserved.
 //----------------------------------------------------------------------------
+#include <AppSettings.h>
 #include <gpiod.h>
 
   //--------------------------------------------------------------------------
@@ -30,7 +31,6 @@
 
     for (dwObj = 0; dwObj < CGPIOD_IN_COUNT; dwObj++, pObj++) {
       // initialise defaults
-      pObj->dwFlags     = CGPIOD_IN_FLG_MQTT_ALL; // all events to MQTT
       pObj->dwState     = CGPIOD_IN_STATE_OUT; 
       pObj->dwPin       = (dwObj == CGPIOD_IN0) ? CGPIOD_IN0_PIN : 
                           (dwObj == CGPIOD_IN1) ? CGPIOD_IN1_PIN : 
@@ -38,7 +38,7 @@
                           (dwObj == CGPIOD_IN3) ? CGPIOD_IN3_PIN : -1; 
       pObj->dwPol       = CGPIOD_IO_POL_INVERT;  
       pObj->dwVal       = CGPIOD_IN_VAL_OUT; 
-      pObj->tmrDebounce = CGPIOD_IN_TMR_DEBOUNCE; 
+      pObj->tmrDebounce = AppSettings.gpiodInDebounce[dwObj]; // CGPIOD_IN_TMR_DEBOUNCE; 
       pObj->msDebounce  = 0; 
       pObj->msState     = 0; 
       } // for
@@ -169,39 +169,52 @@
     tGpiodInput *pObj = &m_input[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK]; 
     tGpiodEvt   evt   = { pCmd->msNow, pCmd->dwOrig, pCmd->dwObj, 0, 0, 0 };
 
-    PrintCmd(pCmd, CLSLVL_GPIOD_OUTPUT | 0x0000, "CGpiod::_inputDoCmd");
-    switch (pCmd->dwCmd & CGPIOD_CMD_NUM_MASK) {
-      case CGPIOD_IN_CMD_STATUS: 
-        // report current value
-        evt.dwEvt   = pObj->dwState;
-        DoSta(&evt);
+    do {
+      // exit if cmds disabled
+      if (AppSettings.gpiodDisable && (pCmd->dwError = XERROR_ACCESS)) {
+        Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0010, "CGpiod::_inputDoCmd,disabled");
         break;
+        } // if
 
-      case CGPIOD_IN_CMD_DEBOUNCE:
-        // handle command
-        if (pCmd->dwParms & CGPIOD_IN_PRM_DEBOUNCE)
-          pObj->tmrDebounce = pCmd->parmsInput.dwDebounce; 
+      switch (pCmd->dwCmd & CGPIOD_CMD_NUM_MASK) {
+        case CGPIOD_IN_CMD_STATUS: 
+          // report current value
+          evt.dwEvt   = pObj->dwState;
+          DoSta(&evt);
+          break;
 
-        // report current value
-        pCmd->dwRsp = pObj->tmrDebounce;
+        case CGPIOD_IN_CMD_DEBOUNCE:
+          // handle if config commands not locked
+          if ((pCmd->dwParms & CGPIOD_IN_PRM_DEBOUNCE) && !AppSettings.gpiodLock) {
+            pObj->tmrDebounce                                              = pCmd->parmsInput.dwDebounce; 
+            AppSettings.gpiodInDebounce[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK] = pCmd->parmsInput.dwDebounce;
+            AppSettings.save();
+            } // if
 
-        gsprintf(str1, "%s/debounce", PrintObj2String(str2, pCmd->dwObj));
-        evt.szTopic = str1;
-        evt.dwEvt   = pObj->tmrDebounce;
-        DoSta(&evt);
-        break;
+          // report current value
+          pCmd->dwRsp = pObj->tmrDebounce;
 
-      default: // treat as event
-        // handle command
-        evt.dwEvt = pCmd->dwCmd;
-        DoEvt(&evt);
-        break;
-      } // switch
+          gsprintf(str1, "%s/debounce", PrintObj2String(str2, pCmd->dwObj));
+          evt.szTopic = str1;
+          evt.dwEvt   = pObj->tmrDebounce;
+          DoSta(&evt);
+          break;
 
-    // automatically copy state -> rsp
-    if (pCmd->dwCmd & CGPIOD_CMD_RSP_AUTO)
-      pCmd->dwRsp = pObj->dwState;
+        default: // treat as event
+          // handle command
+          evt.dwEvt = pCmd->dwCmd;
+          DoEvt(&evt);
+          break;
+        } // switch
 
+      // automatically copy state -> rsp
+      if (pCmd->dwCmd & CGPIOD_CMD_RSP_AUTO)
+        pCmd->dwRsp = pObj->dwState;
+
+      } while (FALSE);
+
+    Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x9999, "CGpiod::_inputDoCmd,err=%u", pCmd->dwError);
+    return pCmd->dwError; 
     return pCmd->dwError; 
     } // _inputDoCmd
 

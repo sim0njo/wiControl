@@ -2,7 +2,7 @@
 //----------------------------------------------------------------------------
 // cgpiod_parse_data.cpp : command parser data
 //
-// Copyright (c) Jo Simons, 2016-2016, All Rights Reserved.
+// Copyright (c) Jo Simons, 2015-2016, All Rights Reserved.
 //----------------------------------------------------------------------------
 #include <gpiod.h>
 
@@ -36,11 +36,9 @@ tParseRsvd g_gpiodParseObj[] = {
   { 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x01001005, "loglevel",  }, // <loglevel>
   { 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x02001006, "emul",      }, // <emul>
   { 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x04001007, "mode",      }, // <mode>
-//{ 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x08001008, "efmt",      }, // <efmt>
-  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x10001009, "lock",      }, // <0|1>
-  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x1000100A, "disable",   }, // <0|1>
-  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x0080100B, "restart",   }, // ack
-  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x0080100C, "save",      }, // ack
+  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x08001008, "lock",      }, // <0..1>.ack
+  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x08001009, "disable",   }, // <0..1>.ack
+  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x1000100A, "restart",   }, // ack
                                                                          
   { 0x10000000      , 0x00000000       , CPARSE_TYPE_NODE, 0x00002000, "hbeat",     }, // only for print
 
@@ -79,10 +77,10 @@ tParseRsvd g_gpiodParseObjEvt[] = {
   { 0x80000200      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000001, "on",        },
 
 //{ 0x80000400      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000000, "stop",      },
-  { 0x80000400      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000001, "upon",      },
-  { 0x80000400      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000002, "downon",    },
-  { 0x80000400      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000003, "upoff",     },
-  { 0x80000400      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000004, "downoff",   },
+//{ 0x80000400      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000001, "upon",      },
+//{ 0x80000400      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000002, "downon",    },
+//{ 0x80000400      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000003, "upoff",     },
+//{ 0x80000400      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000004, "downoff",   },
 
   { 0x80000600      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000005, "timexp",    },
                                                                                   
@@ -113,7 +111,7 @@ tParseRsvd g_gpiodParseCmdInput[] = {
 
 tParseRsvd g_gpiodParseCmdOutput[] = {
 //  dwMask0           dwMask1            dwTType           dwTVal      szTVal
-//  CGPIOD_ORIG_%     Num2Mask(cc)                         0xPPppMMMM  params                
+//  CGPIOD_ORIG_%     Num2Mask(cc)                         0xppPPMMMM  params                
   { 0x000000C0      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00000001, "status",         },
   { 0x000000C0      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00000002, "on",             },
   { 0x000000C0      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00000003, "off",            },
@@ -132,9 +130,9 @@ tParseRsvd g_gpiodParseCmdOutput[] = {
   { 0x000000C0      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00020010, "timeset",        }, // 1-3600 s
   { 0x000000C0      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00020011, "timeadd",        }, // 1-3600 s
   { 0x000000C0      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00000012, "timeabort",      },
+  { 0x000000C0      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x01000013, "defrun",         }, // 0-3600 s
   { 0x000000C0      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00000017, "blink",          },
   { 0x000000C0      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00020018, "blinktimed",     }, // 1-3600 s
-  { 0x000000C0      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x01000100, "deftime",        }, // 0-3600 s
 
   { 0x00000000      , 0x00000000       , 0x00000000      , 0x00000000, "",               },
   };
@@ -160,7 +158,7 @@ tParseRsvd g_gpiodParseCmdShutter[] = {
   { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x003E0010, "tipdelayedup",    }, // 0-5/0-1/D1-65535/R1-65535/T1-65535
   { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x001E0011, "delayeddown",     }, // 0-5/0-1/D1-65535/R1-65535
   { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x003E0012, "tipdelayeddown",  }, // 0-5/0-1/D1-65535/R1-65535/T1-65535
-  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x01000100, "deftime",         }, // 1-3600 s
+  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x01000013, "defrun",          }, // 1-3600 s
 
   { 0x00000000      , 0x00000000       , 0x00000000      , 0x00000000, "",                },
   };
@@ -180,18 +178,6 @@ tParseRsvd g_gpiodParseCmdTimer[] = {
 tParseRsvd g_gpiodParseCmdSystem[] = {
 //  dwMask0           dwMask1            dwTType           dwTVal      szTVal
 //  CGPIOD_ORIG_%                                          0xppPPMMMM                                   
-//{ 0x000000C0      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000001, "ping",      },
-//{ 0x000000C0      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000002, "version",   },
-//{ 0x000000C0      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000003, "memory",    },
-//{ 0x000000C0      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000004, "uptime",    },
-//{ 0x000000C0      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00800005, "restart",   }, // 
-//{ 0x000000C0      , 0x00000001       , CPARSE_TYPE_LEAF, 0x01000100, "loglevel",  }, // <loglevel>
-//{ 0x000000C0      , 0x00000001       , CPARSE_TYPE_LEAF, 0x02000200, "emul",      }, // <emul>
-//{ 0x000000C0      , 0x00000001       , CPARSE_TYPE_LEAF, 0x04000300, "mode",      }, // <mode>
-//{ 0x000000C0      , 0x00000001       , CPARSE_TYPE_LEAF, 0x08000400, "efmt",      }, // <efmt>
-//{ 0x000000C0      , 0x00000001       , CPARSE_TYPE_LEAF, 0x10000500, "lock",      }, // 
-//{ 0x000000C0      , 0x00000001       , CPARSE_TYPE_LEAF, 0x10000600, "disable",   }, // 
-
   { 0x000000C0      , 0x00001000       , CPARSE_TYPE_PARM, 0x00000001, "ack",       }, // 
 
   { 0x00000000      , 0x00000000       , 0x00000000      , 0x00000000, "",          },

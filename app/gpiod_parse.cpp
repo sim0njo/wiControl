@@ -2,7 +2,7 @@
 //----------------------------------------------------------------------------
 // cgpiod_parse.cpp : command parser
 //
-// Copyright (c) Jo Simons, 2016-2016, All Rights Reserved.
+// Copyright (c) Jo Simons, 2015-2016, All Rights Reserved.
 //----------------------------------------------------------------------------
 #include <gpiod.h>
 
@@ -17,13 +17,8 @@ tUint32 CGpiod::ParseCmd(tGpiodCmd* pOut, tChar* pObj, tChar* pCmd, tUint32 dwOr
 
   do {
     // parse object or system command
-    if (pObj)
-      Debug.logTxt(CLSLVL_GPIOD_PARSE | 0x0010, "CGpiod::ParseCmd,obj=%s", pObj);
-
-    if (pCmd)
-      Debug.logTxt(CLSLVL_GPIOD_PARSE | 0x0020, "CGpiod::ParseCmd,cmd=%s", pCmd);
-
-    Debug.logTxt(CLSLVL_GPIOD_PARSE | 0x0030, "CGpiod::ParseCmd,orig=%u,emul=%u", dwOrig, dwEmul);
+    Debug.logTxt(CLSLVL_GPIOD_PARSE | 0x0010, "CGpiod::ParseCmd,obj=%s,cmd=%s,orig=%u,emul=%u",
+                 pObj ? pObj : "", pCmd ? pCmd : "", dwOrig, dwEmul);
     memset(pOut, 0, sizeof(tGpiodCmd));
     m_parse.SetReservedIdents(g_gpiodParseObj);
     m_parse.SetString(pObj ? pObj : pCmd);
@@ -32,7 +27,6 @@ tUint32 CGpiod::ParseCmd(tGpiodCmd* pOut, tChar* pObj, tChar* pCmd, tUint32 dwOr
       
     pOut->dwOrig = dwOrig;
     pOut->dwObj  = m_parse.TVal();
-    Debug.logTxt(CLSLVL_GPIOD_PARSE | 0x0040, "CGpiod::ParseCmd,obj=%08X", pOut->dwObj);
 
     // parse command and parms
     if (pObj)
@@ -59,6 +53,8 @@ tUint32 CGpiod::ParseCmd(tGpiodCmd* pOut, tChar* pObj, tChar* pCmd, tUint32 dwOr
 
     } while (FALSE);
 
+  Debug.logTxt(CLSLVL_GPIOD_PARSE | 0x9999, "CGpiod::ParseCmd,err=%u,obj=%08X,cmd=%08X,parms=%08X", 
+               dwErr, pOut->dwObj, pOut->dwCmd, pOut->dwParms);
   return dwErr; 
   } // ParseCmd
 
@@ -96,7 +92,7 @@ tUint32 CGpiod::_parseCmdInput(tGpiodCmd* pOut)
     if ((pOut->dwCmd & CGPIOD_CMD_PRM_OPTIONAL) && (m_parse.NextToken(0, 0) == CPARSE_TYPE_PERIOD)) {
 
       if (pOut->dwCmd & CGPIOD_IN_PRM_DEBOUNCE) { // debounce 0-3600 seconds in ms
-        if (dwErr = m_parse.GetNumber(&pOut->parmsInput.dwDebounce, 0, 3600000)) break;
+        if (dwErr = m_parse.GetNumber(&pOut->parmsInput.dwDebounce, 50, 3600000)) break;
         pOut->dwParms |= CGPIOD_IN_PRM_DEBOUNCE;
         } // if
 
@@ -104,8 +100,6 @@ tUint32 CGpiod::_parseCmdInput(tGpiodCmd* pOut)
 
     } while (FALSE);
 
-  Debug.logTxt(CLSLVL_GPIOD_PARSE | 0x0000, "CGpiod::_parseCmdInput,err=%u,cmd=%08X,parms=%08X", 
-               dwErr, pOut->dwCmd, pOut->dwParms);
   return dwErr; 
   } // _parseCmdInput
 
@@ -154,17 +148,15 @@ tUint32 CGpiod::_parseCmdOutput(tGpiodCmd* pOut)
     // parse optional parms
     if ((pOut->dwCmd & CGPIOD_CMD_PRM_OPTIONAL) && (m_parse.NextToken(0, 0) == CPARSE_TYPE_PERIOD)) {
 
-      if (pOut->dwCmd & CGPIOD_OUT_PRM_DEFTIME) { // run 1-3600 seconds
-        if (dwErr = m_parse.GetNumber(&pOut->parmsOutput.dwRun, 1, 3600)) break;
-        pOut->dwParms |= CGPIOD_OUT_PRM_DEFTIME;
+      if (pOut->dwCmd & CGPIOD_OUT_PRM_DEFRUN) { // run 0-3600 seconds
+        if (dwErr = m_parse.GetNumber(&pOut->parmsOutput.dwRun, 0, 3600)) break;
+        pOut->dwParms |= CGPIOD_OUT_PRM_DEFRUN;
         } // if
 
       } // CGPIOD_CMD_PRM_OPTIONAL
 
     } while (FALSE);
 
-  Debug.logTxt(CLSLVL_GPIOD_PARSE | 0x0000, "CGpiod::_parseCmdOutput,err=%u,cmd=%08X,parms=%08X", 
-               dwErr, pOut->dwCmd, pOut->dwParms);
   return dwErr; 
   } // _parseCmdOutput
 
@@ -233,17 +225,15 @@ tUint32 CGpiod::_parseCmdShutter(tGpiodCmd* pOut)
     // parse optional parms
     if ((pOut->dwCmd & CGPIOD_CMD_PRM_OPTIONAL) && (m_parse.NextToken(0, 0) == CPARSE_TYPE_PERIOD)) {
 
-      if (pOut->dwCmd & CGPIOD_UDM_PRM_DEFTIME) { // run 1-3600 seconds
+      if (pOut->dwCmd & CGPIOD_UDM_PRM_DEFRUN) { // run 1-3600 seconds
         if (dwErr = m_parse.GetNumber(&pOut->parmsOutput.dwRun, 1, 3600)) break;
-        pOut->dwParms |= CGPIOD_UDM_PRM_DEFTIME;
+        pOut->dwParms |= CGPIOD_UDM_PRM_DEFRUN;
         } // if
 
       } // CGPIOD_CMD_PRM_OPTIONAL
 
     } while (FALSE);
 
-  Debug.logTxt(CLSLVL_GPIOD_PARSE | 0x0000, "CGpiod::_parseCmdShutter,err=%u,cmd=%08X,parms=%08X", 
-               dwErr, pOut->dwCmd, pOut->dwParms);
   return dwErr; 
   } // _parseCmdShutter
 
@@ -287,8 +277,6 @@ tUint32 CGpiod::_parseCmdTimer(tGpiodCmd* pOut)
 
     } while (FALSE);
 
-  Debug.logTxt(CLSLVL_GPIOD_PARSE | 0x0000, "CGpiod::_parseCmdTimer,err=%u,cmd=%08X,parms=%08X", 
-               dwErr, pOut->dwCmd, pOut->dwParms);
   return dwErr; 
   } // _parseCmdTimer
 
@@ -305,19 +293,7 @@ tUint32 CGpiod::_parseCmdSystem(tGpiodCmd* pOut)
 
     // parse mandatory parms
     if (pOut->dwCmd & CGPIOD_CMD_PRM_MANDATORY) {
-      m_parse.SetReservedIdents(g_gpiodParseCmdSystem);
       
-      if (pOut->dwCmd & CGPIOD_SYS_PRM_ACK) { // ack
-
-        if (m_parse.NextToken(pOut->dwOrig, pOut->dwObj & CGPIOD_OBJ_CLS_MASK) != CPARSE_TYPE_PARM) {
-          dwErr = XERROR_SYNTAX;
-          break;
-          } // if
-
-        pOut->parmsSystem.dwAck = m_parse.TVal();
-        pOut->dwParms |= CGPIOD_SYS_PRM_ACK;
-        } // if
-
       } // CGPIOD_CMD_PRM_MANDATORY
 
     // parse optional parms
@@ -334,18 +310,26 @@ tUint32 CGpiod::_parseCmdSystem(tGpiodCmd* pOut)
         } // if
 
       if (pOut->dwCmd & CGPIOD_SYS_PRM_MODE) { // mode
-        if (dwErr = m_parse.GetNumber(&pOut->parmsSystem.dwParm, CGPIOD_MODE_STANDALONE, CGPIOD_MODE_BOTH)) break;
+        if (dwErr = m_parse.GetNumber(&pOut->parmsSystem.dwParm, CGPIOD_MODE_LOCAL, CGPIOD_MODE_BOTH)) break;
         pOut->dwParms |= CGPIOD_SYS_PRM_MODE;
-        } // if
-
-      if (pOut->dwCmd & CGPIOD_SYS_PRM_EFMT) { // efmt
-        if (dwErr = m_parse.GetNumber(&pOut->parmsSystem.dwParm, CGPIOD_EFMT_NUMERICAL, CGPIOD_EFMT_TEXTUAL)) break;
-        pOut->dwParms |= CGPIOD_SYS_PRM_EFMT;
         } // if
 
       if (pOut->dwCmd & CGPIOD_SYS_PRM_OFFON) { // lock | disable
         if (dwErr = m_parse.GetNumber(&pOut->parmsSystem.dwParm, 0, 1)) break;
         pOut->dwParms |= CGPIOD_SYS_PRM_OFFON;
+        } // if
+
+      if (pOut->dwCmd & CGPIOD_SYS_PRM_ACK) { // ack
+        m_parse.SkipSeparator(CPARSE_TYPE_PERIOD, FALSE);
+        m_parse.SetReservedIdents(g_gpiodParseCmdSystem);
+
+        if (m_parse.NextToken(pOut->dwOrig, pOut->dwObj & CGPIOD_OBJ_CLS_MASK) != CPARSE_TYPE_PARM) {
+          dwErr = XERROR_SYNTAX;
+          break;
+          } // if
+
+        pOut->parmsSystem.dwAck = m_parse.TVal();
+        pOut->dwParms |= CGPIOD_SYS_PRM_ACK;
         } // if
 
       } // CGPIOD_CMD_PRM_OPTIONAL

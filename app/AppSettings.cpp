@@ -61,9 +61,25 @@ void ApplicationSettingsStorage::load()
       }
 
     JsonObject& gpiod = root["gpiod"];
-    gpiodEmul = gpiod["emul"];
-    gpiodMode = gpiod["mode"];
-    gpiodEfmt = gpiod["efmt"];
+    gpiodEmul    = gpiod["emul"];
+    gpiodMode    = gpiod["mode"];
+    gpiodLock    = gpiod["lock"];
+    gpiodDisable = gpiod["disable"];
+
+    gpiodInDebounce[0] = gpiod["in0Debounce"];
+    gpiodInDebounce[1] = gpiod["in1Debounce"];
+    gpiodInDebounce[2] = gpiod["in2Debounce"];
+    gpiodInDebounce[3] = gpiod["in3Debounce"];
+
+    gpiodOutDefRun[0] = gpiod["out0DefRun"];
+    gpiodOutDefRun[1] = gpiod["out1DefRun"];
+    gpiodOutDefRun[2] = gpiod["out2DefRun"];
+    gpiodOutDefRun[3] = gpiod["out3DefRun"];
+
+    gpiodUdmDefRun[0] = gpiod["udm0DefRun"];
+    gpiodUdmDefRun[1] = gpiod["udm1DefRun"];
+    gpiodUdmDefRun[2] = gpiod["udm2DefRun"];
+    gpiodUdmDefRun[3] = gpiod["udm3DefRun"];
 
     cpuBoost = root["cpuBoost"];
     useOwnBaseAddress = root["useOwnBaseAddress"];
@@ -111,11 +127,27 @@ void ApplicationSettingsStorage::save()
   mqtt.set("clientId", mqttClientId);
 
   JsonObject& gpiod = jsonBuffer.createObject();
-  root["gpiod"] = gpiod;
-  gpiod["emul"] = gpiodEmul;
-  gpiod["mode"] = gpiodMode;
-  gpiod["efmt"] = gpiodEfmt;
+  root["gpiod"]    = gpiod;
+  gpiod["emul"]    = gpiodEmul;
+  gpiod["mode"]    = gpiodMode;
+  gpiod["lock"]    = gpiodLock;
+  gpiod["disable"] = gpiodDisable;
 
+  gpiod["in0Debounce"] = gpiodInDebounce[0];
+  gpiod["in1Debounce"] = gpiodInDebounce[1];
+  gpiod["in2Debounce"] = gpiodInDebounce[2];
+  gpiod["in3Debounce"] = gpiodInDebounce[3];
+
+  gpiod["out0DefRun"]  = gpiodOutDefRun[0];
+  gpiod["out1DefRun"]  = gpiodOutDefRun[1];
+  gpiod["out2DefRun"]  = gpiodOutDefRun[2];
+  gpiod["out3DefRun"]  = gpiodOutDefRun[3];
+
+  gpiod["udm0DefRun"]  = gpiodUdmDefRun[0];
+  gpiod["udm1DefRun"]  = gpiodUdmDefRun[1];
+  gpiod["udm2DefRun"]  = gpiodUdmDefRun[2];
+  gpiod["udm3DefRun"]  = gpiodUdmDefRun[3];
+ 
   root["cpuBoost"] = cpuBoost;
   root["useOwnBaseAddress"] = useOwnBaseAddress;
 

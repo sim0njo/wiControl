@@ -95,13 +95,13 @@
                         <div class="form-group">
                             <div class="checkbox">
                                 <label>
-                                    <input type="radio" value="1" name="gpiodMode" {gpiodMode1}> Standalone
+                                    <input type="radio" value="1" name="gpiodMode" {gpiodMode1}> Local
                                 </label>
                                 <label>
-                                    <input type="radio" value="2" name="gpiodMode" {gpiodMode2}> MQTT 
+                                    <input type="radio" value="2" name="gpiodMode" {gpiodMode2}> Remote (via MQTT)
                                 </label>
                                 <label>
-                                    <input type="radio" value="3" name="gpiodMode" {gpiodMode3}> Both 
+                                    <input type="radio" value="3" name="gpiodMode" {gpiodMode3}> Both
                                 </label>
                             </div>
                         </div>
@@ -110,16 +110,34 @@
                </tr>
 
                <tr>
-                 <td>MQTT Event Format</td>
+                 <td>Configuration Commands</td>
                  <td>
                     <div class="col-md-offset-2">
                         <div class="form-group">
                             <div class="checkbox">
                                 <label>
-                                    <input type="radio" value="1" name="gpiodEfmt" {gpiodEfmt1}> Numerical
+                                    <input type="radio" value="0" name="gpiodLock" {gpiodLock0}> Enabled
                                 </label>
                                 <label>
-                                    <input type="radio" value="2" name="gpiodEfmt" {gpiodEfmt2}> Textual
+                                    <input type="radio" value="1" name="gpiodLock" {gpiodLock1}> Disabled
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+				 </td>
+               </tr>
+
+               <tr>
+                 <td>Operational Commands</td>
+                 <td>
+                    <div class="col-md-offset-2">
+                        <div class="form-group">
+                            <div class="checkbox">
+                                <label>
+                                    <input type="radio" value="0" name="gpiodDisable" {gpiodDisable0}> Enabled
+                                </label>
+                                <label>
+                                    <input type="radio" value="1" name="gpiodDisable" {gpiodDisable1}> Disabled
                                 </label>
                             </div>
                         </div>

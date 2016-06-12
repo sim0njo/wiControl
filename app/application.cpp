@@ -88,6 +88,7 @@ void processInfoCommand(String commandLine, CommandOutput* pOut)
   pOut->printf(" System Chip ID     : %x\r\n", system_get_chip_id());
   pOut->printf(" SPI Flash ID       : %x\r\n", spi_flash_get_id());
   pOut->printf(" SPI Flash Size     : %d\r\n", (1 << ((spi_flash_get_id() >> 16) & 0xff)));
+  pOut->printf(" Loglevel           : 0x%08X\r\n", Debug.logClsLevels(DEBUG_CLS_0));        
   pOut->printf("\r\n");
 
   pOut->printf("Network\r\n");
@@ -115,14 +116,11 @@ void processInfoCommand(String commandLine, CommandOutput* pOut)
 
   pOut->printf("wiControl\r\n");
   pOut->printf(" Version            : %s/%s\r\n", szAPP_VERSION, szAPP_TOPOLOGY);
-//pOut->printf(" Topology           : %s\r\n", szAPP_TOPOLOGY);
-  pOut->printf(" Emulation          : %s\r\n", (g_gpiod.GetEmul() == CGPIOD_EMUL_OUTPUT)     ? "output"     : "shutter");
-  pOut->printf(" Mode               : %s\r\n", (g_gpiod.GetMode() == CGPIOD_MODE_STANDALONE) ? "standalone" :
-                                               (g_gpiod.GetMode() == CGPIOD_MODE_MQTT)       ? "MQTT"       : "both");
-  pOut->printf(" Event/status format: %s\r\n", (g_gpiod.GetEfmt() == CGPIOD_EFMT_NUMERICAL)  ? "numerical"  : "textual");
-//pOut->printf(" Lock state         : %s\r\n", (g_gpiod.GetFlags(CGPIOD_FLG_LOCK))           ? "locked"     : "unlocked");
-//pOut->printf(" Disable state      : %s\r\n", (g_gpiod.GetFlags(CGPIOD_FLG_DISABLE))        ? "disabled"   : "enabled");
-  pOut->printf(" Loglevel           : 0x%08X\r\n", Debug.logClsLevels(DEBUG_CLS_0));
+  pOut->printf(" Emulation          : %s\r\n", (AppSettings.gpiodEmul    == CGPIOD_EMUL_SHUTTER) ? "shutter"  : "output");
+  pOut->printf(" Mode               : %s\r\n", (AppSettings.gpiodMode    == CGPIOD_MODE_LOCAL)   ? "local"    :
+                                               (AppSettings.gpiodMode    == CGPIOD_MODE_MQTT)    ? "MQTT"     : "both");
+  pOut->printf(" Configuration cmds : %s\r\n", (AppSettings.gpiodLock    == CGPIOD_LOCK_TRUE)    ? "disabled" : "enabled");
+  pOut->printf(" Operational cmds   : %s\r\n", (AppSettings.gpiodDisable == CGPIOD_DISABLE_TRUE) ? "disabled" : "enabled");
 
   pOut->printf(" Input states       : %s/%s/%s/%s\r\n",
                g_gpiod.PrintObjSta2String(str0, CGPIOD_OBJ_CLS_INPUT | 0, g_gpiod.GetState(CGPIOD_OBJ_CLS_INPUT | 0)),
@@ -130,7 +128,7 @@ void processInfoCommand(String commandLine, CommandOutput* pOut)
                g_gpiod.PrintObjSta2String(str2, CGPIOD_OBJ_CLS_INPUT | 2, g_gpiod.GetState(CGPIOD_OBJ_CLS_INPUT | 2)),
                g_gpiod.PrintObjSta2String(str3, CGPIOD_OBJ_CLS_INPUT | 3, g_gpiod.GetState(CGPIOD_OBJ_CLS_INPUT | 3)));
 
-  if (g_gpiod.GetEmul() == CGPIOD_EMUL_OUTPUT)
+  if (AppSettings.gpiodEmul == CGPIOD_EMUL_OUTPUT)
     pOut->printf(" Output states      : %s/%s/%s/%s\r\n",
                  g_gpiod.PrintObjSta2String(str0, CGPIOD_OBJ_CLS_OUTPUT | 0, g_gpiod.GetState(CGPIOD_OBJ_CLS_OUTPUT | 0)),
                  g_gpiod.PrintObjSta2String(str1, CGPIOD_OBJ_CLS_OUTPUT | 1, g_gpiod.GetState(CGPIOD_OBJ_CLS_OUTPUT | 1)),

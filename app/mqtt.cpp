@@ -30,16 +30,16 @@ void     ICACHE_FLASH_ATTR mqttSubscribe(tCChar* szTopicFilter)
 //----------------------------------------------------------------------------
 void ICACHE_FLASH_ATTR mqttPublish(tCChar* szPfx, tCChar* szTopic, tCChar* szMsg)
 {
-  if (!g_pMqtt)
+  if (!g_pMqtt) {
+    Debug.logTxt(CLSLVL_MQTT | 0x0010, "mqttPublish,MQTT client not running");
     return;
+    } // if
 
-  Debug.logTxt(CLSLVL_MQTT | 0x0000, "mqttPublish,topic=%s/%s/%s,msg=%s", 
+  Debug.logTxt(CLSLVL_MQTT | 0x0030, "mqttPublish,topic=%s/%s/%s,msg=%s", 
                AppSettings.mqttClientId.c_str(), szPfx, szTopic, szMsg);
-//Debug.logBin(CLSLVL_MQTT | 0x0010, 2, szTopic, gstrlen(szTopic), "mqttPublish,topic=%s/%s/%s,msg=%s", 
-//             AppSettings.mqttClientId.c_str(), szPfx, szTopic, szMsg);
   g_pMqtt->publish(AppSettings.mqttClientId + String("/") + String(szPfx) + String("/") + String(szTopic), String(szMsg));
   g_mqttPktTx++;
-  } // mqttPublishMessage
+  } // mqttPublish
 
 //----------------------------------------------------------------------------
 // MQTT client callback, topic=<client-id>/... msg=...

@@ -2,7 +2,7 @@
 //----------------------------------------------------------------------------
 // cgpiod.hpp
 //
-// Copyright (c) Jo Simons, 2016-2016, All Rights Reserved.
+// Copyright (c) Jo Simons, 2015-2016, All Rights Reserved.
 //
 // in8  -> D3, out0 -> D8
 // in9  -> D4, out1 -> D7
@@ -40,27 +40,23 @@ void                 gpiodOnMqttPublish(tChar* szTopic, tChar* szMsg);
 #define CGPIOD_DATE                       __DATE__ //
 
 #define CGPIOD_CMD_PFX                       "cmd" //
-#define CGPIOD_CFG_PFX                       "cfg" //
 #define CGPIOD_EVT_PFX                       "evt" //
 #define CGPIOD_STA_PFX                       "sta" //
-#define CGPIOD_BOO_PFX                       "boo" //
 
-#define CGPIOD_FLG_NONE                 0x00000000 // 
-#define CGPIOD_FLG_LOCK                 0x00000001 // 
-#define CGPIOD_FLG_DISABLE              0x00000002 // 
-
-#define CGPIOD_EMUL_NONE                         0 // 
-#define CGPIOD_EMUL_OUTPUT                       1 // emulate output0-1
-#define CGPIOD_EMUL_SHUTTER                      2 // emulate shutter0
+#define CGPIOD_EMUL_NONE                         0 //
+#define CGPIOD_EMUL_OUTPUT                       1 // emulate outputs
+#define CGPIOD_EMUL_SHUTTER                      2 // emulate shutters
 
 #define CGPIOD_MODE_NONE                         0 // 
-#define CGPIOD_MODE_STANDALONE                   1 // handle events locally
-#define CGPIOD_MODE_MQTT                         2 // publish events
-#define CGPIOD_MODE_BOTH                         3 // do both
+#define CGPIOD_MODE_LOCAL                        1 // handle cmds/events locally
+#define CGPIOD_MODE_MQTT                         2 // allow remote system to send cmds/receive events
+#define CGPIOD_MODE_BOTH                         3 // combination of both
 
-#define CGPIOD_EFMT_NONE                         0 // 
-#define CGPIOD_EFMT_NUMERICAL                    1 // 
-#define CGPIOD_EFMT_TEXTUAL                      2 // 
+#define CGPIOD_LOCK_FALSE                        0 // 
+#define CGPIOD_LOCK_TRUE                         1 // 
+
+#define CGPIOD_DISABLE_FALSE                     0 // 
+#define CGPIOD_DISABLE_TRUE                      1 // 
 
 #define CGPIOD_SEC_2_MSEC                     1000 // multiplier for second to ms
 #define CGPIOD_DECISEC_2_MSEC                  100 // multiplier for decisecond to ms
@@ -126,18 +122,15 @@ void                 gpiodOnMqttPublish(tChar* szTopic, tChar* szMsg);
 #define CGPIOD_SYS_CMD_LOGLEVEL         0x00001005 // 
 #define CGPIOD_SYS_CMD_EMUL             0x00001006 // WBS/WBR
 #define CGPIOD_SYS_CMD_MODE             0x00001007 // standalone/networked/both
-#define CGPIOD_SYS_CMD_EFMT             0x00001008 // setefmt.0|1.ack
-#define CGPIOD_SYS_CMD_LOCK             0x00001009 // 
-#define CGPIOD_SYS_CMD_DISABLE          0x0000100A // 
-#define CGPIOD_SYS_CMD_RESTART          0x0000100B // restart.ack
-#define CGPIOD_SYS_CMD_SAVE             0x0000100C // restart.ack
+#define CGPIOD_SYS_CMD_LOCK             0x00001008 // 
+#define CGPIOD_SYS_CMD_DISABLE          0x00001009 // 
+#define CGPIOD_SYS_CMD_RESTART          0x0000100A // restart.ack
 
 #define CGPIOD_SYS_PRM_LOGLEVEL         0x01000000 //
 #define CGPIOD_SYS_PRM_EMUL             0x02000000 //
 #define CGPIOD_SYS_PRM_MODE             0x04000000 //
-#define CGPIOD_SYS_PRM_EFMT             0x08000000 //
-#define CGPIOD_SYS_PRM_OFFON            0x10000000 //
-#define CGPIOD_SYS_PRM_ACK              0x00800000 //
+#define CGPIOD_SYS_PRM_OFFON            0x08000000 //
+#define CGPIOD_SYS_PRM_ACK              0x10000000 //
 
 //----------------------------------------------------------------------------
 // heartbeat definitions
@@ -181,7 +174,8 @@ typedef struct {
 #define CGPIOD_IN2_PIN                           5 // D1 x
 #define CGPIOD_IN3_PIN                           4 // D2 x
 
-#define CGPIOD_IN_TMR_DEBOUNCE                 100 // in ms
+#define CGPIOD_IN_DEBOUNCE                     100 // in ms
+
 #define CGPIOD_IN_TMR_INGT1                   1000 //
 #define CGPIOD_IN_TMR_INGT2                   2000 //
 
@@ -211,17 +205,7 @@ typedef struct {
 #define CGPIOD_IN_EVT_INGT2                      6 // 
 #define CGPIOD_IN_EVT_OUT                        7 // 
 
-#define CGPIOD_IN_FLG_NONE              0x00000000 // 
-#define CGPIOD_IN_FLG_MQTT_INGT0        0x00000004 // send event to MQTT broker
-#define CGPIOD_IN_FLG_MQTT_OUTLT1       0x00000008 // send event to MQTT broker
-#define CGPIOD_IN_FLG_MQTT_INGT1        0x00000010 // send event to MQTT broker
-#define CGPIOD_IN_FLG_MQTT_OUTGT1       0x00000020 // send event to MQTT broker
-#define CGPIOD_IN_FLG_MQTT_INGT2        0x00000040 // send event to MQTT broker
-#define CGPIOD_IN_FLG_MQTT_OUT          0x00000080 // send event to MQTT broker
-#define CGPIOD_IN_FLG_MQTT_ALL          0x000000FC // send all events to MQTT broker
-
 typedef struct {
-  tUint32            dwFlags;                      // evt MQTT routing flags
   tUint32            dwState;                      // input state
   tUint32            dwPin;                        // GPIO pin number
   tUint32            dwPol;                        // polarity 0=normal, 1=invert
@@ -246,7 +230,7 @@ typedef struct {
 #define CGPIOD_OUT2_PIN                         12 // D6
 #define CGPIOD_OUT3_PIN                         14 // D5
 
-#define CGPIOD_OUT_RUN_DEF                       0 // infinite
+#define CGPIOD_OUT_DEF_RUN                       0 // infinite
 
 #define CGPIOD_OUT_STATE_OFF                     0 // 
 #define CGPIOD_OUT_STATE_ON                      1 // 
@@ -270,23 +254,15 @@ typedef struct {
 #define CGPIOD_OUT_CMD_TIMESET                  16 // out0-1
 #define CGPIOD_OUT_CMD_TIMEADD                  17 // out0-1
 #define CGPIOD_OUT_CMD_TIMEABORT                18 // out0-1
+#define CGPIOD_OUT_CMD_DEFRUN                   19 // extended
 #define CGPIOD_OUT_CMD_BLINK                    23 // extended
 #define CGPIOD_OUT_CMD_BLINKTIMED               24 // extended
-#define CGPIOD_OUT_CMD_DEFTIME          0x00000100 // extended
 
 #define CGPIOD_OUT_PRM_DELAY            0x00010000 // mandatory
 #define CGPIOD_OUT_PRM_RUN              0x00020000 // mandatory
-#define CGPIOD_OUT_PRM_DEFTIME          0x01000000 // optional
-
-#define CGPIOD_OUT_EVT_OFF                       0 //
-#define CGPIOD_OUT_EVT_ON                        1 //
-#define CGPIOD_OUT_EVT_TIMEXP                    5 // time ended
+#define CGPIOD_OUT_PRM_DEFRUN           0x01000000 // optional
 
 #define CGPIOD_OUT_FLG_NONE             0x00000000 //
-#define CGPIOD_OUT_FLG_MQTT_OFF         0x00000001 //
-#define CGPIOD_OUT_FLG_MQTT_ON          0x00000002 //
-#define CGPIOD_OUT_FLG_MQTT_TIMEXP      0x00000020 //
-#define CGPIOD_OUT_FLG_MQTT_ALL         0x00000023 //
 #define CGPIOD_OUT_FLG_LOCKED           0x20000000 //
 
 typedef struct {
@@ -312,7 +288,7 @@ typedef struct {
 #define CGPIOD_UDM1_PIN_UP                      12 // out2 D6
 #define CGPIOD_UDM1_PIN_DOWN                    14 // out3 D5
 
-#define CGPIOD_UDM_RUN_DEF                      30 // 30s
+#define CGPIOD_UDM_DEF_RUN                      30 // 30s
 
 #define CGPIOD_UDM_STATE_STOP                    0 // 
 #define CGPIOD_UDM_STATE_UP                      1 // 
@@ -337,7 +313,7 @@ typedef struct {
 #define CGPIOD_UDM_CMD_SENSJALUP                16 // out0-1
 #define CGPIOD_UDM_CMD_SENSROLDOWN              17 // out0-1
 #define CGPIOD_UDM_CMD_SENSJALDOWN              18 // out0-1
-#define CGPIOD_UDM_CMD_DEFTIME          0x00000100 // extended
+#define CGPIOD_UDM_CMD_DEFRUN                   19 // extended
 
 #define CGPIOD_UDM_PRM_PRIOMASK         0x00010000 //
 #define CGPIOD_UDM_PRM_PRIOLEVEL        0x00020000 //
@@ -345,7 +321,7 @@ typedef struct {
 #define CGPIOD_UDM_PRM_DELAY            0x00080000 //
 #define CGPIOD_UDM_PRM_RUN              0x00100000 //
 #define CGPIOD_UDM_PRM_TIP              0x00200000 //
-#define CGPIOD_UDM_PRM_DEFTIME          0x01000000 // optional
+#define CGPIOD_UDM_PRM_DEFRUN           0x01000000 // optional
 
 #define CGPIOD_UDM_PRIO_LVL_0                    0 //
 #define CGPIOD_UDM_PRIO_LVL_1                    1 //
@@ -362,27 +338,7 @@ typedef struct {
 #define CGPIOD_UDM_PRIO_MASK_4          0x00000010 //
 #define CGPIOD_UDM_PRIO_MASK_5          0x00000020 //
 
-//#define CGPIOD_UDM_EVT_STOP                      0 //
-#define CGPIOD_UDM_EVT_UPON                      1 //
-#define CGPIOD_UDM_EVT_DOWNON                    2 //
-#define CGPIOD_UDM_EVT_UPOFF                     3 //
-#define CGPIOD_UDM_EVT_DOWNOFF                   4 //
-#define CGPIOD_UDM_EVT_TIMEXP                    5 // time ended
-#define CGPIOD_UDM_EVT_TIMEROFF                  6 // 
-#define CGPIOD_UDM_EVT_TIMERON                   7 // 
-#define CGPIOD_UDM_EVT_TIMERABORT                8 // 
-
 #define CGPIOD_UDM_FLG_NONE             0x00000000 //
-#define CGPIOD_UDM_FLG_MQTT_STOP        0x00000001 //
-#define CGPIOD_UDM_FLG_MQTT_UPON        0x00000002 //
-#define CGPIOD_UDM_FLG_MQTT_DOWNON      0x00000004 //
-#define CGPIOD_UDM_FLG_MQTT_UPOFF       0x00000008 //
-#define CGPIOD_UDM_FLG_MQTT_DOWNOFF     0x00000010 //
-#define CGPIOD_UDM_FLG_MQTT_TIMEXP      0x00000020 //
-#define CGPIOD_UDM_FLG_MQTT_TIMEROFF    0x00000040 //
-#define CGPIOD_UDM_FLG_MQTT_TIMERON     0x00000080 //
-#define CGPIOD_UDM_FLG_MQTT_TIMERABORT  0x00000100 //
-#define CGPIOD_UDM_FLG_MQTT_ALL         0x000001FF //
 #define CGPIOD_UDM_FLG_LOCKED           0x40000000 //
 
 typedef struct {
@@ -418,17 +374,9 @@ typedef struct {
 #define CGPIOD_TMR_PRM_DELAY            0x00010000 //
 #define CGPIOD_TMR_PRM_RUN              0x00020000 //
 
-#define CGPIOD_TMR_EVT_TIMEROFF                  6 // 
-#define CGPIOD_TMR_EVT_TIMERON                   7 // 
-#define CGPIOD_TMR_EVT_TIMERABORT                8 // 
-
-#define CGPIOD_TMR_FLG_MQTT_TIMEROFF    0x00000040 //
-#define CGPIOD_TMR_FLG_MQTT_TIMERON     0x00000080 //
-#define CGPIOD_TMR_FLG_MQTT_TIMERABORT  0x00000100 //
-#define CGPIOD_TMR_FLG_MQTT_ALL         0x000001C0 //
+//#define CGPIOD_TMR_EVT_TIMERABORT                8 // 
 
 typedef struct {
-  tUint32            dwFlags;                      //
   tUint32            dwState;                      //
   tUint32            dwCmd;                        // 
   tUint32            dwRun;                        //
@@ -488,9 +436,6 @@ class CGpiod {
  private:
   tUint32            m_dwError;                    //
   tUint32            m_dwFlags;                    //
-  tUint32            m_dwEmul;                     //
-  tUint32            m_dwMode;                     //
-  tUint32            m_dwEfmt;                     //
 
   tGpiodOutput       m_led;                        // system led
   tGpiodHbeat        m_hbeat;                      // heartbeat counter
@@ -541,10 +486,6 @@ class CGpiod {
   //--------------------------------------------------------------------------
   // gpiod.cpp
   //--------------------------------------------------------------------------
-  tUint32            GetEmul()                     { return m_dwEmul; }
-  tUint32            GetMode()                     { return m_dwMode; }
-  tUint32            GetEfmt()                     { return m_dwEfmt; }
-
   tUint32            OnConfig();
   tUint32            OnInit();
   void               OnRun();
@@ -655,6 +596,5 @@ class CGpiod {
   }; // CGpiod
 
 extern CGpiod g_gpiod;
-
 
 #endif // __cgpiod_hpp__

@@ -66,13 +66,13 @@ void httpOnStatus(HttpRequest &request, HttpResponse &response)
   vars["gpiodVersion"]  = szAPP_VERSION;
   vars["gpiodTopology"] = szAPP_TOPOLOGY;
 
-  vars["gpiodEmul"] = (AppSettings.gpiodEmul == CGPIOD_EMUL_OUTPUT)     ? "output"     :
-                      (AppSettings.gpiodEmul == CGPIOD_EMUL_SHUTTER)    ? "shutter"    : "<unknown>";
-  vars["gpiodMode"] = (AppSettings.gpiodMode == CGPIOD_MODE_STANDALONE) ? "standalone" :
-                      (AppSettings.gpiodMode == CGPIOD_MODE_MQTT)       ? "MQTT"       :
-                      (AppSettings.gpiodMode == CGPIOD_MODE_BOTH)       ? "both"       : "<unknown>";
-  vars["gpiodEfmt"] = (AppSettings.gpiodEfmt == CGPIOD_EFMT_NUMERICAL)  ? "numerical"  :
-                      (AppSettings.gpiodEfmt == CGPIOD_EFMT_TEXTUAL)    ? "textual"    : "<unknown>";
+  vars["gpiodEmul"]    = (AppSettings.gpiodEmul    == CGPIOD_EMUL_OUTPUT)  ? "output"   :
+                         (AppSettings.gpiodEmul    == CGPIOD_EMUL_SHUTTER) ? "shutter"  : "<unknown>";
+  vars["gpiodMode"]    = (AppSettings.gpiodMode    == CGPIOD_MODE_LOCAL)   ? "local"    :
+                         (AppSettings.gpiodMode    == CGPIOD_MODE_MQTT)    ? "MQTT"     :
+                         (AppSettings.gpiodMode    == CGPIOD_MODE_BOTH)    ? "both"     : "<unknown>";
+  vars["gpiodLock"]    = (AppSettings.gpiodLock    == CGPIOD_LOCK_TRUE)    ? "disabled" : "enabled";
+  vars["gpiodDisable"] = (AppSettings.gpiodDisable == CGPIOD_DISABLE_TRUE) ? "disabled" : "enabled";
 
   sprintf(buf, "%s/%s/%s/%s",
           g_gpiod.PrintObjSta2String(str0, CGPIOD_OBJ_CLS_INPUT | 0, g_gpiod.GetState(CGPIOD_OBJ_CLS_INPUT | 0)),

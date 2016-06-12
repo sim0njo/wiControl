@@ -1,4 +1,9 @@
 
+//----------------------------------------------------------------------------
+// cgpiod.cpp : main daemon implementation
+//
+// Copyright (c) Jo Simons, 2015-2016, All Rights Reserved.
+//----------------------------------------------------------------------------
 #include <AppSettings.h>
 #include <HTTP.h>
 #include <gpiod.h>
@@ -16,11 +21,11 @@ void                 gpiodOnHttpConfig(HttpRequest &request, HttpResponse &respo
 
   // handle new settings
   if (request.getRequestMethod() == RequestMethod::POST) {
-    AppSettings.gpiodEmul = (request.getPostParameter("gpiodEmul") == "2") ? CGPIOD_EMUL_SHUTTER    : CGPIOD_EMUL_OUTPUT;
-    AppSettings.gpiodMode = (request.getPostParameter("gpiodMode") == "1") ? CGPIOD_MODE_STANDALONE : 
-                            (request.getPostParameter("gpiodMode") == "2") ? CGPIOD_MODE_MQTT       : CGPIOD_MODE_BOTH;
-    AppSettings.gpiodEfmt = (request.getPostParameter("gpiodEfmt") == "2") ? CGPIOD_EFMT_TEXTUAL    : CGPIOD_EFMT_NUMERICAL;
-    
+    AppSettings.gpiodEmul    = (request.getPostParameter("gpiodEmul")    == "2") ? CGPIOD_EMUL_SHUTTER : CGPIOD_EMUL_OUTPUT;
+    AppSettings.gpiodMode    = (request.getPostParameter("gpiodMode")    == "1") ? CGPIOD_MODE_LOCAL   : 
+                               (request.getPostParameter("gpiodMode")    == "2") ? CGPIOD_MODE_MQTT  : CGPIOD_MODE_BOTH;
+    AppSettings.gpiodLock    = (request.getPostParameter("gpiodLock")    == "1") ? CGPIOD_LOCK_TRUE    : CGPIOD_LOCK_FALSE;
+    AppSettings.gpiodDisable = (request.getPostParameter("gpiodDisable") == "1") ? CGPIOD_DISABLE_TRUE : CGPIOD_DISABLE_FALSE;
     AppSettings.save();
 
     g_gpiod.OnConfig();
@@ -30,20 +35,23 @@ void                 gpiodOnHttpConfig(HttpRequest &request, HttpResponse &respo
   // send page
   TemplateFileStream *tmpl = new TemplateFileStream("gpiod.html");
   auto &vars = tmpl->variables();
-  vars["appAlias"]     = szAPP_ALIAS;
-  vars["appAuthor"]    = szAPP_AUTHOR;
-  vars["appDesc"]      = szAPP_DESC;
-  vars["mqttClientId"] = AppSettings.mqttClientId;
+  vars["appAlias"]      = szAPP_ALIAS;
+  vars["appAuthor"]     = szAPP_AUTHOR;
+  vars["appDesc"]       = szAPP_DESC;
+  vars["mqttClientId"]  = AppSettings.mqttClientId;
 
-  vars["gpiodEmul1"]   = (AppSettings.gpiodEmul == CGPIOD_EMUL_OUTPUT)     ? "checked='checked'" : "";
-  vars["gpiodEmul2"]   = (AppSettings.gpiodEmul == CGPIOD_EMUL_SHUTTER)    ? "checked='checked'" : "";
+  vars["gpiodEmul1"]    = (AppSettings.gpiodEmul    == CGPIOD_EMUL_OUTPUT)   ? "checked='checked'" : "";
+  vars["gpiodEmul2"]    = (AppSettings.gpiodEmul    == CGPIOD_EMUL_SHUTTER)  ? "checked='checked'" : "";
 
-  vars["gpiodMode1"]   = (AppSettings.gpiodMode == CGPIOD_MODE_STANDALONE) ? "checked='checked'" : "";
-  vars["gpiodMode2"]   = (AppSettings.gpiodMode == CGPIOD_MODE_MQTT)       ? "checked='checked'" : "";
-  vars["gpiodMode3"]   = (AppSettings.gpiodMode == CGPIOD_MODE_BOTH)       ? "checked='checked'" : "";
+  vars["gpiodMode1"]    = (AppSettings.gpiodMode    == CGPIOD_MODE_LOCAL)    ? "checked='checked'" : "";
+  vars["gpiodMode2"]    = (AppSettings.gpiodMode    == CGPIOD_MODE_MQTT)     ? "checked='checked'" : "";
+  vars["gpiodMode3"]    = (AppSettings.gpiodMode    == CGPIOD_MODE_BOTH)     ? "checked='checked'" : "";
 
-  vars["gpiodEfmt1"]   = (AppSettings.gpiodEfmt == CGPIOD_EFMT_NUMERICAL)  ? "checked='checked'" : "";
-  vars["gpiodEfmt2"]   = (AppSettings.gpiodEfmt == CGPIOD_EFMT_TEXTUAL)    ? "checked='checked'" : "";
+  vars["gpiodLock0"]    = (AppSettings.gpiodLock    == CGPIOD_LOCK_FALSE)    ? "checked='checked'" : "";
+  vars["gpiodLock1"]    = (AppSettings.gpiodLock    == CGPIOD_LOCK_TRUE)     ? "checked='checked'" : "";
+
+  vars["gpiodDisable0"] = (AppSettings.gpiodDisable == CGPIOD_DISABLE_FALSE) ? "checked='checked'" : "";
+  vars["gpiodDisable1"] = (AppSettings.gpiodDisable == CGPIOD_DISABLE_TRUE)  ? "checked='checked'" : "";
 
   response.sendTemplate(tmpl); // will be automatically deleted
   } // gpiodOnHttpConfig
@@ -60,23 +68,21 @@ void ICACHE_FLASH_ATTR gpiodOnMqttPublish(tChar* szTopic, tChar* szMsg)
 
   do {
     Debug.logTxt(CLSLVL_GPIOD | 0x0000, "gpiodOnMqttPublish,topic=%s,msg=%s", szTopic, szMsg);
-
     if (gstrnicmp(szTopic, CGPIOD_CMD_PFX, gstrlen(CGPIOD_CMD_PFX)) == 0) {
       // parse object, cmd and optional parms
       pTopic += (gstrlen(CGPIOD_CMD_PFX) + 1);
-      if (g_gpiod.ParseCmd(&cmd, pTopic, szMsg, CGPIOD_ORIG_MQTT, g_gpiod.GetEmul())) {
+
+      if (g_gpiod.ParseCmd(&cmd, pTopic, szMsg, CGPIOD_ORIG_MQTT, AppSettings.gpiodEmul)) {
         Debug.logTxt(CLSLVL_GPIOD | 0x0200, "gpiodOnMqttPublish,ParseCmd() failed,dropping");
         break;
         } // if
 
       cmd.msNow = msNow;
       g_gpiod.DoCmd(&cmd);
+      break;
       } // if CGPIOD_CMD_PFX
 
-    if (gstrnicmp(szTopic, CGPIOD_CFG_PFX, gstrlen(CGPIOD_CFG_PFX)) == 0) {
-      pTopic += (gstrlen(CGPIOD_CFG_PFX) + 1);
-      } // if CGPIOD_CFG_PFX
-
+    Debug.logTxt(CLSLVL_GPIOD | 0x0900, "gpiodOnMqttPublish,not for us,dropping");
     } while (FALSE);
 
   } // gpiodOnMqttPublish
@@ -102,7 +108,7 @@ tUint32 CGpiod::OnInit()
   _inputOnInit();
   _timerOnInit();
 
-  if (m_dwEmul == CGPIOD_EMUL_OUTPUT)
+  if (AppSettings.gpiodEmul == CGPIOD_EMUL_OUTPUT)
     _outputOnInit();
   else
     _shutterOnInit();
@@ -121,7 +127,7 @@ void CGpiod::OnRun()
   _inputOnRun(msNow);
   _timerOnRun(msNow);
 
-  if (m_dwEmul == CGPIOD_EMUL_OUTPUT)
+  if (AppSettings.gpiodEmul == CGPIOD_EMUL_OUTPUT)
     _outputOnRun(msNow);
   else
     _shutterOnRun(msNow);
@@ -137,7 +143,7 @@ tUint32 CGpiod::OnExit()
   _inputOnExit();
   _timerOnExit();
 
-  if (m_dwEmul == CGPIOD_EMUL_OUTPUT)
+  if (AppSettings.gpiodEmul == CGPIOD_EMUL_OUTPUT)
     _outputOnExit();
   else
     _shutterOnExit();
@@ -171,29 +177,9 @@ tUint32 CGpiod::DoSta(tGpiodEvt* pEvt)
 {
   tChar str1[16], str2[16];
 
-//Debug.logTxt(CLSLVL_GPIOD | 0x0000, "CGpiod::DoSta");
-//if (pEvt->dwOrig & CGPIOD_ORIG_FLG_PUBLISH) {
-    switch (pEvt->dwObj & CGPIOD_OBJ_CLS_MASK) {
-      case CGPIOD_OBJ_CLS_INPUT:
-      case CGPIOD_OBJ_CLS_OUTPUT:
-      case CGPIOD_OBJ_CLS_SHUTTER:
-      case CGPIOD_OBJ_CLS_TIMER:
-        PrintObj2String(str1, pEvt->dwObj);
-
-        if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
-          mqttPublish(CGPIOD_STA_PFX, pEvt->szTopic ? pEvt->szTopic : str1, PrintVal2String(str2, pEvt->dwEvt));
-        else
-          mqttPublish(CGPIOD_STA_PFX, pEvt->szTopic ? pEvt->szTopic : str1, PrintObjSta2String(str2, pEvt->dwObj, pEvt->dwEvt));
-        break;
-
-      case CGPIOD_OBJ_CLS_SYSTEM:
-        if (pEvt->szEvt)
-          mqttPublish(CGPIOD_STA_PFX, pEvt->szTopic ? pEvt->szTopic : "system", pEvt->szEvt);
-
-        break;
-      } // switch
-//  } // if
-                          
+  if (AppSettings.gpiodMode & CGPIOD_MODE_MQTT)
+    mqttPublish(CGPIOD_STA_PFX, pEvt->szTopic ? pEvt->szTopic : PrintObj2String(str1, pEvt->dwObj),
+                                pEvt->szEvt   ? pEvt->szEvt   : PrintVal2String(str2, pEvt->dwEvt));
   } // DoSta
 
 //--------------------------------------------------------------------------
@@ -207,16 +193,12 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
   switch (pEvt->dwObj & CGPIOD_OBJ_CLS_MASK) {
     case CGPIOD_OBJ_CLS_INPUT:
       // report event if configured
-      if ((m_dwMode & CGPIOD_MODE_MQTT) && (m_input[dwObj].dwFlags & (0x1 << pEvt->dwEvt))) {
-        if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
-          mqttPublish(CGPIOD_EVT_PFX, PrintObj2String(str1, pEvt->dwObj), PrintVal2String(str2, pEvt->dwEvt));
-        else
-          mqttPublish(CGPIOD_EVT_PFX, PrintObj2String(str1, pEvt->dwObj), PrintObjEvt2String(str2, pEvt->dwObj, pEvt->dwEvt));
-        } // if
+      if (AppSettings.gpiodMode & CGPIOD_MODE_MQTT)
+        mqttPublish(CGPIOD_EVT_PFX, PrintObj2String(str1, pEvt->dwObj), PrintVal2String(str2, pEvt->dwEvt));
 
       // handle standalone emulation
-      if (m_dwMode & CGPIOD_MODE_STANDALONE) { 
-        if (m_dwEmul == CGPIOD_EMUL_OUTPUT) 
+      if (AppSettings.gpiodMode & CGPIOD_MODE_LOCAL) { 
+        if (AppSettings.gpiodEmul == CGPIOD_EMUL_OUTPUT) 
           _outputDoEvt(pEvt);
         else 
           _shutterDoEvt(pEvt);
@@ -225,42 +207,13 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
       break;
 
     case CGPIOD_OBJ_CLS_OUTPUT:
-      // report event if configured
-      if ((m_dwMode & CGPIOD_MODE_MQTT) && (m_output[dwObj].dwFlags & (0x1 << pEvt->dwEvt))) {
-        if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
-          mqttPublish(CGPIOD_EVT_PFX, PrintObj2String(str1, pEvt->dwObj), PrintVal2String(str2, pEvt->dwEvt));
-        else
-          mqttPublish(CGPIOD_EVT_PFX, PrintObj2String(str1, pEvt->dwObj), PrintObjEvt2String(str2, pEvt->dwObj, pEvt->dwEvt));
-        } // if
-
-      break;
-
     case CGPIOD_OBJ_CLS_SHUTTER:
-      // report event if configured
-      if ((m_dwMode & CGPIOD_MODE_MQTT) && (m_shutter[dwObj].dwFlags & (0x1 << pEvt->dwEvt))) {
-        if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
-          mqttPublish(CGPIOD_EVT_PFX, PrintObj2String(str1, pEvt->dwObj), PrintVal2String(str2, pEvt->dwEvt));
-        else
-          mqttPublish(CGPIOD_EVT_PFX, PrintObj2String(str1, pEvt->dwObj), PrintObjEvt2String(str2, pEvt->dwObj, pEvt->dwEvt));
-        } // if
-
-      break;
-
     case CGPIOD_OBJ_CLS_TIMER:
-      // report event if configured
-      if ((m_dwMode & CGPIOD_MODE_MQTT) && (m_timer[dwObj].dwFlags & (0x1 << pEvt->dwEvt))) {
-        if (m_dwEfmt == CGPIOD_EFMT_NUMERICAL)
-          mqttPublish(CGPIOD_EVT_PFX, PrintObj2String(str1, pEvt->dwObj), PrintVal2String(str2, pEvt->dwEvt));
-        else
-          mqttPublish(CGPIOD_EVT_PFX, PrintObj2String(str1, pEvt->dwObj), PrintObjEvt2String(str2, pEvt->dwObj, pEvt->dwEvt));
-        } // if
-
-      break;
-
     case CGPIOD_OBJ_CLS_SYSTEM:
-      // report event
-      if (pEvt->szEvt)
-        mqttPublish(CGPIOD_EVT_PFX, pEvt->szTopic ? pEvt->szTopic : "system", pEvt->szEvt);
+      // report event if configured
+      if (AppSettings.gpiodMode & CGPIOD_MODE_MQTT)
+        mqttPublish(CGPIOD_EVT_PFX, pEvt->szTopic ? pEvt->szTopic : PrintObj2String(str1, pEvt->dwObj), 
+                                    pEvt->szEvt   ? pEvt->szEvt   : PrintVal2String(str2, pEvt->dwEvt));
 
       break;
 
@@ -268,7 +221,7 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
       // handle objects that require heartbeat
       _systemDoEvt(pEvt);
 
-      if (m_dwEmul == CGPIOD_EMUL_OUTPUT)
+      if (AppSettings.gpiodEmul == CGPIOD_EMUL_OUTPUT)
         _outputDoEvt(pEvt);
       break;
 
@@ -285,6 +238,15 @@ tUint32 CGpiod::DoCmd(tGpiodCmd* pCmd)
   tUint32 dwErr = XERROR_SUCCESS;
 
   PrintCmd(pCmd, CLSLVL_GPIOD | 0x0000, "CGpiod::DoCmd");
+
+  // if orig==MQTT and MQTT mode disabled (except for SYSTEM_CMD_MODE) then reject
+  if (  (pCmd->dwOrig == CGPIOD_ORIG_MQTT)                &&
+        ((AppSettings.gpiodMode & CGPIOD_MODE_MQTT) == 0) &&
+      ( ((pCmd->dwObj & CGPIOD_OBJ_CLS_MASK) != CGPIOD_OBJ_CLS_SYSTEM) || 
+        ((pCmd->dwCmd & CGPIOD_CMD_NUM_MASK) != CGPIOD_SYS_CMD_MODE) ) 
+     )
+    return pCmd->dwError = XERROR_ACCESS;
+      
   switch (pCmd->dwObj & CGPIOD_OBJ_CLS_MASK) {
     case CGPIOD_OBJ_CLS_INPUT:   dwErr = _inputDoCmd(pCmd);
       break;
@@ -313,7 +275,7 @@ void CGpiod::begin()
   OnInit();
 
   m_timerMqtt.initializeMs(1000, TimerDelegate(&CGpiod::checkConnection, this)).start(true);
-  m_timerRoot.initializeMs(50, TimerDelegate(&CGpiod::OnRun, this)).start(true);
+  m_timerRoot.initializeMs(50,   TimerDelegate(&CGpiod::OnRun, this)).start(true);
   } // begin
 
 //----------------------------------------------------------------------------
@@ -328,18 +290,12 @@ void CGpiod::checkConnection()
     if (mqttCheckClient()) {
       // subscribe to cmd and cfg topics
       Debug.logTxt(CLSLVL_GPIOD | 0x0010, "CGpiod::checkConnection,subscribe <node-id>/cmd/#");
-      mqttSubscribe("cmd/#"); // + AppSettings.mqttCmdPfx + String("/#"));
+      mqttSubscribe("cmd/#");
 
-//    Debug.logTxt(CLSLVL_GPIOD | 0x0010, "CGpiod::checkConnection,subscribe <node-id>/cfg/#");
-//    mqttSubscribe("cfg/#"); // + AppSettings.mqttCmdPfx + String("/#"));
-      
       // publish boot messages
-      Debug.logTxt(CLSLVL_GPIOD | 0x0030, "CGpiod::checkConnection,publish <node-id>/boo/hw");
-      mqttPublish(CGPIOD_BOO_PFX, "hw", szAPP_TOPOLOGY);
-
-      Debug.logTxt(CLSLVL_GPIOD | 0x0040, "CGpiod::checkConnection,publish <node-id>/boo/sw");
-      sprintf(str, "%s/%s", szAPP_ALIAS, szAPP_VERSION);
-      mqttPublish(CGPIOD_BOO_PFX, "sw", str);
+      Debug.logTxt(CLSLVL_GPIOD | 0x0030, "CGpiod::checkConnection,publish <node-id>/evt/boot");
+      gsprintf(str, "%s;%s/%s", szAPP_VERSION, szAPP_TOPOLOGY, szAPP_TOPOVER);
+      mqttPublish(CGPIOD_EVT_PFX, "boot", str);
       }
 
     } 

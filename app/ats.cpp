@@ -1,4 +1,9 @@
 
+//----------------------------------------------------------------------------
+// ats.cpp : automatic test system interface
+//
+// Copyright (c) Jo Simons, 2015-2016, All Rights Reserved.
+//----------------------------------------------------------------------------
 #include <HTTP.h>
 #include <gpiod.h>
 #include <ats.h>
@@ -41,7 +46,7 @@ void CAtsReq::DoCcmd(String strCcmd)
       gstrcpy(sz, cmdToken[n].c_str());
 
       // parse object, cmd and optional parms
-      if (g_gpiod.ParseCmd(&cmd, 0, sz, CGPIOD_ORIG_HTTP, g_gpiod.GetEmul())) {
+      if (g_gpiod.ParseCmd(&cmd, 0, sz, CGPIOD_ORIG_HTTP, AppSettings.gpiodEmul)) {
         Debug.logTxt(CLSLVL_ATS | 0x0300, "CAtsReq::DoCmd,ParseCmd() failed,dropping");
         dwErr = XERROR_SYNTAX;
         } // if

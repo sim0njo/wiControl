@@ -2,7 +2,7 @@
 //----------------------------------------------------------------------------
 // cgpiod_io.cpp : low level IO interface
 //
-// Copyright (c) Jo Simons, 2016-2016, All Rights Reserved.
+// Copyright (c) Jo Simons, 2015-2016, All Rights Reserved.
 //----------------------------------------------------------------------------
 #include <gpiod.h>
 
