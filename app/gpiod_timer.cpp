@@ -19,7 +19,6 @@
     memset(m_timer, 0, sizeof(m_timer)); 
 
     for (dwObj = 0; dwObj < CGPIOD_TMR_COUNT; dwObj++, pObj++) {
-//      pObj->dwFlags = CGPIOD_TMR_FLG_MQTT_ALL;
       pObj->dwState = CGPIOD_TMR_STATE_OFF;
       pObj->dwCmd   = CGPIOD_TMR_CMD_NONE;
       pObj->dwRun   = 0;
@@ -103,7 +102,6 @@
 
     Debug.logTxt(CLSLVL_GPIOD_TIMER | 0x0000, "CGpiod::_timerDoCmd,obj=%08X", pCmd->dwObj);
 
-    PrintCmd(pCmd, CLSLVL_GPIOD_TIMER | 0x0000, "CGpiod::_timerDoCmd");
     switch (pCmd->dwCmd & CGPIOD_CMD_NUM_MASK) {
       case CGPIOD_TMR_CMD_STATUS: 
         // report current value
@@ -136,13 +134,23 @@
 
       default:
         pCmd->dwError = XERROR_SYNTAX;
-        Debug.logTxt(CLSLVL_GPIOD_TIMER | 0x9999, "CGpiod::_outputDoCmd,unknown cmd %u", pCmd->dwCmd);
+        Debug.logTxt(CLSLVL_GPIOD_TIMER | 0x9999, "CGpiod::_timerDoCmd,unknown cmd %u", pCmd->dwCmd);
         break;
       } // switch
 
     pCmd->dwRsp = pObj->dwState;
     return pCmd->dwError; 
     } // _timerDoCmd
+
+  //--------------------------------------------------------------------------
+  // return timer state
+  //--------------------------------------------------------------------------
+  tUint32 CGpiod::_timerGetState(tUint32 dwObj)
+  {
+    dwObj &= CGPIOD_OBJ_NUM_MASK;
+
+    return (dwObj < CGPIOD_TMR_COUNT) ? m_timer[dwObj].dwState : CGPIOD_TMR_STATE_OFF;
+    } // _timerGetState
 
   //--------------------------------------------------------------------------
   // set new state and send event as needed

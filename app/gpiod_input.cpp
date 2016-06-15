@@ -8,16 +8,6 @@
 #include <gpiod.h>
 
   //--------------------------------------------------------------------------
-  //
-  //--------------------------------------------------------------------------
-  tUint32 CGpiod::_inputGetState(tUint32 dwObj)
-  {
-    dwObj &= CGPIOD_OBJ_NUM_MASK;
-
-    return (dwObj < CGPIOD_IN_COUNT) ? m_input[dwObj].dwState : CGPIOD_IN_STATE_OUT;
-    } // GetState
-
-  //--------------------------------------------------------------------------
   // configure
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_inputOnConfig() 
@@ -87,7 +77,7 @@
             pObj->msState = msNow;
             pObj->dwState = CGPIOD_IN_STATE_INGT0;
             evt.dwEvt     = CGPIOD_IN_EVT_INGT0;
-            Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0200, "CGpiod::_inputOnRun,ingt0");
+//          Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0200, "CGpiod::_inputOnRun,ingt0");
             DoEvt(&evt);
             } // if
           break;
@@ -99,7 +89,7 @@
             pObj->msState = 0;
             pObj->dwState = CGPIOD_IN_STATE_OUT;
             evt.dwEvt     = CGPIOD_IN_EVT_OUTLT1;
-            Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0300, "CGpiod::_inputOnRun,outlt1");
+//          Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0300, "CGpiod::_inputOnRun,outlt1");
             DoEvt(&evt);
             } 
           else {
@@ -108,7 +98,7 @@
 
             pObj->dwState = CGPIOD_IN_STATE_INGT1;
             evt.dwEvt     = CGPIOD_IN_EVT_INGT1;
-            Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0400, "CGpiod::_inputOnRun,ingt1");
+//          Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0400, "CGpiod::_inputOnRun,ingt1");
             DoEvt(&evt);
             } // else
           break;
@@ -120,7 +110,7 @@
             pObj->msState = 0;
             pObj->dwState = CGPIOD_IN_STATE_OUT;
             evt.dwEvt     = CGPIOD_IN_EVT_OUTGT1;
-            Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0500, "CGpiod::_inputOnRun,outgt1");
+//          Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0500, "CGpiod::_inputOnRun,outgt1");
             DoEvt(&evt);
             } 
           else {
@@ -129,7 +119,7 @@
 
             pObj->dwState = CGPIOD_IN_STATE_INGT2;
             evt.dwEvt     = CGPIOD_IN_EVT_INGT2;
-            Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0600, "CGpiod::_inputOnRun,ingt2");
+//          Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0600, "CGpiod::_inputOnRun,ingt2");
             DoEvt(&evt);
             } // else
           break;
@@ -141,7 +131,7 @@
             pObj->msState = 0;
             pObj->dwState = CGPIOD_IN_STATE_OUT;
             evt.dwEvt     = CGPIOD_IN_EVT_OUT;
-            Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0700, "CGpiod::_inputOnRun,out");
+//          Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0700, "CGpiod::_inputOnRun,out");
             DoEvt(&evt);
             } 
           break;
@@ -165,6 +155,7 @@
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_inputDoCmd(tGpiodCmd* pCmd) 
   { 
+    tCChar      *pFunc = "CGpiod::_inputDoCmd";
     tChar       str1[16], str2[16];
     tGpiodInput *pObj = &m_input[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK]; 
     tGpiodEvt   evt   = { pCmd->msNow, pCmd->dwOrig, pCmd->dwObj, 0, 0, 0 };
@@ -172,7 +163,7 @@
     do {
       // exit if cmds disabled
       if (AppSettings.gpiodDisable && (pCmd->dwError = XERROR_ACCESS)) {
-        Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0010, "CGpiod::_inputDoCmd,disabled");
+        Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0010, "%s,disabled", pFunc);
         break;
         } // if
 
@@ -188,15 +179,14 @@
           if ((pCmd->dwParms & CGPIOD_IN_PRM_DEBOUNCE) && !AppSettings.gpiodLock) {
             pObj->tmrDebounce                                              = pCmd->parmsInput.dwDebounce; 
             AppSettings.gpiodInDebounce[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK] = pCmd->parmsInput.dwDebounce;
-            AppSettings.save();
             } // if
 
           // report current value
           pCmd->dwRsp = pObj->tmrDebounce;
 
           gsprintf(str1, "%s/debounce", PrintObj2String(str2, pCmd->dwObj));
-          evt.szTopic = str1;
-          evt.dwEvt   = pObj->tmrDebounce;
+          evt.szObj = str1;
+          evt.dwEvt = pObj->tmrDebounce;
           DoSta(&evt);
           break;
 
@@ -213,10 +203,20 @@
 
       } while (FALSE);
 
-    Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x9999, "CGpiod::_inputDoCmd,err=%u", pCmd->dwError);
+    Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x9999, "%s,err=%u", pFunc, pCmd->dwError);
     return pCmd->dwError; 
     return pCmd->dwError; 
     } // _inputDoCmd
+
+  //--------------------------------------------------------------------------
+  // return input state
+  //--------------------------------------------------------------------------
+  tUint32 CGpiod::_inputGetState(tUint32 dwObj)
+  {
+    dwObj &= CGPIOD_OBJ_NUM_MASK;
+
+    return (dwObj < CGPIOD_IN_COUNT) ? m_input[dwObj].dwState : CGPIOD_IN_STATE_OUT;
+    } // _inputGetState
 
   //--------------------------------------------------------------------------
   // return valid debounced state for pin

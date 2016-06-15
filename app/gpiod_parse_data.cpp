@@ -36,13 +36,22 @@ tParseRsvd g_gpiodParseObj[] = {
   { 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x01001005, "loglevel",  }, // <loglevel>
   { 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x02001006, "emul",      }, // <emul>
   { 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x04001007, "mode",      }, // <mode>
-  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x08001008, "lock",      }, // <0..1>.ack
-  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x08001009, "disable",   }, // <0..1>.ack
+  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x08001008, "lock",      }, // <0..1>
+  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x08001009, "disable",   }, // <0..1>
   { 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x1000100A, "restart",   }, // ack
+  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x1000100B, "save",      }, // ack
                                                                          
   { 0x10000000      , 0x00000000       , CPARSE_TYPE_NODE, 0x00002000, "hbeat",     }, // only for print
 
   { 0x10000000      , 0x00000000       , CPARSE_TYPE_NODE, 0x00004000, "led",       }, // only for print
+
+  { 0x00000000      , 0x00000000       , 0x00000000      , 0x00000000, "",          },
+  };
+
+tParseRsvd g_gpiodParseObjParm[] = {
+//  dwMask0           dwMask1            dwTType           dwTVal      szTVal
+//  CGPIOD_ORIG_%                                          0xppPPMMMM                                   
+  { 0x000000C0      , 0x00001000       , CPARSE_TYPE_PARM, 0x00000001, "ack",       }, // 
 
   { 0x00000000      , 0x00000000       , 0x00000000      , 0x00000000, "",          },
   };
@@ -73,8 +82,8 @@ tParseRsvd g_gpiodParseObjEvt[] = {
   { 0x00000100      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000006, "ingt2",     },
   { 0x00000100      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000007, "out",       },
 
-  { 0x80000200      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000000, "off",       },
-  { 0x80000200      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000001, "on",        },
+//{ 0x80000200      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000000, "off",       },
+//{ 0x80000200      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000001, "on",        },
 
 //{ 0x80000400      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000000, "stop",      },
 //{ 0x80000400      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000001, "upon",      },
@@ -82,7 +91,7 @@ tParseRsvd g_gpiodParseObjEvt[] = {
 //{ 0x80000400      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000003, "upoff",     },
 //{ 0x80000400      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000004, "downoff",   },
 
-  { 0x80000600      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000005, "timexp",    },
+//{ 0x80000600      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000005, "timexp",    },
                                                                                   
   { 0x80000800      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000006, "timeroff",  },
   { 0x80000800      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000007, "timeron",   },
@@ -142,23 +151,23 @@ tParseRsvd g_gpiodParseCmdShutter[] = {
 //  CGPIOD_ORIG_%     Num2Mask(cc)                         0xPPppMMMM  params                
   { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x00000001, "status",          },
   { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x00020002, "stop",            }, // 0-5
-  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x00160003, "toggleUp",        }, // 0-5/0-1/R1-65535 1/10s
-  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x00160004, "toggleDown",      }, // 0-5/0-1/R1-65535 1/10s
-  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x00160005, "up",              }, // 0-5/0-1/R1-65535 1/10s
-  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x00160006, "down",            }, // 0-5/0-1/R1-65535 1/10s
-  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x00260007, "tipUp",           }, // 0-5/0-1/R1-65535 1/10s
-  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x00260008, "tipDown",         }, // 0-5/0-1/R1-65535 1/10s
+  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x00160003, "toggleUp",        }, // 0-5/0-1/R1-3600s
+  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x00160004, "toggleDown",      }, // 0-5/0-1/R1-3600s
+  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x00160005, "up",              }, // 0-5/0-1/R1-3600s
+  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x00160006, "down",            }, // 0-5/0-1/R1-3600s
+  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x00260007, "tipUp",           }, // 0-5/0-1/T0-3600 1/10s
+  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x00260008, "tipDown",         }, // 0-5/0-1/T0-3600 1/10s
   { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x00010009, "priolock",        }, // 0-63
   { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x0001000A, "priounlock",      }, // 0-63
 //{ 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x0000000B, "learnon",         },
 //{ 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x0000000C, "learnoff",        },
   { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x0001000D, "prioset",         }, // 0-63
   { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x0001000E, "prioreset",       }, // 0-63
-  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x001E000F, "delayedup",       }, // 0-5/0-1/D1-65535/R1-65535
-  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x003E0010, "tipdelayedup",    }, // 0-5/0-1/D1-65535/R1-65535/T1-65535
-  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x001E0011, "delayeddown",     }, // 0-5/0-1/D1-65535/R1-65535
-  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x003E0012, "tipdelayeddown",  }, // 0-5/0-1/D1-65535/R1-65535/T1-65535
-  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x01000013, "defrun",          }, // 1-3600 s
+  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x001E000F, "delayedup",       }, // 0-5/0-1/D0-3600s/R1-3600s
+  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x003E0010, "tipdelayedup",    }, // 0-5/0-1/D0-3600s/R1-3600s/T0-3600 1/10s
+  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x001E0011, "delayeddown",     }, // 0-5/0-1/D0-3600s/R1-3600s
+  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x003E0012, "tipdelayeddown",  }, // 0-5/0-1/D0-3600s/R1-3600s/T0-3600 1/10s
+  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x01000013, "defrun",          }, // R1-3600 s
 
   { 0x00000000      , 0x00000000       , 0x00000000      , 0x00000000, "",                },
   };
@@ -173,13 +182,5 @@ tParseRsvd g_gpiodParseCmdTimer[] = {
   { 0x000000C0      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00000016, "abort",          },
 
   { 0x00000000      , 0x00000000       , 0x00000000      , 0x00000000, "",               },
-  };
-
-tParseRsvd g_gpiodParseCmdSystem[] = {
-//  dwMask0           dwMask1            dwTType           dwTVal      szTVal
-//  CGPIOD_ORIG_%                                          0xppPPMMMM                                   
-  { 0x000000C0      , 0x00001000       , CPARSE_TYPE_PARM, 0x00000001, "ack",       }, // 
-
-  { 0x00000000      , 0x00000000       , 0x00000000      , 0x00000000, "",          },
   };
 

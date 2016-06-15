@@ -174,7 +174,7 @@ tUint32 CGpiod::_parseCmdShutter(tGpiodCmd* pOut)
 
     if (m_parse.TType() == CPARSE_TYPE_NONE) {
       // revert to default status command
-      pOut->dwCmd = CGPIOD_UDM_CMD_STATUS;
+      pOut->dwCmd = CGPIOD_SHU_CMD_STATUS;
       break;
       } // if
 
@@ -190,34 +190,34 @@ tUint32 CGpiod::_parseCmdShutter(tGpiodCmd* pOut)
     // parse mandatory parms
     if (pOut->dwCmd & CGPIOD_CMD_PRM_MANDATORY) {
 
-      if (pOut->dwCmd & CGPIOD_UDM_PRM_PRIOMASK) { // prio-mask 0-63
+      if (pOut->dwCmd & CGPIOD_SHU_PRM_PRIOMASK) { // prio-mask 0-63
         if (dwErr = m_parse.GetNumber(&pOut->parmsShutter.dwPrioMask, 0, 63)) break;
-        pOut->dwParms |= CGPIOD_UDM_PRM_PRIOMASK;
+        pOut->dwParms |= CGPIOD_SHU_PRM_PRIOMASK;
         } // if
 
-      if (pOut->dwCmd & CGPIOD_UDM_PRM_PRIOLEVEL) { // prio-level 0-5
+      if (pOut->dwCmd & CGPIOD_SHU_PRM_PRIOLEVEL) { // prio-level 0-5
         if (dwErr = m_parse.GetNumber(&pOut->parmsShutter.dwPrioLvl, 0, 5)) break;
-        pOut->dwParms |= CGPIOD_UDM_PRM_PRIOLEVEL;
+        pOut->dwParms |= CGPIOD_SHU_PRM_PRIOLEVEL;
         } // if
 
-      if (pOut->dwCmd & CGPIOD_UDM_PRM_PRIOLOCK) { // lock 0-1
+      if (pOut->dwCmd & CGPIOD_SHU_PRM_PRIOLOCK) { // lock 0-1
         if (dwErr = m_parse.GetNumber(&pOut->parmsShutter.dwLock, 0, 1)) break;
-        pOut->dwParms |= CGPIOD_UDM_PRM_PRIOLOCK;
+        pOut->dwParms |= CGPIOD_SHU_PRM_PRIOLOCK;
         } // if
 
-      if (pOut->dwCmd & CGPIOD_UDM_PRM_DELAY) { // delay 0-3600 seconds
+      if (pOut->dwCmd & CGPIOD_SHU_PRM_DELAY) { // delay 0-3600 seconds
         if (dwErr = m_parse.GetNumber(&pOut->parmsShutter.dwDelay, 0, 3600)) break;
-        pOut->dwParms |= CGPIOD_UDM_PRM_DELAY;
+        pOut->dwParms |= CGPIOD_SHU_PRM_DELAY;
         } // if
 
-      if (pOut->dwCmd & CGPIOD_UDM_PRM_RUN) { // run 1-3600 seconds
+      if (pOut->dwCmd & CGPIOD_SHU_PRM_RUN) { // run 1-3600 seconds
         if (dwErr = m_parse.GetNumber(&pOut->parmsShutter.dwRun, 1, 3600)) break;
-        pOut->dwParms |= CGPIOD_UDM_PRM_RUN;
+        pOut->dwParms |= CGPIOD_SHU_PRM_RUN;
         } // if
 
-      if (pOut->dwCmd & CGPIOD_UDM_PRM_TIP) { // tip 0-3600 1/10th seconds
+      if (pOut->dwCmd & CGPIOD_SHU_PRM_TIP) { // tip 0-3600 1/10th seconds
         if (dwErr = m_parse.GetNumber(&pOut->parmsShutter.dwTip, 0, 3600)) break;
-        pOut->dwParms |= CGPIOD_UDM_PRM_TIP;
+        pOut->dwParms |= CGPIOD_SHU_PRM_TIP;
         } // if
 
       } // CGPIOD_CMD_PRM_MANDATORY
@@ -225,9 +225,9 @@ tUint32 CGpiod::_parseCmdShutter(tGpiodCmd* pOut)
     // parse optional parms
     if ((pOut->dwCmd & CGPIOD_CMD_PRM_OPTIONAL) && (m_parse.NextToken(0, 0) == CPARSE_TYPE_PERIOD)) {
 
-      if (pOut->dwCmd & CGPIOD_UDM_PRM_DEFRUN) { // run 1-3600 seconds
+      if (pOut->dwCmd & CGPIOD_SHU_PRM_DEFRUN) { // run 1-3600 seconds
         if (dwErr = m_parse.GetNumber(&pOut->parmsOutput.dwRun, 1, 3600)) break;
-        pOut->dwParms |= CGPIOD_UDM_PRM_DEFRUN;
+        pOut->dwParms |= CGPIOD_SHU_PRM_DEFRUN;
         } // if
 
       } // CGPIOD_CMD_PRM_OPTIONAL
@@ -299,29 +299,29 @@ tUint32 CGpiod::_parseCmdSystem(tGpiodCmd* pOut)
     // parse optional parms
     if (pOut->dwCmd & CGPIOD_CMD_PRM_OPTIONAL) {
 
-      if (pOut->dwCmd & CGPIOD_SYS_PRM_LOGLEVEL) { // loglevel
+      if (pOut->dwCmd & CGPIOD_SYS_PRM_LOGLEVEL) { // .<loglevel>
         if (dwErr = m_parse.GetNumber(&pOut->parmsSystem.dwParm, 0, 0xFFFFFFFF)) break;
         pOut->dwParms |= CGPIOD_SYS_PRM_LOGLEVEL;
         } // if
 
-      if (pOut->dwCmd & CGPIOD_SYS_PRM_EMUL) { // emul
+      if (pOut->dwCmd & CGPIOD_SYS_PRM_EMUL) { // .<emul>
         if (dwErr = m_parse.GetNumber(&pOut->parmsSystem.dwParm, CGPIOD_EMUL_OUTPUT, CGPIOD_EMUL_SHUTTER)) break;
         pOut->dwParms |= CGPIOD_SYS_PRM_EMUL;
         } // if
 
-      if (pOut->dwCmd & CGPIOD_SYS_PRM_MODE) { // mode
+      if (pOut->dwCmd & CGPIOD_SYS_PRM_MODE) { // .<mode>
         if (dwErr = m_parse.GetNumber(&pOut->parmsSystem.dwParm, CGPIOD_MODE_LOCAL, CGPIOD_MODE_BOTH)) break;
         pOut->dwParms |= CGPIOD_SYS_PRM_MODE;
         } // if
 
-      if (pOut->dwCmd & CGPIOD_SYS_PRM_OFFON) { // lock | disable
+      if (pOut->dwCmd & CGPIOD_SYS_PRM_OFFON) { // .<lock> | .<disable>
         if (dwErr = m_parse.GetNumber(&pOut->parmsSystem.dwParm, 0, 1)) break;
         pOut->dwParms |= CGPIOD_SYS_PRM_OFFON;
         } // if
 
-      if (pOut->dwCmd & CGPIOD_SYS_PRM_ACK) { // ack
+      if (pOut->dwCmd & CGPIOD_SYS_PRM_ACK) { // .ack
         m_parse.SkipSeparator(CPARSE_TYPE_PERIOD, FALSE);
-        m_parse.SetReservedIdents(g_gpiodParseCmdSystem);
+        m_parse.SetReservedIdents(g_gpiodParseObjParm);
 
         if (m_parse.NextToken(pOut->dwOrig, pOut->dwObj & CGPIOD_OBJ_CLS_MASK) != CPARSE_TYPE_PARM) {
           dwErr = XERROR_SYNTAX;

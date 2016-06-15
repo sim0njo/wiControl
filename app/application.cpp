@@ -23,7 +23,7 @@ void appReportHeapUsage()
   tGpiodCmd cmd = { 0 };
 
   cmd.dwOrig = CGPIOD_ORIG_MQTT;
-  cmd.dwObj  = CGPIOD_OBJ_SYSTEM;
+  cmd.dwObj  = CGPIOD_SYS_CMD_MEMORY;
   cmd.dwCmd  = CGPIOD_SYS_CMD_MEMORY;
   g_gpiod.DoCmd(&cmd);
   } //

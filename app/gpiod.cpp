@@ -165,6 +165,9 @@ tUint32 CGpiod::GetState(tUint32 dwObj)
     case CGPIOD_OBJ_CLS_SHUTTER:
       return _shutterGetState(dwObj);
       break;
+//  case CGPIOD_OBJ_CLS_TIMER:
+//    return _timerGetState(dwObj);
+//    break;
     } // switch
 
   return 0;
@@ -177,9 +180,17 @@ tUint32 CGpiod::DoSta(tGpiodEvt* pEvt)
 {
   tChar str1[16], str2[16];
 
+  if (pEvt->szEvt)
+    Debug.logTxt(CLSLVL_GPIOD | 0x0000, "CGpiod::DoSta,%s.%s", 
+                 pEvt->szObj ? pEvt->szObj : PrintObj2String(str1, pEvt->dwObj), pEvt->szEvt);
+  else
+    Debug.logTxt(CLSLVL_GPIOD | 0x0000, "CGpiod::DoSta,%s.%s", 
+                 pEvt->szObj ? pEvt->szObj : PrintObj2String(str1, pEvt->dwObj), 
+                 PrintObjSta2String(str2, pEvt->dwObj, pEvt->dwEvt), PrintVal2String(str2, pEvt->dwEvt));
+
   if (AppSettings.gpiodMode & CGPIOD_MODE_MQTT)
-    mqttPublish(CGPIOD_STA_PFX, pEvt->szTopic ? pEvt->szTopic : PrintObj2String(str1, pEvt->dwObj),
-                                pEvt->szEvt   ? pEvt->szEvt   : PrintVal2String(str2, pEvt->dwEvt));
+    mqttPublish(CGPIOD_STA_PFX, pEvt->szObj ? pEvt->szObj : PrintObj2String(str1, pEvt->dwObj),
+                                pEvt->szEvt ? pEvt->szEvt : PrintVal2String(str2, pEvt->dwEvt));
   } // DoSta
 
 //--------------------------------------------------------------------------
@@ -187,11 +198,16 @@ tUint32 CGpiod::DoSta(tGpiodEvt* pEvt)
 //--------------------------------------------------------------------------
 tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt) 
 {
-  tChar   str1[16], str2[16];
+  tCChar  *pFunc = "CGpiod::DoEvt";
+  tChar   str1[16], str2[16], str3[16];
   tUint32 dwObj = pEvt->dwObj & CGPIOD_OBJ_NUM_MASK;
 
   switch (pEvt->dwObj & CGPIOD_OBJ_CLS_MASK) {
     case CGPIOD_OBJ_CLS_INPUT:
+      Debug.logTxt(CLSLVL_GPIOD | 0x0100, "%s,%s.%s (%s)", pFunc,
+                   PrintObj2String(str1, pEvt->dwObj), 
+                   PrintObjEvt2String(str2, pEvt->dwObj, pEvt->dwEvt), PrintVal2String(str3, pEvt->dwEvt));
+
       // report event if configured
       if (AppSettings.gpiodMode & CGPIOD_MODE_MQTT)
         mqttPublish(CGPIOD_EVT_PFX, PrintObj2String(str1, pEvt->dwObj), PrintVal2String(str2, pEvt->dwEvt));
@@ -210,10 +226,19 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
     case CGPIOD_OBJ_CLS_SHUTTER:
     case CGPIOD_OBJ_CLS_TIMER:
     case CGPIOD_OBJ_CLS_SYSTEM:
+      if (pEvt->szEvt)
+        Debug.logTxt(CLSLVL_GPIOD | 0x0200, "%s,%s.%s", pFunc, 
+                     pEvt->szObj ? pEvt->szObj : PrintObj2String(str1, pEvt->dwObj), pEvt->szEvt);
+
+      else 
+        Debug.logTxt(CLSLVL_GPIOD | 0x0210, "%s,%s.%s (%s)", pFunc,
+                     pEvt->szObj ? pEvt->szObj : PrintObj2String(str1, pEvt->dwObj), 
+                     PrintObjEvt2String(str2, pEvt->dwObj, pEvt->dwEvt), PrintVal2String(str3, pEvt->dwEvt));
+
       // report event if configured
       if (AppSettings.gpiodMode & CGPIOD_MODE_MQTT)
-        mqttPublish(CGPIOD_EVT_PFX, pEvt->szTopic ? pEvt->szTopic : PrintObj2String(str1, pEvt->dwObj), 
-                                    pEvt->szEvt   ? pEvt->szEvt   : PrintVal2String(str2, pEvt->dwEvt));
+        mqttPublish(CGPIOD_EVT_PFX, pEvt->szObj ? pEvt->szObj : PrintObj2String(str1, pEvt->dwObj), 
+                                    pEvt->szEvt ? pEvt->szEvt : PrintVal2String(str2, pEvt->dwEvt));
 
       break;
 
@@ -235,9 +260,18 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
 //----------------------------------------------------------------------------
 tUint32 CGpiod::DoCmd(tGpiodCmd* pCmd) 
 {
+  tCChar  *pFunc = "CGpiod::DoCmd";
+  tChar   str1[16], str2[16], str3[16];
   tUint32 dwErr = XERROR_SUCCESS;
 
-  PrintCmd(pCmd, CLSLVL_GPIOD | 0x0000, "CGpiod::DoCmd");
+  if ((pCmd->dwObj & CGPIOD_OBJ_CLS_MASK) == CGPIOD_OBJ_CLS_SYSTEM)
+    Debug.logTxt(CLSLVL_GPIOD | 0x0000, "%s,%s%s", pFunc,
+                 PrintObj2String(str1, pCmd->dwObj), 
+                 PrintCmdParamVals(str3, sizeof(str2), pCmd));
+  else
+    Debug.logTxt(CLSLVL_GPIOD | 0x0010, "%s,%s.%s%s", pFunc, 
+                 PrintObj2String(str1, pCmd->dwObj),
+                 PrintObjCmd2String(str2, pCmd->dwObj, pCmd->dwCmd), PrintCmdParamVals(str3, sizeof(str2), pCmd));
 
   // if orig==MQTT and MQTT mode disabled (except for SYSTEM_CMD_MODE) then reject
   if (  (pCmd->dwOrig == CGPIOD_ORIG_MQTT)                &&
@@ -262,6 +296,7 @@ tUint32 CGpiod::DoCmd(tGpiodCmd* pCmd)
       break;
     } // switch
 
+  Debug.logTxt(CLSLVL_GPIOD | 0x9999, "%s,err=%u", pFunc, dwErr);
   return dwErr;
   } // DoCmd
 

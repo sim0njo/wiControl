@@ -23,13 +23,13 @@
 
 //----------------------------------------------------------------------------
 extern tParseRsvd    g_gpiodParseObj[];
+extern tParseRsvd    g_gpiodParseObjParm[];
 extern tParseRsvd    g_gpiodParseObjSta[];
 extern tParseRsvd    g_gpiodParseObjEvt[];
 extern tParseRsvd    g_gpiodParseCmdInput[];
-extern tParseRsvd    g_gpiodParseCmdTimer[];
 extern tParseRsvd    g_gpiodParseCmdOutput[];
 extern tParseRsvd    g_gpiodParseCmdShutter[];
-extern tParseRsvd    g_gpiodParseCmdSystem[];
+extern tParseRsvd    g_gpiodParseCmdTimer[];
 
 //----------------------------------------------------------------------------
 void                 gpiodOnHttpConfig(HttpRequest &request, HttpResponse &response);
@@ -125,6 +125,7 @@ void                 gpiodOnMqttPublish(tChar* szTopic, tChar* szMsg);
 #define CGPIOD_SYS_CMD_LOCK             0x00001008 // 
 #define CGPIOD_SYS_CMD_DISABLE          0x00001009 // 
 #define CGPIOD_SYS_CMD_RESTART          0x0000100A // restart.ack
+#define CGPIOD_SYS_CMD_SAVE             0x0000100B // save.ack
 
 #define CGPIOD_SYS_PRM_LOGLEVEL         0x01000000 //
 #define CGPIOD_SYS_PRM_EMUL             0x02000000 //
@@ -278,68 +279,69 @@ typedef struct {
 //----------------------------------------------------------------------------
 // shutter definitions
 //----------------------------------------------------------------------------
-#define CGPIOD_UDM_COUNT                         2 //
+#define CGPIOD_SHU_COUNT                         2 //
 
-#define CGPIOD_UDM0                              0 //
-#define CGPIOD_UDM1                              1 //
+#define CGPIOD_SHU0                              0 //
+#define CGPIOD_SHU1                              1 //
 
-#define CGPIOD_UDM0_PIN_UP                      15 // out0 D8 
-#define CGPIOD_UDM0_PIN_DOWN                    13 // out1 D7
-#define CGPIOD_UDM1_PIN_UP                      12 // out2 D6
-#define CGPIOD_UDM1_PIN_DOWN                    14 // out3 D5
+#define CGPIOD_SHU0_PIN_UP                      15 // out0 D8 
+#define CGPIOD_SHU0_PIN_DOWN                    13 // out1 D7
+#define CGPIOD_SHU1_PIN_UP                      12 // out2 D6
+#define CGPIOD_SHU1_PIN_DOWN                    14 // out3 D5
 
-#define CGPIOD_UDM_DEF_RUN                      30 // 30s
+#define CGPIOD_SHU_DEF_RUN                      30 // 30s
+#define CGPIOD_SHU_DEF_DELAY                   200 // 200ms
 
-#define CGPIOD_UDM_STATE_STOP                    0 // 
-#define CGPIOD_UDM_STATE_UP                      1 // 
-#define CGPIOD_UDM_STATE_DOWN                    2 // 
+#define CGPIOD_SHU_STATE_STOP                    0 // 
+#define CGPIOD_SHU_STATE_UP                      1 // 
+#define CGPIOD_SHU_STATE_DOWN                    2 // 
 
-#define CGPIOD_UDM_CMD_NONE                      0 //
-#define CGPIOD_UDM_CMD_STATUS                    1 // out0-1
-#define CGPIOD_UDM_CMD_STOP                      2 // out0-1
-#define CGPIOD_UDM_CMD_TOGGLEUP                  3 // out0-1
-#define CGPIOD_UDM_CMD_TOGGLEDOWN                4 // out0-1
-#define CGPIOD_UDM_CMD_UP                        5 // out0-1
-#define CGPIOD_UDM_CMD_DOWN                      6 // out0-1
-#define CGPIOD_UDM_CMD_TIPUP                     7 // out0-1
-#define CGPIOD_UDM_CMD_TIPDOWN                   8 // out0-1
-#define CGPIOD_UDM_CMD_PRIOLOCK                  9 // out0-1
-#define CGPIOD_UDM_CMD_PRIOUNLOCK               10 // out0-1
-#define CGPIOD_UDM_CMD_LEARNON                  11 // out0-1
-#define CGPIOD_UDM_CMD_LEARNOFF                 12 // out0-1
-#define CGPIOD_UDM_CMD_PRIOSET                  13 // out0-1
-#define CGPIOD_UDM_CMD_PRIORESET                14 // out0-1
-#define CGPIOD_UDM_CMD_SENSROLUP                15 // out0-1
-#define CGPIOD_UDM_CMD_SENSJALUP                16 // out0-1
-#define CGPIOD_UDM_CMD_SENSROLDOWN              17 // out0-1
-#define CGPIOD_UDM_CMD_SENSJALDOWN              18 // out0-1
-#define CGPIOD_UDM_CMD_DEFRUN                   19 // extended
+#define CGPIOD_SHU_CMD_NONE                      0 //
+#define CGPIOD_SHU_CMD_STATUS                    1 // out0-1
+#define CGPIOD_SHU_CMD_STOP                      2 // out0-1
+#define CGPIOD_SHU_CMD_TOGGLEUP                  3 // out0-1
+#define CGPIOD_SHU_CMD_TOGGLEDOWN                4 // out0-1
+#define CGPIOD_SHU_CMD_UP                        5 // out0-1
+#define CGPIOD_SHU_CMD_DOWN                      6 // out0-1
+#define CGPIOD_SHU_CMD_TIPUP                     7 // out0-1
+#define CGPIOD_SHU_CMD_TIPDOWN                   8 // out0-1
+#define CGPIOD_SHU_CMD_PRIOLOCK                  9 // out0-1
+#define CGPIOD_SHU_CMD_PRIOUNLOCK               10 // out0-1
+#define CGPIOD_SHU_CMD_LEARNON                  11 // out0-1
+#define CGPIOD_SHU_CMD_LEARNOFF                 12 // out0-1
+#define CGPIOD_SHU_CMD_PRIOSET                  13 // out0-1
+#define CGPIOD_SHU_CMD_PRIORESET                14 // out0-1
+#define CGPIOD_SHU_CMD_SENSROLUP                15 // out0-1
+#define CGPIOD_SHU_CMD_SENSJALUP                16 // out0-1
+#define CGPIOD_SHU_CMD_SENSROLDOWN              17 // out0-1
+#define CGPIOD_SHU_CMD_SENSJALDOWN              18 // out0-1
+#define CGPIOD_SHU_CMD_DEFRUN                   19 // extended
 
-#define CGPIOD_UDM_PRM_PRIOMASK         0x00010000 //
-#define CGPIOD_UDM_PRM_PRIOLEVEL        0x00020000 //
-#define CGPIOD_UDM_PRM_PRIOLOCK         0x00040000 //
-#define CGPIOD_UDM_PRM_DELAY            0x00080000 //
-#define CGPIOD_UDM_PRM_RUN              0x00100000 //
-#define CGPIOD_UDM_PRM_TIP              0x00200000 //
-#define CGPIOD_UDM_PRM_DEFRUN           0x01000000 // optional
+#define CGPIOD_SHU_PRM_PRIOMASK         0x00010000 //
+#define CGPIOD_SHU_PRM_PRIOLEVEL        0x00020000 //
+#define CGPIOD_SHU_PRM_PRIOLOCK         0x00040000 //
+#define CGPIOD_SHU_PRM_DELAY            0x00080000 //
+#define CGPIOD_SHU_PRM_RUN              0x00100000 //
+#define CGPIOD_SHU_PRM_TIP              0x00200000 //
+#define CGPIOD_SHU_PRM_DEFRUN           0x01000000 // optional
 
-#define CGPIOD_UDM_PRIO_LVL_0                    0 //
-#define CGPIOD_UDM_PRIO_LVL_1                    1 //
-#define CGPIOD_UDM_PRIO_LVL_2                    2 //
-#define CGPIOD_UDM_PRIO_LVL_3                    3 //
-#define CGPIOD_UDM_PRIO_LVL_4                    4 //
-#define CGPIOD_UDM_PRIO_LVL_5                    5 //
+#define CGPIOD_SHU_PRIO_LVL_0                    0 //
+#define CGPIOD_SHU_PRIO_LVL_1                    1 //
+#define CGPIOD_SHU_PRIO_LVL_2                    2 //
+#define CGPIOD_SHU_PRIO_LVL_3                    3 //
+#define CGPIOD_SHU_PRIO_LVL_4                    4 //
+#define CGPIOD_SHU_PRIO_LVL_5                    5 //
 
-#define CGPIOD_UDM_PRIO_MASK_NONE       0x00000000 //
-#define CGPIOD_UDM_PRIO_MASK_0          0x00000001 //
-#define CGPIOD_UDM_PRIO_MASK_1          0x00000002 //
-#define CGPIOD_UDM_PRIO_MASK_2          0x00000004 //
-#define CGPIOD_UDM_PRIO_MASK_3          0x00000008 //
-#define CGPIOD_UDM_PRIO_MASK_4          0x00000010 //
-#define CGPIOD_UDM_PRIO_MASK_5          0x00000020 //
+#define CGPIOD_SHU_PRIO_MASK_NONE       0x00000000 //
+#define CGPIOD_SHU_PRIO_MASK_0          0x00000001 //
+#define CGPIOD_SHU_PRIO_MASK_1          0x00000002 //
+#define CGPIOD_SHU_PRIO_MASK_2          0x00000004 //
+#define CGPIOD_SHU_PRIO_MASK_3          0x00000008 //
+#define CGPIOD_SHU_PRIO_MASK_4          0x00000010 //
+#define CGPIOD_SHU_PRIO_MASK_5          0x00000020 //
 
-#define CGPIOD_UDM_FLG_NONE             0x00000000 //
-#define CGPIOD_UDM_FLG_LOCKED           0x40000000 //
+#define CGPIOD_SHU_FLG_NONE             0x00000000 //
+#define CGPIOD_SHU_FLG_LOCKED           0x40000000 //
 
 typedef struct {
   tUint32            dwFlags;                      //
@@ -347,12 +349,13 @@ typedef struct {
   tUint32            dwPinDown;                    // GPIO pin number
   tUint32            dwPol;                        // polarity 0=normal, 1=invert
   tUint32            dwRunDef;                     // default run time for standalone oper
-  tUint32            dwState;                      // CGPIOD_UDM_STATE_
+  tUint32            dwState;                      // CGPIOD_SHU_STATE_
   tUint32            dwPrioLvl;                    // 0..5
   tUint32            dwPrioMask;                   // 0..63
   tUint32            dwCmd;                        // 
-  tUint32            dwDelay;                      // delay time
+  tUint32            dwDelay1;                     // delay time
   tUint32            dwRun;                        // run time
+  tUint32            dwDelay2;                     // delay time between run and tip
   tUint32            dwTip;                        // tip time
   } tGpiodShutter;
 
@@ -424,7 +427,7 @@ typedef struct {
   tUint32            msNow;                        // 
   tUint32            dwOrig;                       // I
   tUint32            dwObj;                        // 
-  tCChar*            szTopic;                      //
+  tCChar*            szObj;                        //
   tUint32            dwEvt;                        // 
   tCChar*            szEvt;                        //
   } tGpiodEvt;
@@ -442,7 +445,7 @@ class CGpiod {
 
   tGpiodInput        m_input[CGPIOD_IN_COUNT];     // in8-11
   tGpiodOutput       m_output[CGPIOD_OUT_COUNT];   // out0-3
-  tGpiodShutter      m_shutter[CGPIOD_UDM_COUNT];  // out0-1
+  tGpiodShutter      m_shutter[CGPIOD_SHU_COUNT];  // out0-1
   tGpiodTimer        m_timer[CGPIOD_TMR_COUNT];    // out6-7
 
   CParse             m_parse;                      //
@@ -470,6 +473,10 @@ class CGpiod {
 
   tUint32            SetTimerDeciSec(tUint32 msNow, tUint32 dwDeciSec) {
     return (msNow + (dwDeciSec * CGPIOD_DECISEC_2_MSEC)) | 1; 
+    } //
+
+  tUint32            SetTimerMilliSec(tUint32 msNow, tUint32 dwMilliSec) {
+    return (msNow + dwMilliSec) | 1; 
     } //
 
   //--------------------------------------------------------------------------
@@ -510,8 +517,6 @@ class CGpiod {
   //--------------------------------------------------------------------------
   // gpiod_print.cpp
   //--------------------------------------------------------------------------
-  void               PrintEvt(tGpiodEvt* pEvt, tUint32 dwClsLvl, tCChar* szPfx);
-  void               PrintCmd(tGpiodCmd* pCmd, tUint32 dwClsLvl, tCChar* szPfx);
   tCChar*            PrintObj2String(tChar* pOut, tUint32 dwObj);
   tCChar*            PrintObjSta2String(tChar* pOut, tUint32 dwObj, tUint32 dwSta);
   tCChar*            PrintObjEvt2String(tChar* pOut, tUint32 dwObj, tUint32 dwEvt);
@@ -534,8 +539,8 @@ class CGpiod {
   tUint32            _inputOnInit();
   tUint32            _inputOnRun(tUint32 msNow);
   tUint32            _inputOnExit();
-  tUint32            _inputGetState(tUint32 dwObj);
   tUint32            _inputDoCmd(tGpiodCmd* pCmd);
+  tUint32            _inputGetState(tUint32 dwObj);
   tUint32            _inputGetPinVal(tGpiodInput* pObj, tUint32 msNow);
 
   //--------------------------------------------------------------------------
@@ -545,9 +550,9 @@ class CGpiod {
   tUint32            _timerOnInit();
   tUint32            _timerOnRun(tUint32 msNow);
   tUint32            _timerOnExit();
-  tUint32            _timerGetState(tUint32 dwObj);
   tUint32            _timerDoEvt(tGpiodEvt* pEvt);
   tUint32            _timerDoCmd(tGpiodCmd* pCmd);
+  tUint32            _timerGetState(tUint32 dwObj);
   void               _timerSetState(tGpiodTimer* pObj, tUint32 dwState, tGpiodEvt* pEvt);
 
   //--------------------------------------------------------------------------
@@ -557,9 +562,9 @@ class CGpiod {
   tUint32            _outputOnInit();
   tUint32            _outputOnRun(tUint32 msNow);
   tUint32            _outputOnExit();
-  tUint32            _outputGetState(tUint32 dwObj);
   tUint32            _outputDoEvt(tGpiodEvt* pEvt);
   tUint32            _outputDoCmd(tGpiodCmd* pCmd);
+  tUint32            _outputGetState(tUint32 dwObj);
   void               _outputSetState(tGpiodOutput* pObj, tUint32 dwState, tGpiodEvt* pEvt);
 
   //--------------------------------------------------------------------------
@@ -569,10 +574,10 @@ class CGpiod {
   tUint32            _shutterOnInit();
   tUint32            _shutterOnRun(tUint32 msNow);
   tUint32            _shutterOnExit();
-  tUint32            _shutterGetState(tUint32 dwObj);
   tUint32            _shutterDoEvt(tGpiodEvt* pEvt);
   tUint32            _shutterDoCmd(tGpiodCmd* pCmd);
   tUint32            _shutterCheckPrio(tGpiodShutter* pObj, tGpiodCmd* pCmd);
+  tUint32            _shutterGetState(tUint32 dwObj);
   void               _shutterSetState(tGpiodShutter* pObj, tUint32 dwState, tGpiodEvt* pEvt);
 
   //--------------------------------------------------------------------------

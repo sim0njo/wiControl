@@ -130,9 +130,9 @@
           _outputSetState(&m_led, m_led.dwState ^ CGPIOD_OUT_STATE_ON, 0);
           pCmd->dwRsp = 1;
 
-          evt.szTopic = "pong";
+          evt.szObj = "pong";
           gsprintf(str, "%s", Network.getClientIP().toString().c_str());
-          evt.szEvt   = str;
+          evt.szEvt = str;
           DoEvt(&evt);
           break;
 
@@ -180,7 +180,6 @@
             Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0100, "CGpiod::_systemDoCmd,set emul to %u", pCmd->parmsSystem.dwParm);
           
             AppSettings.gpiodEmul = pCmd->parmsSystem.dwParm;
-            AppSettings.save();
             OnInit();
             } // if
 
@@ -195,7 +194,6 @@
           if ((pCmd->dwParms == CGPIOD_SYS_PRM_MODE) && !AppSettings.gpiodLock) {
             Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0100, "CGpiod::_systemDoCmd,set mode to %u", pCmd->parmsSystem.dwParm);
             AppSettings.gpiodMode = pCmd->parmsSystem.dwParm;
-            AppSettings.save();
             } // if
 
           // report current value
@@ -208,7 +206,6 @@
           // handle set command
           if (pCmd->dwParms == CGPIOD_SYS_PRM_OFFON) {
             AppSettings.gpiodLock = pCmd->parmsSystem.dwParm ? 1 : 0;
-            AppSettings.save();
             } // if
 
           // report current value
@@ -221,7 +218,6 @@
           // handle command
           if ((pCmd->dwParms == CGPIOD_SYS_PRM_OFFON) && !AppSettings.gpiodLock) {
             AppSettings.gpiodDisable = pCmd->parmsSystem.dwParm ? 1 : 0;
-            AppSettings.save();
             } // if
 
           // report current value
@@ -239,6 +235,15 @@
             System.restart();
             } // if
 
+          break;
+
+        case CGPIOD_SYS_CMD_SAVE:
+          if (pCmd->dwParms == CGPIOD_SYS_PRM_ACK) {
+            AppSettings.save();
+
+            evt.dwEvt = 1;
+            DoEvt(&evt);
+            } // if
           break;
 
         default:

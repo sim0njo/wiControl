@@ -8,16 +8,6 @@
 #include <gpiod.h>
 
   //--------------------------------------------------------------------------
-  //
-  //--------------------------------------------------------------------------
-  tUint32 CGpiod::_outputGetState(tUint32 dwObj)
-  {
-    dwObj &= CGPIOD_OBJ_NUM_MASK;
-
-    return (dwObj < CGPIOD_OUT_COUNT) ? m_output[dwObj].dwState : CGPIOD_OUT_STATE_OFF;
-    } // _outputGetState
-
-  //--------------------------------------------------------------------------
   // configure
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_outputOnConfig() 
@@ -157,7 +147,7 @@
   { 
     tUint32      dwObj;
     tGpiodCmd    cmd;
-    tGpiodEvt    evt;
+    tGpiodEvt    evt   = { pEvt->msNow, pEvt->dwOrig, 0, 0, 0, 0 };
     tGpiodOutput *pObj = m_output; 
 
     do {
@@ -166,10 +156,6 @@
       cmd.msNow  = pEvt->msNow;
       cmd.dwOrig = pEvt->dwOrig;
       
-      memset(&evt, 0, sizeof(evt));
-      evt.msNow  = pEvt->msNow;
-      evt.dwOrig = pEvt->dwOrig;
-
       // handle input event
       if ((pEvt->dwObj & CGPIOD_OBJ_CLS_MASK) == CGPIOD_OBJ_CLS_INPUT) {
 
@@ -212,6 +198,7 @@
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_outputDoCmd(tGpiodCmd* pCmd) 
   { 
+    tCChar       *pFunc = "CGpiod::_outputDoCmd";
     tChar        str1[16], str2[16];
     tGpiodOutput *pObj = &m_output[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK]; 
     tGpiodEvt    evt   = { pCmd->msNow, pCmd->dwOrig, pCmd->dwObj, 0, 0, 0 };
@@ -219,7 +206,7 @@
     do {
       // exit if cmds disabled
       if (AppSettings.gpiodDisable && (pCmd->dwError = XERROR_ACCESS)) {
-        Debug.logTxt(CLSLVL_GPIOD_OUTPUT | 0x0010, "CGpiod::_outputDoCmd,disabled");
+        Debug.logTxt(CLSLVL_GPIOD_OUTPUT | 0x0010, "%s,disabled", pFunc);
         break;
         } // if
 
@@ -338,14 +325,13 @@
           if ((pCmd->dwParms & CGPIOD_OUT_PRM_DEFRUN) && !AppSettings.gpiodLock) {
             pObj->dwRunDef                                                = pCmd->parmsOutput.dwRun;
             AppSettings.gpiodOutDefRun[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK] = pCmd->parmsOutput.dwRun;
-            AppSettings.save();
             } // if
         
           pCmd->dwRsp = pObj->dwRunDef;   
    
           gsprintf(str1, "%s/defrun", PrintObj2String(str2, pCmd->dwObj));
-          evt.szTopic = str1;
-          evt.dwEvt   = pObj->dwRunDef;
+          evt.szObj = str1;
+          evt.dwEvt = pObj->dwRunDef;
           DoSta(&evt);
           break;
 
@@ -364,7 +350,7 @@
 
         default:
           pCmd->dwError = XERROR_NOT_FOUND;
-          Debug.logTxt(CLSLVL_GPIOD_OUTPUT | 0x0900, "CGpiod::_outputDoCmd,unknown cmd %u", pCmd->dwCmd & CGPIOD_CMD_NUM_MASK);
+          Debug.logTxt(CLSLVL_GPIOD_OUTPUT | 0x0900, "%s,unknown cmd %u", pFunc, pCmd->dwCmd & CGPIOD_CMD_NUM_MASK);
           break;
         } // switch
 
@@ -374,9 +360,19 @@
 
       } while (FALSE);
 
-    Debug.logTxt(CLSLVL_GPIOD_OUTPUT | 0x9999, "CGpiod::_outputDoCmd,err=%u", pCmd->dwError);
+    Debug.logTxt(CLSLVL_GPIOD_OUTPUT | 0x9999, "%s,err=%u", pFunc, pCmd->dwError);
     return pCmd->dwError; 
     } // _outputDoCmd
+
+  //--------------------------------------------------------------------------
+  // return output state
+  //--------------------------------------------------------------------------
+  tUint32 CGpiod::_outputGetState(tUint32 dwObj)
+  {
+    dwObj &= CGPIOD_OBJ_NUM_MASK;
+
+    return (dwObj < CGPIOD_OUT_COUNT) ? m_output[dwObj].dwState : CGPIOD_OUT_STATE_OFF;
+    } // _outputGetState
 
   //--------------------------------------------------------------------------
   // set new state to hw and send event as needed

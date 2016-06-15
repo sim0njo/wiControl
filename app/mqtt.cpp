@@ -20,6 +20,11 @@ uint32_t             g_mqttPktTx = 0;
 //----------------------------------------------------------------------------
 void     ICACHE_FLASH_ATTR mqttSubscribe(tCChar* szTopicFilter)
 {
+  if (!g_pMqtt) {
+    Debug.logTxt(CLSLVL_MQTT | 0x0010, "mqttSubscribe,MQTT client not running");
+    return;
+    } // if
+
   Debug.logTxt(CLSLVL_MQTT | 0x0000, "mqttSubscribe,topicFilter=%s/%s",
                AppSettings.mqttClientId.c_str(), szTopicFilter);
   g_pMqtt->subscribe(AppSettings.mqttClientId + String("/") + String(szTopicFilter));
