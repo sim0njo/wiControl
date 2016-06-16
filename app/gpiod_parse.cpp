@@ -45,9 +45,7 @@ tUint32 CGpiod::ParseCmd(tGpiodCmd* pOut, tChar* pObj, tChar* pCmd, tUint32 dwOr
         break;
       case CGPIOD_OBJ_CLS_SYSTEM:  dwErr = _parseCmdSystem(pOut);
         break;
-      default:
-        dwErr = XERROR_SYNTAX;
-        Debug.logTxt(CLSLVL_GPIOD_PARSE | 0x0100, "CGpiod::ParseCmd,err=%u,unknown object", dwErr);
+      default:                     dwErr = XERROR_SYNTAX;
         break;
       } // switch
 

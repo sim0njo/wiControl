@@ -82,15 +82,6 @@ tParseRsvd g_gpiodParseObjEvt[] = {
   { 0x00000100      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000006, "ingt2",     },
   { 0x00000100      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000007, "out",       },
 
-//{ 0x80000200      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000000, "off",       },
-//{ 0x80000200      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000001, "on",        },
-
-//{ 0x80000400      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000000, "stop",      },
-//{ 0x80000400      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000001, "upon",      },
-//{ 0x80000400      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000002, "downon",    },
-//{ 0x80000400      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000003, "upoff",     },
-//{ 0x80000400      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000004, "downoff",   },
-
 //{ 0x80000600      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000005, "timexp",    },
                                                                                   
   { 0x80000800      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000006, "timeroff",  },
@@ -113,7 +104,7 @@ tParseRsvd g_gpiodParseCmdInput[] = {
   { 0x000000C0      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00000005, "outgt1",    },
   { 0x000000C0      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00000006, "ingt2",     },
   { 0x000000C0      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00000007, "out",       },
-  { 0x000000C0      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x01000100, "debounce",  },
+  { 0x000000C0      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x01000008, "debounce",  },
 
   { 0x00000000      , 0x00000000       , 0x00000000      , 0x00000000, "",          },
   };

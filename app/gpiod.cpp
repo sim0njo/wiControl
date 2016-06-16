@@ -23,7 +23,7 @@ void                 gpiodOnHttpConfig(HttpRequest &request, HttpResponse &respo
   if (request.getRequestMethod() == RequestMethod::POST) {
     AppSettings.gpiodEmul    = (request.getPostParameter("gpiodEmul")    == "2") ? CGPIOD_EMUL_SHUTTER : CGPIOD_EMUL_OUTPUT;
     AppSettings.gpiodMode    = (request.getPostParameter("gpiodMode")    == "1") ? CGPIOD_MODE_LOCAL   : 
-                               (request.getPostParameter("gpiodMode")    == "2") ? CGPIOD_MODE_MQTT  : CGPIOD_MODE_BOTH;
+                               (request.getPostParameter("gpiodMode")    == "2") ? CGPIOD_MODE_MQTT    : CGPIOD_MODE_BOTH;
     AppSettings.gpiodLock    = (request.getPostParameter("gpiodLock")    == "1") ? CGPIOD_LOCK_TRUE    : CGPIOD_LOCK_FALSE;
     AppSettings.gpiodDisable = (request.getPostParameter("gpiodDisable") == "1") ? CGPIOD_DISABLE_TRUE : CGPIOD_DISABLE_FALSE;
     AppSettings.save();
@@ -181,12 +181,12 @@ tUint32 CGpiod::DoSta(tGpiodEvt* pEvt)
   tChar str1[16], str2[16];
 
   if (pEvt->szEvt)
-    Debug.logTxt(CLSLVL_GPIOD | 0x0000, "CGpiod::DoSta,%s.%s", 
+    Debug.logTxt(CLSLVL_GPIOD | 0x0010, "CGpiod::DoSta,%s.%s", 
                  pEvt->szObj ? pEvt->szObj : PrintObj2String(str1, pEvt->dwObj), pEvt->szEvt);
   else
-    Debug.logTxt(CLSLVL_GPIOD | 0x0000, "CGpiod::DoSta,%s.%s", 
+    Debug.logTxt(CLSLVL_GPIOD | 0x0020, "CGpiod::DoSta,%s.%s (%u)", 
                  pEvt->szObj ? pEvt->szObj : PrintObj2String(str1, pEvt->dwObj), 
-                 PrintObjSta2String(str2, pEvt->dwObj, pEvt->dwEvt), PrintVal2String(str2, pEvt->dwEvt));
+                 PrintObjSta2String(str2, pEvt->dwObj, pEvt->dwEvt), pEvt->dwEvt);
 
   if (AppSettings.gpiodMode & CGPIOD_MODE_MQTT)
     mqttPublish(CGPIOD_STA_PFX, pEvt->szObj ? pEvt->szObj : PrintObj2String(str1, pEvt->dwObj),
@@ -199,14 +199,14 @@ tUint32 CGpiod::DoSta(tGpiodEvt* pEvt)
 tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt) 
 {
   tCChar  *pFunc = "CGpiod::DoEvt";
-  tChar   str1[16], str2[16], str3[16];
+  tChar   str1[16], str2[16];
   tUint32 dwObj = pEvt->dwObj & CGPIOD_OBJ_NUM_MASK;
 
   switch (pEvt->dwObj & CGPIOD_OBJ_CLS_MASK) {
     case CGPIOD_OBJ_CLS_INPUT:
-      Debug.logTxt(CLSLVL_GPIOD | 0x0100, "%s,%s.%s (%s)", pFunc,
+      Debug.logTxt(CLSLVL_GPIOD | 0x0100, "%s,%s.%s (%u)", pFunc,
                    PrintObj2String(str1, pEvt->dwObj), 
-                   PrintObjEvt2String(str2, pEvt->dwObj, pEvt->dwEvt), PrintVal2String(str3, pEvt->dwEvt));
+                   PrintObjEvt2String(str2, pEvt->dwObj, pEvt->dwEvt), pEvt->dwEvt);
 
       // report event if configured
       if (AppSettings.gpiodMode & CGPIOD_MODE_MQTT)
@@ -231,9 +231,9 @@ tUint32 CGpiod::DoEvt(tGpiodEvt* pEvt)
                      pEvt->szObj ? pEvt->szObj : PrintObj2String(str1, pEvt->dwObj), pEvt->szEvt);
 
       else 
-        Debug.logTxt(CLSLVL_GPIOD | 0x0210, "%s,%s.%s (%s)", pFunc,
+        Debug.logTxt(CLSLVL_GPIOD | 0x0210, "%s,%s.%s (%u)", pFunc,
                      pEvt->szObj ? pEvt->szObj : PrintObj2String(str1, pEvt->dwObj), 
-                     PrintObjEvt2String(str2, pEvt->dwObj, pEvt->dwEvt), PrintVal2String(str3, pEvt->dwEvt));
+                     PrintObjEvt2String(str2, pEvt->dwObj, pEvt->dwEvt), pEvt->dwEvt);
 
       // report event if configured
       if (AppSettings.gpiodMode & CGPIOD_MODE_MQTT)

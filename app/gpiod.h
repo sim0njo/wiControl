@@ -195,7 +195,7 @@ typedef struct {
 #define CGPIOD_IN_CMD_OUTGT1                     5 // 
 #define CGPIOD_IN_CMD_INGT2                      6 // 
 #define CGPIOD_IN_CMD_OUT                        7 // 
-#define CGPIOD_IN_CMD_DEBOUNCE          0x00000100 // 
+#define CGPIOD_IN_CMD_DEBOUNCE                   8 // 
 
 #define CGPIOD_IN_PRM_DEBOUNCE          0x01000000 // optional
 

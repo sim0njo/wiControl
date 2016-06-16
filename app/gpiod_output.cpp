@@ -188,7 +188,7 @@
 
         } // if
 
-      } while (0);
+      } while (FALSE);
 
     return m_dwError;
     } // CGpiod::_outputDoEvt

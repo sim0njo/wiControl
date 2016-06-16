@@ -77,7 +77,6 @@
             pObj->msState = msNow;
             pObj->dwState = CGPIOD_IN_STATE_INGT0;
             evt.dwEvt     = CGPIOD_IN_EVT_INGT0;
-//          Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0200, "CGpiod::_inputOnRun,ingt0");
             DoEvt(&evt);
             } // if
           break;
@@ -89,7 +88,6 @@
             pObj->msState = 0;
             pObj->dwState = CGPIOD_IN_STATE_OUT;
             evt.dwEvt     = CGPIOD_IN_EVT_OUTLT1;
-//          Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0300, "CGpiod::_inputOnRun,outlt1");
             DoEvt(&evt);
             } 
           else {
@@ -98,7 +96,6 @@
 
             pObj->dwState = CGPIOD_IN_STATE_INGT1;
             evt.dwEvt     = CGPIOD_IN_EVT_INGT1;
-//          Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0400, "CGpiod::_inputOnRun,ingt1");
             DoEvt(&evt);
             } // else
           break;
@@ -110,7 +107,6 @@
             pObj->msState = 0;
             pObj->dwState = CGPIOD_IN_STATE_OUT;
             evt.dwEvt     = CGPIOD_IN_EVT_OUTGT1;
-//          Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0500, "CGpiod::_inputOnRun,outgt1");
             DoEvt(&evt);
             } 
           else {
@@ -119,7 +115,6 @@
 
             pObj->dwState = CGPIOD_IN_STATE_INGT2;
             evt.dwEvt     = CGPIOD_IN_EVT_INGT2;
-//          Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0600, "CGpiod::_inputOnRun,ingt2");
             DoEvt(&evt);
             } // else
           break;
@@ -131,7 +126,6 @@
             pObj->msState = 0;
             pObj->dwState = CGPIOD_IN_STATE_OUT;
             evt.dwEvt     = CGPIOD_IN_EVT_OUT;
-//          Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0700, "CGpiod::_inputOnRun,out");
             DoEvt(&evt);
             } 
           break;
