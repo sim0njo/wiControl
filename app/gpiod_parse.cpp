@@ -131,13 +131,18 @@ tUint32 CGpiod::_parseCmdOutput(tGpiodCmd* pOut)
     // parse mandatory parms
     if (pOut->dwCmd & CGPIOD_CMD_PRM_MANDATORY) {
 
-      if (pOut->dwCmd & CGPIOD_OUT_PRM_DELAY) { // delay 1-3600 seconds
-        if (dwErr = m_parse.GetNumber(&pOut->parmsOutput.dwDelay, 1, 3600)) break;
+      if (pOut->dwCmd & CGPIOD_OUT_PRM_LOCK) { // lock 0-1
+        if (dwErr = m_parse.GetNumber(&pOut->parmsOutput.dwLock, 0, 1)) break;
+        pOut->dwParms |= CGPIOD_OUT_PRM_LOCK;
+        } // if
+
+      if (pOut->dwCmd & CGPIOD_OUT_PRM_DELAY) { // delay 0-3600 seconds
+        if (dwErr = m_parse.GetNumber(&pOut->parmsOutput.dwDelay, 0, 3600)) break;
         pOut->dwParms |= CGPIOD_OUT_PRM_DELAY;
         } // if
 
-      if (pOut->dwCmd & CGPIOD_OUT_PRM_RUN) { // run 1-3600 seconds
-        if (dwErr = m_parse.GetNumber(&pOut->parmsOutput.dwRun, 1, 3600)) break;
+      if (pOut->dwCmd & CGPIOD_OUT_PRM_RUN) { // run 0-3600 seconds
+        if (dwErr = m_parse.GetNumber(&pOut->parmsOutput.dwRun, 0, 3600)) break;
         pOut->dwParms |= CGPIOD_OUT_PRM_RUN;
         } // if
 
@@ -145,6 +150,11 @@ tUint32 CGpiod::_parseCmdOutput(tGpiodCmd* pOut)
 
     // parse optional parms
     if ((pOut->dwCmd & CGPIOD_CMD_PRM_OPTIONAL) && (m_parse.NextToken(0, 0) == CPARSE_TYPE_PERIOD)) {
+
+      if (pOut->dwCmd & CGPIOD_OUT_PRM_OLOCK) { // lock 0-1
+        if (dwErr = m_parse.GetNumber(&pOut->parmsOutput.dwLock, 0, 1)) break;
+        pOut->dwParms |= CGPIOD_OUT_PRM_OLOCK;
+        } // if
 
       if (pOut->dwCmd & CGPIOD_OUT_PRM_DEFRUN) { // run 0-3600 seconds
         if (dwErr = m_parse.GetNumber(&pOut->parmsOutput.dwRun, 0, 3600)) break;
@@ -213,9 +223,14 @@ tUint32 CGpiod::_parseCmdShutter(tGpiodCmd* pOut)
         pOut->dwParms |= CGPIOD_SHU_PRM_RUN;
         } // if
 
-      if (pOut->dwCmd & CGPIOD_SHU_PRM_TIP) { // tip 0-3600 1/10th seconds
+      if (pOut->dwCmd & CGPIOD_SHU_PRM_TIP0) { // tip 0-3600 1/10th seconds
         if (dwErr = m_parse.GetNumber(&pOut->parmsShutter.dwTip, 0, 3600)) break;
-        pOut->dwParms |= CGPIOD_SHU_PRM_TIP;
+        pOut->dwParms |= CGPIOD_SHU_PRM_TIP0;
+        } // if
+
+      if (pOut->dwCmd & CGPIOD_SHU_PRM_TIP1) { // tip 1-3600 1/10th seconds
+        if (dwErr = m_parse.GetNumber(&pOut->parmsShutter.dwTip, 1, 3600)) break;
+        pOut->dwParms |= CGPIOD_SHU_PRM_TIP1;
         } // if
 
       } // CGPIOD_CMD_PRM_MANDATORY
@@ -224,7 +239,7 @@ tUint32 CGpiod::_parseCmdShutter(tGpiodCmd* pOut)
     if ((pOut->dwCmd & CGPIOD_CMD_PRM_OPTIONAL) && (m_parse.NextToken(0, 0) == CPARSE_TYPE_PERIOD)) {
 
       if (pOut->dwCmd & CGPIOD_SHU_PRM_DEFRUN) { // run 1-3600 seconds
-        if (dwErr = m_parse.GetNumber(&pOut->parmsOutput.dwRun, 1, 3600)) break;
+        if (dwErr = m_parse.GetNumber(&pOut->parmsShutter.dwRun, 1, 3600)) break;
         pOut->dwParms |= CGPIOD_SHU_PRM_DEFRUN;
         } // if
 

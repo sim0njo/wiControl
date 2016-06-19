@@ -1,3 +1,3 @@
 #include "globals.h"
-const char * build_git_sha = "031bb9c-dirty";
-const char * build_time = "Don Jun 16 23:49:51 CEST 2016";
+const char * build_git_sha = "5bcef64-dirty";
+const char * build_time = "Mon Jun 20 00:27:47 CEST 2016";

@@ -112,6 +112,11 @@ tCChar* CGpiod::PrintCmdParamVals(tChar* pOut, tUint32 cbOut, tGpiodCmd* pCmd)
 
       case CGPIOD_OBJ_CLS_OUTPUT:  
       case CGPIOD_OBJ_CLS_TIMER:  
+        if (pCmd->dwParms & CGPIOD_OUT_PRM_LOCK) { 
+          gsprintf(str, ".%u", pCmd->parmsOutput.dwLock);
+          xstrcatn(pOut, cbOut, str, 0);
+          } // if
+
         if (pCmd->dwParms & CGPIOD_OUT_PRM_DELAY) { 
           gsprintf(str, ".%u", pCmd->parmsOutput.dwDelay);
           xstrcatn(pOut, cbOut, str, 0);
@@ -119,6 +124,11 @@ tCChar* CGpiod::PrintCmdParamVals(tChar* pOut, tUint32 cbOut, tGpiodCmd* pCmd)
 
         if (pCmd->dwParms & CGPIOD_OUT_PRM_RUN) { 
           gsprintf(str, ".%u", pCmd->parmsOutput.dwRun);
+          xstrcatn(pOut, cbOut, str, 0);
+          } // if
+
+        if (pCmd->dwParms & CGPIOD_OUT_PRM_OLOCK) {
+          gsprintf(str, ".%u", pCmd->parmsOutput.dwLock);
           xstrcatn(pOut, cbOut, str, 0);
           } // if
 
@@ -145,17 +155,22 @@ tCChar* CGpiod::PrintCmdParamVals(tChar* pOut, tUint32 cbOut, tGpiodCmd* pCmd)
           xstrcatn(pOut, cbOut, str, 0);
           } // if
 
-        if (pCmd->dwParms & CGPIOD_SHU_PRM_DELAY) { // delay 1-65535 seconds or 1/10th seconds (6535s or 65535 1/10th s)
+        if (pCmd->dwParms & CGPIOD_SHU_PRM_DELAY) { // delay 0-3600 seconds 
           gsprintf(str, ".%u", pCmd->parmsShutter.dwDelay);
           xstrcatn(pOut, cbOut, str, 0);
           } // if
 
-        if (pCmd->dwParms & CGPIOD_SHU_PRM_RUN) { // runtime 1-65535 seconds or 1/10th seconds (6535s or 65535 1/10th s)
+        if (pCmd->dwParms & CGPIOD_SHU_PRM_RUN) { // runtime 1-3600 seconds 
           gsprintf(str, ".%u", pCmd->parmsShutter.dwRun);
           xstrcatn(pOut, cbOut, str, 0);
           } // if
 
-        if (pCmd->dwParms & CGPIOD_SHU_PRM_TIP) { // tiptime 1-65535 1/10th seconds (6535s or 65535 1/10th s)
+        if (pCmd->dwParms & CGPIOD_SHU_PRM_TIP0) { // tiptime 0-3600 1/10th seconds
+          gsprintf(str, ".%u", pCmd->parmsShutter.dwTip);
+          xstrcatn(pOut, cbOut, str, 0);
+          } // if
+
+        if (pCmd->dwParms & CGPIOD_SHU_PRM_TIP1) { // tiptime 1-3600 1/10th seconds
           gsprintf(str, ".%u", pCmd->parmsShutter.dwTip);
           xstrcatn(pOut, cbOut, str, 0);
           } // if

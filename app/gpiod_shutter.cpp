@@ -115,9 +115,9 @@
             // initiate stop
             _shutterSetState(pObj, CGPIOD_SHU_STATE_STOP, &evt);
             pObj->dwTip = 0;
-            pObj->dwCmd = CGPIOD_SHU_CMD_NONE;
             } // if tip
 
+          pObj->dwCmd = CGPIOD_SHU_CMD_NONE;
           break;
 
         case CGPIOD_SHU_CMD_DOWN:
@@ -166,9 +166,9 @@
             // initiate stop
             _shutterSetState(pObj, CGPIOD_SHU_STATE_STOP, &evt);
             pObj->dwTip = 0;
-            pObj->dwCmd = CGPIOD_SHU_CMD_NONE;
             } // if tip
 
+          pObj->dwCmd = CGPIOD_SHU_CMD_NONE;
           break;
 
         default:
@@ -225,8 +225,10 @@
 
           case CGPIOD_IN_EVT_INGT1:
             // start shutter up/down
-            cmd.dwObj              = CGPIOD_OBJ_CLS_SHUTTER | ((pEvt->dwObj & CGPIOD_OBJ_NUM_MASK) / 2);
-            cmd.parmsShutter.dwRun = m_shutter[(pEvt->dwObj & CGPIOD_OBJ_NUM_MASK) / 2].dwRunDef; 
+            cmd.dwObj                = CGPIOD_OBJ_CLS_SHUTTER | ((pEvt->dwObj & CGPIOD_OBJ_NUM_MASK) / 2);
+            cmd.parmsShutter.dwDelay = 0;
+            cmd.parmsShutter.dwRun   = m_shutter[(pEvt->dwObj & CGPIOD_OBJ_NUM_MASK) / 2].dwRunDef; 
+            cmd.parmsShutter.dwTip   = 0;
 
             if (pEvt->dwObj & 0x1)
               // in1, in3
@@ -252,7 +254,7 @@
   tUint32 CGpiod::_shutterCheckPrio(tGpiodShutter* pObj, tGpiodCmd* pCmd)
   { 
     // ok if not locked
-    if (_GetFlags(&pObj->dwFlags, CGPIOD_SHU_FLG_LOCKED) == 0)
+    if (GetFlags(&pObj->dwFlags, CGPIOD_SHU_FLG_LOCKED) == 0)
       return XERROR_SUCCESS;
 
     // nok if set prio is higher than cmd prio
@@ -312,6 +314,36 @@
           pObj->dwCmd = CGPIOD_SHU_CMD_NONE;
           break;
 
+        case CGPIOD_SHU_CMD_UP: 
+          if (_shutterCheckPrio(pObj, pCmd)) break;
+          
+          // make sure to stop first
+          _shutterSetState(pObj, CGPIOD_SHU_STATE_STOP, &evt); 
+
+          // prepare for up
+          pObj->dwDelay1 = (pCmd->parmsShutter.dwDelay) ? SetTimerSec(pCmd->msNow, pCmd->parmsShutter.dwDelay) :
+                                                          SetTimerMilliSec(pCmd->msNow, CGPIOD_SHU_DEF_DELAY);
+          pObj->dwRun    =  pCmd->parmsShutter.dwRun;    
+          pObj->dwDelay2 = (pCmd->parmsShutter.dwTip  ) ? CGPIOD_SHU_DEF_DELAY : 0;
+          pObj->dwTip    =  pCmd->parmsShutter.dwTip;
+          pObj->dwCmd    =  CGPIOD_SHU_CMD_UP;
+          break;
+
+        case CGPIOD_SHU_CMD_DOWN: 
+          if (_shutterCheckPrio(pObj, pCmd)) break;
+          
+          // make sure to stop first
+          _shutterSetState(pObj, CGPIOD_SHU_STATE_STOP, &evt); 
+
+          // prepare for down
+          pObj->dwDelay1 = (pCmd->parmsShutter.dwDelay) ? SetTimerSec(pCmd->msNow, pCmd->parmsShutter.dwDelay) :
+                                                          SetTimerMilliSec(pCmd->msNow, CGPIOD_SHU_DEF_DELAY);
+          pObj->dwRun    =  pCmd->parmsShutter.dwRun;    
+          pObj->dwDelay2 = (pCmd->parmsShutter.dwTip  ) ? CGPIOD_SHU_DEF_DELAY : 0;
+          pObj->dwTip    =  pCmd->parmsShutter.dwTip;
+          pObj->dwCmd    =  CGPIOD_SHU_CMD_DOWN;
+          break;
+
         case CGPIOD_SHU_CMD_TOGGLEUP: 
           if (_shutterCheckPrio(pObj, pCmd)) break;
 
@@ -344,32 +376,6 @@
           _shutterSetState(pObj, CGPIOD_SHU_STATE_STOP, &evt); 
           break;
 
-        case CGPIOD_SHU_CMD_UP: 
-          if (_shutterCheckPrio(pObj, pCmd)) break;
-          
-          // make sure to stop first
-          _shutterSetState(pObj, CGPIOD_SHU_STATE_STOP, &evt); 
-
-          // prepare for up
-          pObj->dwDelay1 = SetTimerMilliSec(pCmd->msNow, CGPIOD_SHU_DEF_DELAY);
-          pObj->dwRun    = pCmd->parmsShutter.dwRun;
-          pObj->dwDelay2 = pObj->dwTip = 0;
-          pObj->dwCmd    = CGPIOD_SHU_CMD_UP;
-          break;
-
-        case CGPIOD_SHU_CMD_DOWN: 
-          if (_shutterCheckPrio(pObj, pCmd)) break;
-          
-          // make sure to stop first
-          _shutterSetState(pObj, CGPIOD_SHU_STATE_STOP, &evt); 
-
-          // prepare for down
-          pObj->dwDelay1 = SetTimerMilliSec(pCmd->msNow, CGPIOD_SHU_DEF_DELAY);
-          pObj->dwRun    = pCmd->parmsShutter.dwRun;
-          pObj->dwDelay2 = pObj->dwTip = 0;
-          pObj->dwCmd    = CGPIOD_SHU_CMD_DOWN;
-          break;
-
         case CGPIOD_SHU_CMD_TIPUP: 
           if (_shutterCheckPrio(pObj, pCmd)) break;
           
@@ -380,7 +386,7 @@
           pObj->dwDelay1 = pObj->dwRun = 0;
           pObj->dwDelay2 = SetTimerMilliSec(pCmd->msNow, CGPIOD_SHU_DEF_DELAY);
           pObj->dwTip    = pCmd->parmsShutter.dwTip;
-          pObj->dwCmd    = CGPIOD_SHU_CMD_UP;
+          pObj->dwCmd    = CGPIOD_SHU_CMD_DOWN; // because tip is opposite of cmd
           break;
     
         case CGPIOD_SHU_CMD_TIPDOWN: 
@@ -393,17 +399,17 @@
           pObj->dwDelay1 = pObj->dwRun = 0;
           pObj->dwDelay2 = SetTimerMilliSec(pCmd->msNow, CGPIOD_SHU_DEF_DELAY);
           pObj->dwTip    = pCmd->parmsShutter.dwTip;
-          pObj->dwCmd    = CGPIOD_SHU_CMD_DOWN;
+          pObj->dwCmd    = CGPIOD_SHU_CMD_UP; // because tip is opposite of cmd
           break;
 
         case CGPIOD_SHU_CMD_PRIOLOCK: 
           pObj->dwPrioLvl  = CGPIOD_SHU_PRIO_LVL_5;
           pObj->dwPrioMask = pCmd->parmsShutter.dwPrioMask;
-          _SetFlags(&pObj->dwFlags, CGPIOD_SHU_FLG_LOCKED);
+          SetFlags(&pObj->dwFlags, CGPIOD_SHU_FLG_LOCKED);
           break;
 
         case CGPIOD_SHU_CMD_PRIOUNLOCK: 
-          _RstFlags(&pObj->dwFlags, CGPIOD_SHU_FLG_LOCKED);
+          RstFlags(&pObj->dwFlags, CGPIOD_SHU_FLG_LOCKED);
           break;
 
         case CGPIOD_SHU_CMD_LEARNON: 
@@ -417,69 +423,11 @@
         case CGPIOD_SHU_CMD_PRIOSET: 
           pObj->dwPrioLvl  = pCmd->parmsShutter.dwPrioLvl;
           pObj->dwPrioMask = CGPIOD_SHU_PRIO_MASK_NONE;
-          _SetFlags(&pObj->dwFlags, CGPIOD_SHU_FLG_LOCKED);
+          SetFlags(&pObj->dwFlags, CGPIOD_SHU_FLG_LOCKED);
           break;
 
         case CGPIOD_SHU_CMD_PRIORESET: 
-          _RstFlags(&pObj->dwFlags, CGPIOD_SHU_FLG_LOCKED);
-          break;
-
-        case CGPIOD_SHU_CMD_SENSROLUP:
-          if (_shutterCheckPrio(pObj, pCmd)) break;
-          
-          // make sure to stop first
-          _shutterSetState(pObj, CGPIOD_SHU_STATE_STOP, &evt); 
-
-          // prepare for up
-          pObj->dwDelay1 = pCmd->parmsShutter.dwDelay ? SetTimerSec(pCmd->msNow, pCmd->parmsShutter.dwDelay) : 
-                                                        SetTimerMilliSec(pCmd->msNow, CGPIOD_SHU_DEF_DELAY);
-          pObj->dwRun    = pCmd->parmsShutter.dwRun;
-          pObj->dwDelay2 = pObj->dwTip = 0;
-          pObj->dwCmd    = CGPIOD_SHU_CMD_UP;
-          break;
-
-        case CGPIOD_SHU_CMD_SENSJALUP: 
-          if (_shutterCheckPrio(pObj, pCmd)) break;
-          
-          // make sure to stop first
-          _shutterSetState(pObj, CGPIOD_SHU_STATE_STOP, &evt); 
-
-          // prepare for up
-          pObj->dwDelay1 = pCmd->parmsShutter.dwDelay ? SetTimerSec(pCmd->msNow, pCmd->parmsShutter.dwDelay) : 
-                                                        SetTimerMilliSec(pCmd->msNow, CGPIOD_SHU_DEF_DELAY);
-          pObj->dwRun    = pCmd->parmsShutter.dwRun;
-          pObj->dwDelay2 = pCmd->parmsShutter.dwTip   ? SetTimerMilliSec(pCmd->msNow, CGPIOD_SHU_DEF_DELAY) : 0;
-          pObj->dwTip    = pCmd->parmsShutter.dwTip;
-          pObj->dwCmd    = CGPIOD_SHU_CMD_UP;
-          break;
-
-        case CGPIOD_SHU_CMD_SENSROLDOWN: 
-          if (_shutterCheckPrio(pObj, pCmd)) break;
-          
-          // make sure to stop first
-          _shutterSetState(pObj, CGPIOD_SHU_STATE_STOP, &evt); 
-
-          // prepare for down
-          pObj->dwDelay1 = pCmd->parmsShutter.dwDelay ? SetTimerSec(pCmd->msNow, pCmd->parmsShutter.dwDelay) : 
-                                                        SetTimerMilliSec(pCmd->msNow, CGPIOD_SHU_DEF_DELAY);
-          pObj->dwRun    = pCmd->parmsShutter.dwRun;
-          pObj->dwDelay2 = pObj->dwTip = 0;
-          pObj->dwCmd    = CGPIOD_SHU_CMD_DOWN;
-          break;
-
-        case CGPIOD_SHU_CMD_SENSJALDOWN: 
-          if (_shutterCheckPrio(pObj, pCmd)) break;
-          
-          // make sure to stop first
-          _shutterSetState(pObj, CGPIOD_SHU_STATE_STOP, &evt); 
-
-          // prepare for up
-          pObj->dwDelay1 = pCmd->parmsShutter.dwDelay ? SetTimerSec(pCmd->msNow, pCmd->parmsShutter.dwDelay) : 
-                                                        SetTimerMilliSec(pCmd->msNow, CGPIOD_SHU_DEF_DELAY);
-          pObj->dwRun    = pCmd->parmsShutter.dwRun;
-          pObj->dwDelay2 = pCmd->parmsShutter.dwTip   ? SetTimerMilliSec(pCmd->msNow, CGPIOD_SHU_DEF_DELAY) : 0;
-          pObj->dwTip    = pCmd->parmsShutter.dwTip;
-          pObj->dwCmd    = CGPIOD_SHU_CMD_DOWN;
+          RstFlags(&pObj->dwFlags, CGPIOD_SHU_FLG_LOCKED);
           break;
 
         case CGPIOD_SHU_CMD_DEFRUN: 
@@ -507,6 +455,12 @@
       if (pCmd->dwCmd & CGPIOD_CMD_RSP_AUTO)
         pCmd->dwRsp = pObj->dwState;
    
+//    Debug.logTxt(CLSLVL_GPIOD_SHUTTER | 0x9000, "%s,dwDelay1=%u", pFunc, pObj->dwDelay1);
+//    Debug.logTxt(CLSLVL_GPIOD_SHUTTER | 0x9010, "%s,dwRun   =%u", pFunc, pObj->dwRun);
+//    Debug.logTxt(CLSLVL_GPIOD_SHUTTER | 0x9020, "%s,dwDelay2=%u", pFunc, pObj->dwDelay2);
+//    Debug.logTxt(CLSLVL_GPIOD_SHUTTER | 0x9030, "%s,dwTip   =%u", pFunc, pObj->dwTip);
+//    Debug.logTxt(CLSLVL_GPIOD_SHUTTER | 0x9040, "%s,dwCmd   =%u", pFunc, pObj->dwCmd);
+//    Debug.logTxt(CLSLVL_GPIOD_SHUTTER | 0x9050, "%s,dwState =%u", pFunc, pObj->dwState);
       } while (FALSE);
 
     Debug.logTxt(CLSLVL_GPIOD_SHUTTER | 0x9999, "%s,err=%u", pFunc, pCmd->dwError);
