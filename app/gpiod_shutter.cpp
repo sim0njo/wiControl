@@ -232,10 +232,10 @@
 
             if (pEvt->dwObj & 0x1)
               // in1, in3
-              cmd.dwCmd = CGPIOD_SHU_CMD_DOWN;
+              cmd.dwCmd = CGPIOD_SHU_CMD_UP;
             else
               // in0, in2
-              cmd.dwCmd = CGPIOD_SHU_CMD_UP;
+              cmd.dwCmd = CGPIOD_SHU_CMD_DOWN;
  
             _shutterDoCmd(&cmd);
             break;
@@ -295,6 +295,8 @@
     tGpiodEvt     evt   = { pCmd->msNow, pCmd->dwOrig, pCmd->dwObj, 0, 0, 0 };
 
     do {
+      Debug.logTxt(CLSLVL_GPIOD_SHUTTER | 0x0000, "%s", pFunc);
+
       // exit if cmds disabled
       if (AppSettings.gpiodDisable && (pCmd->dwError = XERROR_ACCESS)) {
         Debug.logTxt(CLSLVL_GPIOD_SHUTTER | 0x0010, "%s,disabled", pFunc);
@@ -480,33 +482,45 @@
   //--------------------------------------------------------------------------
   // set new state to hw and send event as needed
   //--------------------------------------------------------------------------
-  void CGpiod::_shutterSetState(tGpiodShutter* pObj, tUint32 dwState, tGpiodEvt* pEvt) 
+  tUint32 CGpiod::_shutterSetState(tGpiodShutter* pObj, tUint32 dwState, tGpiodEvt* pEvt) 
   {
-    // pObj->dwState dwState evt 
-    // stop          up      UPON
-    // stop          down    DOWNON
-    // up            stop    UPOFF
-    // up            down    not allowed
-    // down          stop    DOWNOFF
-    // down          up      not allowed
-    switch (pObj->dwState = dwState) {
-      case CGPIOD_SHU_STATE_UP:
-        _ioSetPinVal(pObj->dwPinDown,  CGPIOD_OUT_STATE_OFF ^ pObj->dwPol);
-        _ioSetPinVal(pObj->dwPinUp,    CGPIOD_OUT_STATE_ON  ^ pObj->dwPol);
-        if (pEvt) pEvt->dwEvt = CGPIOD_SHU_STATE_UP;
+    do {
+      // exit if no difference
+      if (pObj->dwState == dwState)
         break;
-      case CGPIOD_SHU_STATE_DOWN:
-        _ioSetPinVal(pObj->dwPinUp,    CGPIOD_OUT_STATE_OFF ^ pObj->dwPol);
-        _ioSetPinVal(pObj->dwPinDown,  CGPIOD_OUT_STATE_ON  ^ pObj->dwPol);
-        if (pEvt) pEvt->dwEvt = CGPIOD_SHU_STATE_DOWN;
-        break;
-      default:
-        _ioSetPinVal(pObj->dwPinUp,    CGPIOD_OUT_STATE_OFF ^ pObj->dwPol);
-        _ioSetPinVal(pObj->dwPinDown,  CGPIOD_OUT_STATE_OFF ^ pObj->dwPol);
-        if (pEvt) pEvt->dwEvt = CGPIOD_SHU_STATE_STOP;
-        break;
-      } // switch
 
-    if (pEvt) DoSta(pEvt);             
+      // pObj->dwState dwState evt 
+      // stop          up      UPON
+      // stop          down    DOWNON
+      // up            stop    UPOFF
+      // up            down    not allowed
+      // down          stop    DOWNOFF
+      // down          up      not allowed
+      switch (pObj->dwState = dwState) {
+        case CGPIOD_SHU_STATE_UP:
+          _ioSetPinVal(pObj->dwPinDown,  CGPIOD_OUT_STATE_OFF ^ pObj->dwPol);
+          _ioSetPinVal(pObj->dwPinUp,    CGPIOD_OUT_STATE_ON  ^ pObj->dwPol);
+          if (pEvt) pEvt->dwEvt = CGPIOD_SHU_STATE_UP;
+          break;
+        case CGPIOD_SHU_STATE_DOWN:
+          _ioSetPinVal(pObj->dwPinUp,    CGPIOD_OUT_STATE_OFF ^ pObj->dwPol);
+          _ioSetPinVal(pObj->dwPinDown,  CGPIOD_OUT_STATE_ON  ^ pObj->dwPol);
+          if (pEvt) pEvt->dwEvt = CGPIOD_SHU_STATE_DOWN;
+          break;
+        default:
+          _ioSetPinVal(pObj->dwPinUp,    CGPIOD_OUT_STATE_OFF ^ pObj->dwPol);
+          _ioSetPinVal(pObj->dwPinDown,  CGPIOD_OUT_STATE_OFF ^ pObj->dwPol);
+          if (pEvt) pEvt->dwEvt = CGPIOD_SHU_STATE_STOP;
+          break;
+        } // switch
+
+        if (pEvt) {
+        pEvt->szObj = 0;
+        DoSta(pEvt);
+        } // if
+
+    } while (FALSE);
+
+    return pObj->dwState;
     } // _shutterSetState
 

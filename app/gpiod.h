@@ -277,17 +277,17 @@ typedef struct {
 #define CGPIOD_SHU0                              0 //
 #define CGPIOD_SHU1                              1 //
 
-#define CGPIOD_SHU0_PIN_UP                      15 // out0 D8 
-#define CGPIOD_SHU0_PIN_DOWN                    13 // out1 D7
-#define CGPIOD_SHU1_PIN_UP                      12 // out2 D6
-#define CGPIOD_SHU1_PIN_DOWN                    14 // out3 D5
+#define CGPIOD_SHU0_PIN_DOWN                    15 // out0 D8 
+#define CGPIOD_SHU0_PIN_UP                      13 // out1 D7
+#define CGPIOD_SHU1_PIN_DOWN                    12 // out2 D6
+#define CGPIOD_SHU1_PIN_UP                      14 // out3 D5
 
 #define CGPIOD_SHU_DEF_RUN                      30 // 30s
 #define CGPIOD_SHU_DEF_DELAY                   200 // 200ms
 
 #define CGPIOD_SHU_STATE_STOP                    0 // 
-#define CGPIOD_SHU_STATE_UP                      1 // 
-#define CGPIOD_SHU_STATE_DOWN                    2 // 
+#define CGPIOD_SHU_STATE_DOWN                    1 // 
+#define CGPIOD_SHU_STATE_UP                      2 // 
 
 #define CGPIOD_SHU_CMD_NONE                      0 //
 #define CGPIOD_SHU_CMD_STATUS                    1 // out0-1
@@ -573,7 +573,7 @@ class CGpiod {
   tUint32            _shutterDoCmd(tGpiodCmd* pCmd);
   tUint32            _shutterCheckPrio(tGpiodShutter* pObj, tGpiodCmd* pCmd);
   tUint32            _shutterGetState(tUint32 dwObj);
-  void               _shutterSetState(tGpiodShutter* pObj, tUint32 dwState, tGpiodEvt* pEvt);
+  tUint32            _shutterSetState(tGpiodShutter* pObj, tUint32 dwState, tGpiodEvt* pEvt);
 
   //--------------------------------------------------------------------------
   // gpiod_system.cpp
