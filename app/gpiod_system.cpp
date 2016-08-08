@@ -13,21 +13,14 @@
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_systemOnConfig() 
   {
-    Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0010, "CGpiod::_systemOnConfig,emul   =%u", AppSettings.gpiodEmul);
-    Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0020, "CGpiod::_systemOnConfig,mode   =%u", AppSettings.gpiodMode);
-    Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0030, "CGpiod::_systemOnConfig,lock   =%u", AppSettings.gpiodLock);
-    Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0040, "CGpiod::_systemOnConfig,disable=%u", AppSettings.gpiodDisable);
+    Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0010, "CGpiod::_systemOnConfig,emul   =%u", g_appCfg.gpiodEmul);
+    Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0020, "CGpiod::_systemOnConfig,mode   =%u", g_appCfg.gpiodMode);
+    Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0030, "CGpiod::_systemOnConfig,lock   =%u", g_appCfg.gpiodLock);
+    Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0040, "CGpiod::_systemOnConfig,disable=%u", g_appCfg.gpiodDisable);
 
     // configure heartbeat timer
     memset(&m_hbeat, 0, sizeof(m_hbeat));
     m_hbeat.msPeriod = CGPIOD_HB_PERIOD;
-
-    // configure system led
-    memset(&m_led, 0, sizeof(m_led)); 
-    m_led.dwPin   = CGPIOD_LED_PIN; 
-    m_led.dwPol   = CGPIOD_IO_POL_NORMAL; 
-    m_led.dwState = CGPIOD_OUT_STATE_OFF; 
-    m_led.dwCmd   = CGPIOD_LED_CMD_NONE; 
     return m_dwError;
     } // _systemOnConfig
 
@@ -37,8 +30,6 @@
   tUint32 CGpiod::_systemOnInit() 
   {
     Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0000, "CGpiod::_systemOnInit");
-    _ioSetPinVal(m_led.dwPin, m_led.dwState ^ m_led.dwPol);
-    _ioSetPinDir(m_led.dwPin, CGPIOD_IO_DIR_OUTPUT);
     return m_dwError;
     } // _systemOnInit
 
@@ -58,30 +49,6 @@
       DoEvt(&evt);
       } // if
 
-    // handle system leds
-    switch (m_led.dwCmd) {
-      case CGPIOD_LED_CMD_ONTIMED:
-        if (msNow >= m_led.dwRun) {
-          _outputSetState(&m_led, CGPIOD_OUT_STATE_OFF, 0);
-          m_led.dwCmd = CGPIOD_LED_CMD_NONE;
-          } // if
-        break;
-
-      case CGPIOD_LED_CMD_BLINK:
-        // handled by _systemDoEvt() for multi-channel in phase operation
-        break;
-
-      case CGPIOD_LED_CMD_BLINKTIMED:
-        if (msNow >= m_led.dwRun) {
-          _outputSetState(&m_led, CGPIOD_OUT_STATE_OFF, 0);
-          m_led.dwCmd = CGPIOD_LED_CMD_NONE;
-          } // if
-        break;
-
-      default:
-        break;
-      } // switch
-
     return m_dwError;
     } // CGpiod::_systemOnRun
 
@@ -92,8 +59,6 @@
   {
     // set outputs to off and switch to input
     Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0000, "CGpiod::_systemOnExit");
-    _ioSetPinVal(m_led.dwPin, (m_led.dwState = CGPIOD_OUT_STATE_OFF) ^ m_led.dwPol);
-    _ioSetPinDir(m_led.dwPin, CGPIOD_IO_DIR_INPUT);
     return m_dwError;
     } // CGpiod::_systemOnExit
 
@@ -102,14 +67,6 @@
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_systemDoEvt(tGpiodEvt* pEvt) 
   { 
-    // handle 1 second heartbeat for synchronous blinking leds
-    if ((pEvt->dwObj & CGPIOD_OBJ_CLS_MASK) == CGPIOD_OBJ_CLS_HBEAT) {
-      
-      if ((m_led.dwCmd == CGPIOD_LED_CMD_BLINK) || (m_led.dwCmd == CGPIOD_LED_CMD_BLINKTIMED))
-        _outputSetState(&m_led, (pEvt->dwEvt == CGPIOD_HB_EVT_ODD) ? CGPIOD_OUT_STATE_ON : CGPIOD_OUT_STATE_OFF, 0);
-
-      } // if
-
     return m_dwError;
     } // CGpiod::_systemDoEvt
 
@@ -118,20 +75,21 @@
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_systemDoCmd(tGpiodCmd* pCmd) 
   { 
-    tChar     str[32];
+    tChar     str[40];
+    tUint8    byMac[8];
     tGpiodEvt evt = { pCmd->msNow, pCmd->dwOrig, pCmd->dwObj, 0, 0, 0 };
     tGpiodCmd cmd = { 0 };
 
     do {
       switch (pCmd->dwCmd & CGPIOD_CMD_NUM_MASK) {
         case CGPIOD_SYS_CMD_PING: // blink led @ D8 for x seconds
-          m_led.dwCmd = CGPIOD_LED_CMD_BLINKTIMED;
-          m_led.dwRun = pCmd->msNow + CGPIOD_LED_BLINKTIME;
-          _outputSetState(&m_led, m_led.dwState ^ CGPIOD_OUT_STATE_ON, 0);
           pCmd->dwRsp = 1;
 
           evt.szObj = "pong";
-          gsprintf(str, "%s", Network.getClientIP().toString().c_str());
+          wifi_get_macaddr(0x0, byMac);
+          gsprintf(str, "%s,%02X:%02X:%02X:%02X:%02X:%02X",
+                   Network.getClientAddr().toString().c_str(), byMac[0], byMac[1], byMac[2], byMac[3], byMac[4], byMac[5]);
+//        gsprintf(str, "%s;%06X", Network.getClientAddr().toString().c_str(), system_get_chip_id());
           evt.szEvt = str;
           DoEvt(&evt);
           break;
@@ -140,7 +98,7 @@
           // report current value
           pCmd->dwRsp = APP_VERSION;
 
-          gsprintf(str, "%s;%s/%s", szAPP_VERSION, szAPP_TOPOLOGY, szAPP_TOPOVER);
+          gsprintf(str, "%s;%s", szAPP_VERSION, szAPP_TOPOLOGY);
           evt.szEvt   = str;
           DoSta(&evt);
           break;
@@ -165,7 +123,7 @@
 
         case CGPIOD_SYS_CMD_LOGLEVEL:
           // handle set command
-          if ((pCmd->dwParms == CGPIOD_SYS_PRM_LOGLEVEL) && !AppSettings.gpiodLock)
+          if ((pCmd->dwParms == CGPIOD_SYS_PRM_LOGLEVEL) && !g_appCfg.gpiodLock)
             Debug.logClsLevels(DEBUG_CLS_0, pCmd->parmsSystem.dwParm);
 
           // report current value
@@ -176,70 +134,70 @@
 
         case CGPIOD_SYS_CMD_EMUL:
           // handle set command
-          if ((pCmd->dwParms == CGPIOD_SYS_PRM_EMUL) && !AppSettings.gpiodLock) {
+          if ((pCmd->dwParms == CGPIOD_SYS_PRM_EMUL) && !g_appCfg.gpiodLock) {
             Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0100, "CGpiod::_systemDoCmd,set emul to %u", pCmd->parmsSystem.dwParm);
           
-            AppSettings.gpiodEmul = pCmd->parmsSystem.dwParm;
+            g_appCfg.gpiodEmul = pCmd->parmsSystem.dwParm;
             OnInit();
             } // if
 
           // report current value
-          pCmd->dwRsp = AppSettings.gpiodEmul;
-          evt.dwEvt   = AppSettings.gpiodEmul;
+          pCmd->dwRsp = g_appCfg.gpiodEmul;
+          evt.dwEvt   = g_appCfg.gpiodEmul;
           DoSta(&evt);
           break;
 
         case CGPIOD_SYS_CMD_MODE: 
           // handle set command
-          if ((pCmd->dwParms == CGPIOD_SYS_PRM_MODE) && !AppSettings.gpiodLock) {
+          if ((pCmd->dwParms == CGPIOD_SYS_PRM_MODE) && !g_appCfg.gpiodLock) {
             Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0100, "CGpiod::_systemDoCmd,set mode to %u", pCmd->parmsSystem.dwParm);
-            AppSettings.gpiodMode = pCmd->parmsSystem.dwParm;
+            g_appCfg.gpiodMode = pCmd->parmsSystem.dwParm;
             } // if
 
           // report current value
-          pCmd->dwRsp = AppSettings.gpiodMode;
-          evt.dwEvt   = AppSettings.gpiodMode;
+          pCmd->dwRsp = g_appCfg.gpiodMode;
+          evt.dwEvt   = g_appCfg.gpiodMode;
           DoSta(&evt);
           break;
 
         case CGPIOD_SYS_CMD_LOCK:
           // handle set command
           if (pCmd->dwParms == CGPIOD_SYS_PRM_OFFON) {
-            AppSettings.gpiodLock = pCmd->parmsSystem.dwParm ? 1 : 0;
+            g_appCfg.gpiodLock = pCmd->parmsSystem.dwParm ? 1 : 0;
             } // if
 
           // report current value
-          pCmd->dwRsp = AppSettings.gpiodLock;
-          evt.dwEvt   = AppSettings.gpiodLock;
+          pCmd->dwRsp = g_appCfg.gpiodLock;
+          evt.dwEvt   = g_appCfg.gpiodLock;
           DoSta(&evt);
           break;
 
         case CGPIOD_SYS_CMD_DISABLE: 
           // handle command
-          if ((pCmd->dwParms == CGPIOD_SYS_PRM_OFFON) && !AppSettings.gpiodLock) {
-            AppSettings.gpiodDisable = pCmd->parmsSystem.dwParm ? 1 : 0;
+          if ((pCmd->dwParms == CGPIOD_SYS_PRM_OFFON) && !g_appCfg.gpiodLock) {
+            g_appCfg.gpiodDisable = pCmd->parmsSystem.dwParm ? 1 : 0;
             } // if
 
           // report current value
-          pCmd->dwRsp = AppSettings.gpiodDisable;
-          evt.dwEvt   = AppSettings.gpiodDisable;
+          pCmd->dwRsp = g_appCfg.gpiodDisable;
+          evt.dwEvt   = g_appCfg.gpiodDisable;
           DoSta(&evt);
           break;
 
         case CGPIOD_SYS_CMD_RESTART:
           // handle command
-          if ((pCmd->dwParms == CGPIOD_SYS_PRM_ACK) && (AppSettings.gpiodLock == CGPIOD_LOCK_FALSE)) {
+          if ((pCmd->dwParms == CGPIOD_SYS_PRM_ACK) && (g_appCfg.gpiodLock == CGPIOD_LOCK_FALSE)) {
             evt.dwEvt = 1;
             DoEvt(&evt);
 
-            System.restart();
+            g_app.Restart(0);
             } // if
 
           break;
 
         case CGPIOD_SYS_CMD_SAVE:
           if (pCmd->dwParms == CGPIOD_SYS_PRM_ACK) {
-            AppSettings.save();
+            g_appCfg.save();
 
             evt.dwEvt = 1;
             DoEvt(&evt);

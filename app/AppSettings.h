@@ -13,39 +13,37 @@
 
 #define APP_SETTINGS_FILE ".settings.conf" // leading point for security reasons :)
 
-typedef enum
-{
-    apModeAlwaysOn = 1,
-    apModeAlwaysOff,
-    apModeWhenDisconnected
-} eAppMode;
+typedef enum {
+  apModeAlwaysOn = 1,
+  apModeAlwaysOff,
+  apModeWhenDisconnected
+  } eNetwApMode;
 
-class ApplicationSettingsStorage
-{
+class ApplicationSettingsStorage {
  public:
-  bool               wired = false;
-  String             ssid;
-  String             password;
-  eAppMode           apMode = apModeAlwaysOn;
-  String             apPassword;
+  bool               netwWired = false;
+
+  eNetwApMode        apMode = apModeAlwaysOn;
+  String             apPswd;
+
+  String             staSSID;
+  String             staPswd;
 
   String             portalUrl;
   String             portalData;
 
-  bool               dhcp = true;
-
-  IPAddress          ip;
-  IPAddress          netmask;
-  IPAddress          gateway;
+  bool               netwDHCP = true;
+  IPAddress          netwAddr;
+  IPAddress          netwMask;
+  IPAddress          netwGtwy;
 
   String             mqttUser;
-  String             mqttPass;
+  String             mqttPswd;
   String             mqttServer;
   int                mqttPort = 1883;
   String             mqttClientId;
 
   bool               cpuBoost = true;
-  bool               useOwnBaseAddress = true;
 
   String             webOtaBaseUrl;
 
@@ -65,6 +63,6 @@ class ApplicationSettingsStorage
   bool               exist() { return fileExist(APP_SETTINGS_FILE); }
   };
 
-extern ApplicationSettingsStorage AppSettings;
+extern ApplicationSettingsStorage g_appCfg;
 
 #endif /* INCLUDE_APPSETTINGS_H_ */

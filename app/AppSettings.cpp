@@ -6,6 +6,7 @@
  */
 
 #include <SmingCore/SmingCore.h>
+#include <SmingCore/Debug.h>
 #include <AppSettings.h>
 
 void ApplicationSettingsStorage::load()
@@ -21,12 +22,12 @@ void ApplicationSettingsStorage::load()
 
     JsonObject& network = root["network"];
 
-    wired = false;
+    netwWired = false;
 
-    ssid = (const char *)network["ssid"];
-    password = (const char *)network["password"];
-    apPassword = (const char *)network["apPassword"];
-    portalUrl = (const char *)network["portalUrl"];
+    staSSID    = (const char *)network["staSSID"];
+    staPswd    = (const char *)network["staPswd"];
+    apPswd     = (const char *)network["apPswd"];
+    portalUrl  = (const char *)network["portalUrl"];
     portalData = (const char *)network["portalData"];
 
     if (!network.containsKey("apMode"))
@@ -43,14 +44,14 @@ void ApplicationSettingsStorage::load()
         apMode = apModeAlwaysOff;
       } // else
 
-    dhcp    = network["dhcp"];
-    ip      = (const char *)network["ip"];
-    netmask = (const char *)network["netmask"];
-    gateway = (const char *)network["gateway"];
+    netwDHCP = network["dhcp"];
+    netwAddr = (const char *)network["addr"];
+    netwMask = (const char *)network["mask"];
+    netwGtwy = (const char *)network["gtwy"];
 
     JsonObject& mqtt = root["mqtt"];
     mqttUser     = (const char *)mqtt["user"];
-    mqttPass     = (const char *)mqtt["password"];
+    mqttPswd     = (const char *)mqtt["pswd"];
     mqttServer   = (const char *)mqtt["server"];
     mqttPort     = mqtt["port"];
     mqttClientId = (const char *)mqtt["clientId"];
@@ -82,7 +83,6 @@ void ApplicationSettingsStorage::load()
     gpiodUdmDefRun[3] = gpiod["udm3DefRun"];
 
     cpuBoost = root["cpuBoost"];
-    useOwnBaseAddress = root["useOwnBaseAddress"];
 
     webOtaBaseUrl = (const char *)root["webOtaBaseUrl"];
 
@@ -96,12 +96,12 @@ void ApplicationSettingsStorage::save()
   JsonObject& root = jsonBuffer.createObject();
 
   JsonObject& network = jsonBuffer.createObject();
-  root["network"] = network;
-  network["wired"] = wired;
-  network["ssid"] = ssid.c_str();
-  network["password"] = password.c_str();
-  network["apPassword"] = apPassword.c_str();
-  network["portalUrl"] = portalUrl.c_str();
+  root["network"]       = network;
+  network["wired"]      = netwWired;
+  network["staSSID"]    = staSSID.c_str();
+  network["staPswd"]    = staPswd.c_str();
+  network["apPswd"]     = apPswd.c_str();
+  network["portalUrl"]  = portalUrl.c_str();
   network["portalData"] = portalData.c_str();
 
   if (apMode == apModeAlwaysOn)
@@ -111,17 +111,17 @@ void ApplicationSettingsStorage::save()
   else
     network["apMode"] = "whenDisconnected";
 
-  network["dhcp"] = dhcp;
+  network["dhcp"] = netwDHCP;
 
   // Make copy by value for temporary string objects
-  network.set("ip", ip.toString());
-  network.set("netmask", netmask.toString());
-  network.set("gateway", gateway.toString());
+  network.set("addr", netwAddr.toString());
+  network.set("mask", netwMask.toString());
+  network.set("gtwy", netwGtwy.toString());
 
   JsonObject& mqtt = jsonBuffer.createObject();
   root["mqtt"] = mqtt;
   mqtt.set("user", mqttUser);
-  mqtt.set("password", mqttPass);
+  mqtt.set("pswd", mqttPswd);
   mqtt.set("server", mqttServer);
   mqtt["port"] = mqttPort;
   mqtt.set("clientId", mqttClientId);
@@ -149,7 +149,6 @@ void ApplicationSettingsStorage::save()
   gpiod["udm3DefRun"]  = gpiodUdmDefRun[3];
  
   root["cpuBoost"] = cpuBoost;
-  root["useOwnBaseAddress"] = useOwnBaseAddress;
 
   root.set("webOtaBaseUrl", webOtaBaseUrl.c_str());
 
@@ -159,4 +158,4 @@ void ApplicationSettingsStorage::save()
   fileSetContent(APP_SETTINGS_FILE, out);
   } //
 
-ApplicationSettingsStorage AppSettings;
+ApplicationSettingsStorage g_appCfg;

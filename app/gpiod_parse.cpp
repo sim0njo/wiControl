@@ -41,8 +41,6 @@ tUint32 CGpiod::ParseCmd(tGpiodCmd* pOut, tChar* pObj, tChar* pCmd, tUint32 dwOr
         break;
       case CGPIOD_OBJ_CLS_SHUTTER: dwErr = _parseCmdShutter(pOut);
         break;
-      case CGPIOD_OBJ_CLS_TIMER:   dwErr = _parseCmdTimer(pOut);
-        break;
       case CGPIOD_OBJ_CLS_SYSTEM:  dwErr = _parseCmdSystem(pOut);
         break;
       default:                     dwErr = XERROR_SYNTAX;
@@ -249,49 +247,6 @@ tUint32 CGpiod::_parseCmdShutter(tGpiodCmd* pOut)
 
   return dwErr; 
   } // _parseCmdShutter
-
-//----------------------------------------------------------------------------
-// parse timer command
-//----------------------------------------------------------------------------
-tUint32 CGpiod::_parseCmdTimer(tGpiodCmd* pOut) 
-{
-  tUint32 dwErr = XERROR_SUCCESS;
-
-  do {
-    // parse command
-    m_parse.SetReservedIdents(g_gpiodParseCmdTimer);
-    if (m_parse.NextToken(pOut->dwOrig, xNum2BitMask(pOut->dwObj & CGPIOD_OBJ_NUM_MASK)) != CPARSE_TYPE_LEAF) {
-      // syntax error
-      dwErr = XERROR_SYNTAX;
-      break;
-      } // if
-
-    // known command
-    pOut->dwCmd = m_parse.TVal();
-
-    // parse mandatory parms
-    if (pOut->dwCmd & CGPIOD_CMD_PRM_MANDATORY) {
-
-      if (pOut->dwCmd & CGPIOD_TMR_PRM_DELAY) { // delay 1-65535 seconds or 1/10th seconds (6535s or 65535 1/10th s)
-        if (dwErr = m_parse.GetNumber(&pOut->parmsTimer.dwDelay, 1, 65535)) break;
-        pOut->dwParms |= CGPIOD_TMR_PRM_DELAY;
-        } // if
-
-      if (pOut->dwCmd & CGPIOD_TMR_PRM_RUN) { // runtime 1-65535 seconds or 1/10th seconds (6535s or 65535 1/10th s)
-        if (dwErr = m_parse.GetNumber(&pOut->parmsTimer.dwRun, 1, 65535)) break;
-        pOut->dwParms |= CGPIOD_TMR_PRM_RUN;
-        } // if
-
-      } // CGPIOD_CMD_PRM_MANDATORY
-
-    // parse optional parms
-    if ((pOut->dwCmd & CGPIOD_CMD_PRM_OPTIONAL) && (m_parse.NextToken(0, 0) == CPARSE_TYPE_PERIOD)) {
-      } // CGPIOD_CMD_PRM_OPTIONAL
-
-    } while (FALSE);
-
-  return dwErr; 
-  } // _parseCmdTimer
 
 //----------------------------------------------------------------------------
 // parse system command

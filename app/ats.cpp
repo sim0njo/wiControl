@@ -46,7 +46,7 @@ void CAtsReq::DoCcmd(String strCcmd)
       gstrcpy(sz, cmdToken[n].c_str());
 
       // parse object, cmd and optional parms
-      if (g_gpiod.ParseCmd(&cmd, 0, sz, CGPIOD_ORIG_HTTP, AppSettings.gpiodEmul)) {
+      if (g_gpiod.ParseCmd(&cmd, 0, sz, CGPIOD_ORIG_HTTP, g_appCfg.gpiodEmul)) {
         Debug.logTxt(CLSLVL_ATS | 0x0300, "CAtsReq::DoCmd,ParseCmd() failed,dropping");
         dwErr = XERROR_SYNTAX;
         } // if

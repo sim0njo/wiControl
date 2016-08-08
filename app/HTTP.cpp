@@ -29,20 +29,20 @@ void httpOnStatus(HttpRequest &request, HttpResponse &response)
   vars["appAlias"]     = szAPP_ALIAS;
   vars["appAuthor"]    = szAPP_AUTHOR;
   vars["appDesc"]      = szAPP_DESC;
-  vars["mqttClientId"] = AppSettings.mqttClientId;
+  vars["mqttClientId"] = g_appCfg.mqttClientId;
 
-  vars["ssid"] = AppSettings.ssid;
+  vars["ssid"] = g_appCfg.staSSID;
   vars["wifiStatus"] = g_isNetworkConnected ? "Connected" : "Not connected";
     
-  bool dhcp = AppSettings.dhcp;
+  bool dhcp = g_appCfg.netwDHCP;
   if (dhcp)
     vars["ipOrigin"] = "DHCP";
   else
     vars["ipOrigin"] = "Static";
 
-  if (!Network.getClientIP().isNull())
+  if (!Network.getClientAddr().isNull())
   {
-    vars["ip"] = Network.getClientIP().toString();
+    vars["ip"] = Network.getClientAddr().toString();
     }
   else
   {
@@ -50,10 +50,10 @@ void httpOnStatus(HttpRequest &request, HttpResponse &response)
     vars["ipOrigin"] = "not configured";
     }
 
-  if (AppSettings.mqttServer != "")
+  if (g_appCfg.mqttServer != "")
   {
-    vars["mqttHost"]   = AppSettings.mqttServer;
-    vars["mqttPort"]   = AppSettings.mqttPort;
+    vars["mqttHost"]   = g_appCfg.mqttServer;
+    vars["mqttPort"]   = g_appCfg.mqttPort;
     vars["mqttStatus"] = mqttIsConnected() ? "Connected":"Not connected";
     }
   else
@@ -66,13 +66,13 @@ void httpOnStatus(HttpRequest &request, HttpResponse &response)
   vars["gpiodVersion"]  = szAPP_VERSION;
   vars["gpiodTopology"] = szAPP_TOPOLOGY;
 
-  vars["gpiodEmul"]    = (AppSettings.gpiodEmul    == CGPIOD_EMUL_OUTPUT)  ? "output"   :
-                         (AppSettings.gpiodEmul    == CGPIOD_EMUL_SHUTTER) ? "shutter"  : "<unknown>";
-  vars["gpiodMode"]    = (AppSettings.gpiodMode    == CGPIOD_MODE_LOCAL)   ? "local"    :
-                         (AppSettings.gpiodMode    == CGPIOD_MODE_MQTT)    ? "MQTT"     :
-                         (AppSettings.gpiodMode    == CGPIOD_MODE_BOTH)    ? "both"     : "<unknown>";
-  vars["gpiodLock"]    = (AppSettings.gpiodLock    == CGPIOD_LOCK_TRUE)    ? "disabled" : "enabled";
-  vars["gpiodDisable"] = (AppSettings.gpiodDisable == CGPIOD_DISABLE_TRUE) ? "disabled" : "enabled";
+  vars["gpiodEmul"]    = (g_appCfg.gpiodEmul    == CGPIOD_EMUL_OUTPUT)  ? "output"   :
+                         (g_appCfg.gpiodEmul    == CGPIOD_EMUL_SHUTTER) ? "shutter"  : "<unknown>";
+  vars["gpiodMode"]    = (g_appCfg.gpiodMode    == CGPIOD_MODE_LOCAL)   ? "local"    :
+                         (g_appCfg.gpiodMode    == CGPIOD_MODE_MQTT)    ? "MQTT"     :
+                         (g_appCfg.gpiodMode    == CGPIOD_MODE_BOTH)    ? "both"     : "<unknown>";
+  vars["gpiodLock"]    = (g_appCfg.gpiodLock    == CGPIOD_LOCK_TRUE)    ? "disabled" : "enabled";
+  vars["gpiodDisable"] = (g_appCfg.gpiodDisable == CGPIOD_DISABLE_TRUE) ? "disabled" : "enabled";
 
   sprintf(buf, "%s/%s/%s/%s",
           g_gpiod.PrintObjSta2String(str0, CGPIOD_OBJ_CLS_INPUT | 0, g_gpiod.GetState(CGPIOD_OBJ_CLS_INPUT | 0)),
@@ -81,7 +81,7 @@ void httpOnStatus(HttpRequest &request, HttpResponse &response)
           g_gpiod.PrintObjSta2String(str3, CGPIOD_OBJ_CLS_INPUT | 3, g_gpiod.GetState(CGPIOD_OBJ_CLS_INPUT | 3)));
   vars["gpiodInputs"] = buf;
 
-  if (AppSettings.gpiodEmul == CGPIOD_EMUL_OUTPUT)
+  if (g_appCfg.gpiodEmul == CGPIOD_EMUL_OUTPUT)
     sprintf(buf, "%s/%s/%s/%s",
             g_gpiod.PrintObjSta2String(str0, CGPIOD_OBJ_CLS_OUTPUT | 0, g_gpiod.GetState(CGPIOD_OBJ_CLS_OUTPUT | 0)),
             g_gpiod.PrintObjSta2String(str1, CGPIOD_OBJ_CLS_OUTPUT | 1, g_gpiod.GetState(CGPIOD_OBJ_CLS_OUTPUT | 1)),
@@ -119,7 +119,7 @@ void httpOnStatus(HttpRequest &request, HttpResponse &response)
 //----------------------------------------------------------------------------
 void httpOnTools(HttpRequest &request, HttpResponse &response)
 {
-    AppSettings.load();
+    g_appCfg.load();
 
     if (!g_http.isHttpClientAllowed(request, response))
         return;
@@ -129,12 +129,12 @@ void httpOnTools(HttpRequest &request, HttpResponse &response)
         String command = request.getPostParameter("Command");
         
         if (command.equals("Upgrade")) {
-            AppSettings.webOtaBaseUrl = request.getPostParameter("webOtaBaseUrl");
+            g_appCfg.webOtaBaseUrl = request.getPostParameter("webOtaBaseUrl");
 
-            AppSettings.save();
+            g_appCfg.save();
 
             Debug.println("Going to call: StartOtaUpdateWeb()");
-            StartOtaUpdateWeb(AppSettings.webOtaBaseUrl);
+            StartOtaUpdateWeb(g_appCfg.webOtaBaseUrl);
             Debug.println("Called: StartOtaUpdateWeb()");
         }
         else if (command.equals("Restart")) {
@@ -154,9 +154,9 @@ void httpOnTools(HttpRequest &request, HttpResponse &response)
   vars["appAlias"]     = szAPP_ALIAS;
   vars["appAuthor"]    = szAPP_AUTHOR;
   vars["appDesc"]      = szAPP_DESC;
-  vars["mqttClientId"] = AppSettings.mqttClientId;
+  vars["mqttClientId"] = g_appCfg.mqttClientId;
 
-  vars["webOtaBaseUrl"] = AppSettings.webOtaBaseUrl;
+  vars["webOtaBaseUrl"] = g_appCfg.webOtaBaseUrl;
 
   response.sendTemplate(tmpl); // will be automatically deleted
   } //
@@ -191,7 +191,7 @@ void httpOnFile(HttpRequest &request, HttpResponse &response)
 //----------------------------------------------------------------------------
 bool HTTPClass::isHttpClientAllowed(HttpRequest &request, HttpResponse &response)
 {
-    if (AppSettings.apPassword.equals(""))
+    if (g_appCfg.apPswd.equals(""))
         return true;
 
     String authHeader = request.getHeader("Authorization");
@@ -207,7 +207,7 @@ bool HTTPClass::isHttpClientAllowed(HttpRequest &request, HttpResponse &response
         {
             userpass[r]=0; //zero-terminate user:pass string
             Debug.printf("Authorization header decoded %s\n", userpass);
-            String validUserPass = "admin:"+AppSettings.apPassword;
+            String validUserPass = "admin:" + g_appCfg.apPswd;
             if (validUserPass.equals(userpass))
             {
                 return true;

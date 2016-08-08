@@ -27,7 +27,7 @@
                        (dwObj == CGPIOD_OUT2) ? CGPIOD_OUT2_PIN : 
                        (dwObj == CGPIOD_OUT3) ? CGPIOD_OUT3_PIN : -1; 
       pObj->dwPol    = CGPIOD_IO_POL_NORMAL; 
-      pObj->dwRunDef = AppSettings.gpiodOutDefRun[dwObj]; // CGPIOD_OUT_RUN_DEF;
+      pObj->dwRunDef = g_appCfg.gpiodOutDefRun[dwObj]; // CGPIOD_OUT_RUN_DEF;
       } // for
 
     return m_dwError;
@@ -89,7 +89,7 @@
             pObj->dwRun = 0;
             } // if run
 
-          // handle unlocking
+          // handle unlocking if locked by this command
           if (GetFlags(&pObj->dwFlags, CGPIOD_OUT_FLG_LOCKED))
             _outputSetLock(pObj, CGPIOD_OUT_LOCK_OFF, &evt);
             
@@ -119,7 +119,7 @@
             pObj->dwRun = 0;
             } // if run
 
-          // handle unlocking
+          // handle unlocking if locked by this command
           if (GetFlags(&pObj->dwFlags, CGPIOD_OUT_FLG_LOCKED))
             _outputSetLock(pObj, CGPIOD_OUT_LOCK_OFF, &evt);
             
@@ -149,7 +149,7 @@
             pObj->dwRun = 0;
             } // if run
 
-          // handle unlocking
+          // handle unlocking if locked by this command
           if (GetFlags(&pObj->dwFlags, CGPIOD_OUT_FLG_LOCKED))
             _outputSetLock(pObj, CGPIOD_OUT_LOCK_OFF, &evt);
             
@@ -168,7 +168,7 @@
             _outputSetState(pObj, CGPIOD_OUT_STATE_OFF, &evt);
             pObj->dwRun = 0;
 
-            // handle unlocking
+            // handle unlocking if locked by this command
             if (GetFlags(&pObj->dwFlags, CGPIOD_OUT_FLG_LOCKED))
               _outputSetLock(pObj, CGPIOD_OUT_LOCK_OFF, &evt);
             
@@ -267,7 +267,7 @@
 
     do {
       // exit if cmds disabled
-      if (AppSettings.gpiodDisable && (pCmd->dwError = XERROR_ACCESS)) {
+      if (g_appCfg.gpiodDisable && (pCmd->dwError = XERROR_ACCESS)) {
         Debug.logTxt(CLSLVL_GPIOD_OUTPUT | 0x0010, "%s,disabled", pFunc);
         break;
         } // if
@@ -285,6 +285,7 @@
 
           // handle locking + notification
           if (_outputSetLock(pObj, pCmd->parmsOutput.dwLock, &evt))
+            // remember that we locked output for this command
             SetFlags(&pObj->dwFlags, CGPIOD_OUT_FLG_LOCKED);
 
           pObj->dwCmd = CGPIOD_OUT_CMD_OFF;
@@ -310,6 +311,7 @@
 
           // handle locking + notification
           if (_outputSetLock(pObj, pCmd->parmsOutput.dwLock, &evt))
+            // remember that we locked output for this command
             SetFlags(&pObj->dwFlags, CGPIOD_OUT_FLG_LOCKED);
 
           pObj->dwCmd = CGPIOD_OUT_CMD_ON;
@@ -335,6 +337,7 @@
 
           // handle locking + notification
           if (_outputSetLock(pObj, pCmd->parmsOutput.dwLock, &evt))
+            // remember that we locked output for this command
             SetFlags(&pObj->dwFlags, CGPIOD_OUT_FLG_LOCKED);
 
           pObj->dwCmd = CGPIOD_OUT_CMD_TOGGLE;
@@ -360,6 +363,7 @@
 
           // handle locking + notification
           if (_outputSetLock(pObj, pCmd->parmsOutput.dwLock, &evt))
+            // remember that we locked output for this command
             SetFlags(&pObj->dwFlags, CGPIOD_OUT_FLG_LOCKED);
 
           pObj->dwCmd = CGPIOD_OUT_CMD_BLINK;
@@ -386,9 +390,9 @@
 
         case CGPIOD_OUT_CMD_DEFRUN: 
           // handle if config commands not locked
-          if ((pCmd->dwParms & CGPIOD_OUT_PRM_DEFRUN) && !AppSettings.gpiodLock) {
+          if ((pCmd->dwParms & CGPIOD_OUT_PRM_DEFRUN) && !g_appCfg.gpiodLock) {
             pObj->dwRunDef                                                = pCmd->parmsOutput.dwRun;
-            AppSettings.gpiodOutDefRun[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK] = pCmd->parmsOutput.dwRun;
+            g_appCfg.gpiodOutDefRun[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK] = pCmd->parmsOutput.dwRun;
             } // if
    
           gsprintf(str1, "%s/defrun", PrintObj2String(str2, pCmd->dwObj));

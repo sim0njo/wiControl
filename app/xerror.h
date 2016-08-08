@@ -19,28 +19,35 @@ tCChar* xError2String(tUint32 dwError);
 
 #define XERROR_                         0x00000000 //
 #define XERROR_SUCCESS                           0 // success
+
 #define XERROR_INTERNAL                          1 // internal error cannot be resolved by user
-#define XERROR_MEMORY                            2 // out of memory or buffer too small
-#define XERROR_CREATE                            3 // error creating file or socket
-#define XERROR_OPEN                              4 // error opening file or socket
-#define XERROR_WRITE                             5 // error writing file or socket
-#define XERROR_READ                              6 // error reading file or socket
-#define XERROR_SEEK                              7 // error reading file or socket
-#define XERROR_STATE                             8 // invalid state
-#define XERROR_SYNTAX                            9 // invalid syntax
-#define XERROR_SEMANTIC                         10 // invalid semantic
-#define XERROR_RESPONSE                         11 // invalid response
-#define XERROR_RESOURCES                        12 // no resources to complete operation
-#define XERROR_NOT_FOUND                        13 // resource not found
-#define XERROR_LICENSE                          14 // resource not licensed
-#define XERROR_ACCESS                           15 // resource not accessible
-#define XERROR_DISABLED                         16 // resource disabled                 
-#define XERROR_BUSY                             17 // resource busy
-#define XERROR_PENDING                          18 // request  pending
-#define XERROR_TIMEOUT                          19 // request  timed out
-#define XERROR_ABORTED                          20 // request  aborted
-#define XERROR_NO_DATA                          21 // internal only
-#define XERROR_CLOSED                           22 // file, socket or connection closed
+#define XERROR_NO_DATA                           2 // internal only
+
+#define XERROR_MEMORY                            3 // out of memory or buffer too small
+
+#define XERROR_CREATE                            4 // error creating file or socket
+#define XERROR_OPEN                              5 // error opening file or socket
+#define XERROR_WRITE                             6 // error writing file or socket
+#define XERROR_READ                              7 // error reading file or socket
+#define XERROR_SEEK                              8 // error reading file or socket
+#define XERROR_CLOSED                            9 // file, socket or connection closed
+
+#define XERROR_STATE                            10 // invalid state
+#define XERROR_SYNTAX                           11 // invalid syntax
+#define XERROR_SEMANTIC                         12 // invalid semantic
+#define XERROR_RESPONSE                         13 // invalid response
+
+#define XERROR_RESOURCES                        14 // no resources to complete operation
+#define XERROR_NOT_FOUND                        15 // resource not found
+#define XERROR_LICENSE                          16 // resource not licensed
+#define XERROR_ACCESS                           17 // resource not accessible
+#define XERROR_DISABLED                         18 // resource disabled                 
+#define XERROR_BUSY                             19 // resource busy
+
+#define XERROR_PENDING                          20 // request  pending
+#define XERROR_TIMEOUT                          21 // request  timed out
+#define XERROR_ABORTED                          22 // request  aborted
+
 //#define XERROR_MOD_SYS_MAX                      23 //
 
 // -----------------------------------------------------------------

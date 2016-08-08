@@ -29,5 +29,6 @@
 #define CLSLVL_GPIOD_TIMER            DEBUG_LVL_0C // 0x1000
 #define CLSLVL_GPIOD_SYSTEM           DEBUG_LVL_0D // 0x2000
 #define CLSLVL_GPIOD_PARSE            DEBUG_LVL_0E // 0x4000
+#define CLSLVL_GPIOD_RGB              DEBUG_LVL_0F // 0x8000
                                                           
 #endif // __app_clslevels_h__

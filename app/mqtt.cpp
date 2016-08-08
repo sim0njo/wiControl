@@ -26,8 +26,8 @@ void     ICACHE_FLASH_ATTR mqttSubscribe(tCChar* szTopicFilter)
     } // if
 
   Debug.logTxt(CLSLVL_MQTT | 0x0000, "mqttSubscribe,topicFilter=%s/%s",
-               AppSettings.mqttClientId.c_str(), szTopicFilter);
-  g_pMqtt->subscribe(AppSettings.mqttClientId + String("/") + String(szTopicFilter));
+               g_appCfg.mqttClientId.c_str(), szTopicFilter);
+  g_pMqtt->subscribe(g_appCfg.mqttClientId + String("/") + String(szTopicFilter));
   } // mqttSubscribe
 
 //----------------------------------------------------------------------------
@@ -41,8 +41,8 @@ void ICACHE_FLASH_ATTR mqttPublish(tCChar* szPfx, tCChar* szTopic, tCChar* szMsg
     } // if
 
   Debug.logTxt(CLSLVL_MQTT | 0x0030, "mqttPublish,topic=%s/%s/%s,msg=%s", 
-               AppSettings.mqttClientId.c_str(), szPfx, szTopic, szMsg);
-  g_pMqtt->publish(AppSettings.mqttClientId + String("/") + String(szPfx) + String("/") + String(szTopic), String(szMsg));
+               g_appCfg.mqttClientId.c_str(), szPfx, szTopic, szMsg);
+  g_pMqtt->publish(g_appCfg.mqttClientId + String("/") + String(szPfx) + String("/") + String(szTopic), String(szMsg));
   g_mqttPktTx++;
   } // mqttPublish
 
@@ -56,7 +56,7 @@ void ICACHE_FLASH_ATTR mqttOnPublish(String strTopic, String strMsg)
   do {
     // make sure topic starts with <client-id>
     Debug.logTxt(CLSLVL_MQTT | 0x0000, "mqttOnPublish,topic=%s,msg=%s", strTopic.c_str(), strMsg.c_str());
-    if (strTopic.startsWith(AppSettings.mqttClientId + "/") == 0) {
+    if (strTopic.startsWith(g_appCfg.mqttClientId + "/") == 0) {
       Debug.logTxt(CLSLVL_MQTT | 0x0010, "mqttOnPublish,not for us,dropping");
       g_mqttPktRxDropped++;
       return;
@@ -71,7 +71,7 @@ void ICACHE_FLASH_ATTR mqttOnPublish(String strTopic, String strMsg)
     gstrcpy(szMsg, strMsg.c_str());
 
     // pass topic=<pfx>/<obj>... on to GPIOD
-    pTopic += (AppSettings.mqttClientId.length() + 1);
+    pTopic += (g_appCfg.mqttClientId.length() + 1);
     gpiodOnMqttPublish(pTopic, szMsg);
     } while (FALSE);
 
@@ -87,10 +87,10 @@ uint32_t ICACHE_FLASH_ATTR mqttStartClient()
   if (g_pMqtt)
     delete g_pMqtt;
 
-  AppSettings.load();
-  if (!AppSettings.mqttServer.equals(String("")) && AppSettings.mqttPort != 0) {
-    g_pMqtt = new MqttClient(AppSettings.mqttServer, AppSettings.mqttPort, mqttOnPublish);
-    g_bMqttIsConnected = g_pMqtt->connect(AppSettings.mqttClientId, AppSettings.mqttUser, AppSettings.mqttPass);
+  g_appCfg.load();
+  if (!g_appCfg.mqttServer.equals(String("")) && g_appCfg.mqttPort != 0) {
+    g_pMqtt = new MqttClient(g_appCfg.mqttServer, g_appCfg.mqttPort, mqttOnPublish);
+    g_bMqttIsConnected = g_pMqtt->connect(g_appCfg.mqttClientId, g_appCfg.mqttUser, g_appCfg.mqttPswd);
     return g_bMqttIsConnected;
     }
 
@@ -113,17 +113,17 @@ uint32_t ICACHE_FLASH_ATTR mqttCheckClient()
 //----------------------------------------------------------------------------
 void mqttOnHttpConfig(HttpRequest &request, HttpResponse &response)
 {
-  AppSettings.load();
+  g_appCfg.load();
   if (!g_http.isHttpClientAllowed(request, response))
     return;
 
   if (request.getRequestMethod() == RequestMethod::POST) {
-    AppSettings.mqttServer   = request.getPostParameter("mqttHost");
-    AppSettings.mqttPort     = atoi(request.getPostParameter("mqttPort").c_str());
-    AppSettings.mqttUser     = request.getPostParameter("mqttUser");
-    AppSettings.mqttPass     = request.getPostParameter("mqttPswd");
-    AppSettings.mqttClientId = request.getPostParameter("mqttClientId");
-    AppSettings.save();
+    g_appCfg.mqttServer   = request.getPostParameter("mqttHost");
+    g_appCfg.mqttPort     = atoi(request.getPostParameter("mqttPort").c_str());
+    g_appCfg.mqttUser     = request.getPostParameter("mqttUser");
+    g_appCfg.mqttPswd     = request.getPostParameter("mqttPswd");
+    g_appCfg.mqttClientId = request.getPostParameter("mqttClientId");
+    g_appCfg.save();
 
     if (WifiStation.isConnected())
       mqttStartClient();
@@ -136,11 +136,11 @@ void mqttOnHttpConfig(HttpRequest &request, HttpResponse &response)
   vars["appAuthor"]    = szAPP_AUTHOR;
   vars["appDesc"]      = szAPP_DESC;
 
-  vars["mqttHost"]     = AppSettings.mqttServer;
-  vars["mqttPort"]     = AppSettings.mqttPort;
-  vars["mqttUser"]     = AppSettings.mqttUser;
-  vars["mqttPswd"]     = AppSettings.mqttPass;
-  vars["mqttClientId"] = AppSettings.mqttClientId;
+  vars["mqttHost"]     = g_appCfg.mqttServer;
+  vars["mqttPort"]     = g_appCfg.mqttPort;
+  vars["mqttUser"]     = g_appCfg.mqttUser;
+  vars["mqttPswd"]     = g_appCfg.mqttPswd;
+  vars["mqttClientId"] = g_appCfg.mqttClientId;
   response.sendTemplate(tmpl); // will be automatically deleted
   } // mqttOnHttpConfig
 
@@ -158,4 +158,4 @@ uint32_t mqttIsConnected(void)
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-String mqttServer(void)       { return AppSettings.mqttServer; }
+String mqttServer(void)       { return g_appCfg.mqttServer; }

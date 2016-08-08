@@ -66,7 +66,6 @@ tCChar* CGpiod::PrintObjCmd2String(tChar* pOut, tUint32 dwObj, tUint32 dwCmd)
   tUint32    dwErr  = XERROR_SUCCESS;
   tParseRsvd *pRsvd = (dwObj & CGPIOD_OBJ_CLS_INPUT)   ? g_gpiodParseCmdInput   :
                       (dwObj & CGPIOD_OBJ_CLS_OUTPUT)  ? g_gpiodParseCmdOutput  :
-                      (dwObj & CGPIOD_OBJ_CLS_TIMER)   ? g_gpiodParseCmdTimer   :
                       (dwObj & CGPIOD_OBJ_CLS_SHUTTER) ? g_gpiodParseCmdShutter : g_gpiodParseCmdInput;
 
   for ( ; pRsvd->dwMask0; pRsvd++)
@@ -111,7 +110,7 @@ tCChar* CGpiod::PrintCmdParamVals(tChar* pOut, tUint32 cbOut, tGpiodCmd* pCmd)
         break;
 
       case CGPIOD_OBJ_CLS_OUTPUT:  
-      case CGPIOD_OBJ_CLS_TIMER:  
+//    case CGPIOD_OBJ_CLS_TIMER:  
         if (pCmd->dwParms & CGPIOD_OUT_PRM_LOCK) { 
           gsprintf(str, ".%u", pCmd->parmsOutput.dwLock);
           xstrcatn(pOut, cbOut, str, 0);

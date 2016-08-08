@@ -22,24 +22,19 @@ tParseRsvd g_gpiodParseObj[] = {
   { 0x000000C0      , 0x00000002       , CPARSE_TYPE_NODE, 0x00000400, "out0",      },
   { 0x000000C0      , 0x00000002       , CPARSE_TYPE_NODE, 0x00000401, "out1",      },
 
-//{ 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x00000800, "tmr0",      },
-//{ 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x00000801, "tmr1",      },
-//{ 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x00000802, "tmr2",      },
-//{ 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x00000803, "tmr3",      },
-
 //  CGPIOD_ORIG_%     CGPIOD_EMUL_%                        0xppPPMMMM                                   
-//{ 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x00001000, "system",    },
-  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x00001001, "ping",      },
-  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x00001002, "version",   },
-  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x00001003, "memory",    },
-  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x00001004, "uptime",    },
-  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x01001005, "loglevel",  }, // optional <loglevel>
-  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x02001006, "emul",      }, // optional <emul>
-  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x04001007, "mode",      }, // optional <mode>
-  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x08001008, "lock",      }, // optional <0..1>
-  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x08001009, "disable",   }, // optional <0..1>
-  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x1000100A, "restart",   }, // ack
-  { 0x000000C0      , 0x00000003       , CPARSE_TYPE_NODE, 0x1000100B, "save",      }, // ack
+//{ 0x000000C0      , 0x00000007       , CPARSE_TYPE_NODE, 0x00001000, "system",    },
+  { 0x000000C0      , 0x00000007       , CPARSE_TYPE_NODE, 0x00001001, "ping",      },
+  { 0x000000C0      , 0x00000007       , CPARSE_TYPE_NODE, 0x00001002, "version",   },
+  { 0x000000C0      , 0x00000007       , CPARSE_TYPE_NODE, 0x00001003, "memory",    },
+  { 0x000000C0      , 0x00000007       , CPARSE_TYPE_NODE, 0x00001004, "uptime",    },
+  { 0x000000C0      , 0x00000007       , CPARSE_TYPE_NODE, 0x01001005, "loglevel",  }, // optional <loglevel>
+  { 0x000000C0      , 0x00000007       , CPARSE_TYPE_NODE, 0x02001006, "emul",      }, // optional <emul>
+  { 0x000000C0      , 0x00000007       , CPARSE_TYPE_NODE, 0x04001007, "mode",      }, // optional <mode>
+  { 0x000000C0      , 0x00000007       , CPARSE_TYPE_NODE, 0x08001008, "lock",      }, // optional <0..1>
+  { 0x000000C0      , 0x00000007       , CPARSE_TYPE_NODE, 0x08001009, "disable",   }, // optional <0..1>
+  { 0x000000C0      , 0x00000007       , CPARSE_TYPE_NODE, 0x1000100A, "restart",   }, // ack
+  { 0x000000C0      , 0x00000007       , CPARSE_TYPE_NODE, 0x1000100B, "save",      }, // ack
                                                                          
   { 0x10000000      , 0x00000000       , CPARSE_TYPE_NODE, 0x00002000, "hbeat",     }, // only for print
 
@@ -51,7 +46,7 @@ tParseRsvd g_gpiodParseObj[] = {
 tParseRsvd g_gpiodParseObjParm[] = {
 //  dwMask0           dwMask1            dwTType           dwTVal      szTVal
 //  CGPIOD_ORIG_%                                          0xppPPMMMM                                   
-  { 0x000000C0      , 0x00001000       , CPARSE_TYPE_PARM, 0x00000001, "ack",       }, // 
+  { 0x00000180      , 0x00001000       , CPARSE_TYPE_PARM, 0x00000001, "ack",       }, // 
 
   { 0x00000000      , 0x00000000       , 0x00000000      , 0x00000000, "",          },
   };
@@ -82,10 +77,6 @@ tParseRsvd g_gpiodParseObjEvt[] = {
   { 0x00000100      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000006, "ingt2",     },
   { 0x00000100      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000007, "out",       },
 
-//{ 0x80000800      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000006, "timeroff",  },
-//{ 0x80000800      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000007, "timeron",   },
-//{ 0x80000800      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000008, "timerabort",},
-                                                                                  
   { 0x00002000      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000000, "tickEven",  },
   { 0x00002000      , 0x00000001       , CPARSE_TYPE_LEAF, 0x00000001, "tickOdd",   },
 
@@ -141,17 +132,5 @@ tParseRsvd g_gpiodParseCmdShutter[] = {
 //{ 0x000000C0      , 0x00000003       , CPARSE_TYPE_LEAF, 0x0000000F, "learnoff",        },
 
   { 0x00000000      , 0x00000000       , 0x00000000      , 0x00000000, "",                },
-  };
-
-tParseRsvd g_gpiodParseCmdTimer[] = {
-//  dwMask0           dwMask1            dwTType           dwTVal      szTVal
-//  CGPIOD_ORIG_%     Num2Mask(cc)                         0xppPPMMMM  params                
-  { 0x000000C0      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00000001, "status",         },
-  { 0x000000C0      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00010013, "ondelayed",      }, // 1-36000 1/10th s
-  { 0x000000C0      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00010014, "offdelayed",     }, // 1-36000 1/10th s
-  { 0x000000C0      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00020015, "ontimed",        }, // 1-36000 1/10th s
-  { 0x000000C0      , 0x0000000F       , CPARSE_TYPE_LEAF, 0x00000016, "abort",          },
-
-  { 0x00000000      , 0x00000000       , 0x00000000      , 0x00000000, "",               },
   };
 

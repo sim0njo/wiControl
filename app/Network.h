@@ -20,14 +20,14 @@ class NetworkClass {
     };
 
   void               begin(NetworkStateChangeDelegate dlg = NULL);
-  void               softApEnable();
-  void               softApDisable();
+  void               apEnable();
+  void               apDisable();
   void               reconnect(int delayMs);
   void               handleEvent(System_Event_t *e);
 
-  IPAddress          getClientIP();
+  IPAddress          getClientAddr();
   IPAddress          getClientMask();
-  IPAddress          getClientGW();
+  IPAddress          getClientGtwy();
     
  private:
   void               portalLoginHandler(HttpClient& client, bool successful);
