@@ -29,7 +29,8 @@
 #include <xerror.h>
 #include <cparse.hpp>
 #include <app_clslevels.h>
-#include <application.h>
+#include <app.h>
+#include <globals.h>
 
 //----------------------------------------------------------------------------
 extern tParseRsvd    g_gpiodParseObj[];
@@ -433,8 +434,8 @@ class CGpiod {
 
  public:
   //--------------------------------------------------------------------------
-  void               begin();
-  void               checkConnection();
+//  void               begin();
+//  void               checkConnection();
 
   //--------------------------------------------------------------------------
   //

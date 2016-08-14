@@ -4,7 +4,6 @@
 //
 // Copyright (c) Jo Simons, 2015-2016, All Rights Reserved.
 //----------------------------------------------------------------------------
-#include <AppSettings.h>
 #include <gpiod.h>
 
   //--------------------------------------------------------------------------
@@ -27,7 +26,7 @@
       pObj->dwPinDown  = (dwObj == CGPIOD_SHU0) ? CGPIOD_SHU0_PIN_DOWN :
                          (dwObj == CGPIOD_SHU1) ? CGPIOD_SHU1_PIN_DOWN : -1;
       pObj->dwPol      = CGPIOD_IO_POL_NORMAL; 
-      pObj->dwRunDef   = g_appCfg.gpiodUdmDefRun[dwObj];
+      pObj->dwRunDef   = g_app.m_gpiodUdmDefRun[dwObj];
       } // for
 
     return m_dwError;
@@ -298,7 +297,7 @@
       Debug.logTxt(CLSLVL_GPIOD_SHUTTER | 0x0000, "%s", pFunc);
 
       // exit if cmds disabled
-      if (g_appCfg.gpiodDisable && (pCmd->dwError = XERROR_ACCESS)) {
+      if (g_app.m_gpiodDisable && (pCmd->dwError = XERROR_ACCESS)) {
         Debug.logTxt(CLSLVL_GPIOD_SHUTTER | 0x0010, "%s,disabled", pFunc);
         break;
         } // if
@@ -434,9 +433,9 @@
 
         case CGPIOD_SHU_CMD_DEFRUN: 
           // handle if config commands not locked
-          if ((pCmd->dwParms & CGPIOD_SHU_PRM_DEFRUN) && !g_appCfg.gpiodLock) {
-            pObj->dwRunDef                                                = pCmd->parmsShutter.dwRun;
-            g_appCfg.gpiodUdmDefRun[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK] = pCmd->parmsShutter.dwRun;
+          if ((pCmd->dwParms & CGPIOD_SHU_PRM_DEFRUN) && !g_app.m_gpiodLock) {
+            pObj->dwRunDef                                            = pCmd->parmsShutter.dwRun;
+            g_app.m_gpiodUdmDefRun[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK] = pCmd->parmsShutter.dwRun;
             } // if
         
           pCmd->dwRsp = pObj->dwRunDef;   

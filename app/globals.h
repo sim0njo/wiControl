@@ -1,19 +1,23 @@
-/*globals.h*/
-#ifndef GLOBALS_H_
-#define GLOBALS_H_
 
+//----------------------------------------------------------------------------
+// globals.h
+//
+// Copyright (c) Jo Simons, 2015-2016, All Rights Reserved.
+//----------------------------------------------------------------------------
+#ifndef __globals_hpp__
+#define __globals_hpp__
 
 extern const char* build_time;
 extern const char* build_git_sha;
-extern int         g_isNetworkConnected;
+//extern int         g_isNetworkConnected;
 /* why is type bool not known ?*/
 
 
 #define szAPP_ALIAS                    "wiControl" //
 #define szAPP_AUTHOR     "Jo Simons (c) 2015-2016" //
 #define szAPP_DESC       "Wireless Control Module" //
-#define APP_VERSION                     0x04000100 //
-#define szAPP_VERSION                    "4.0.1.0" //
+#define APP_VERSION                     0x04000200 //
+#define szAPP_VERSION                    "4.0.2.0" //
 
 //#define TOPOLOGY_4I4O_ED01 
 //#define TOPOLOGY_4I4O_ED02 
@@ -51,4 +55,4 @@ extern int         g_isNetworkConnected;
 #define WIRED_ETHERNET_W5100                     1 //
 #define WIRED_ETHERNET_W5500                     2 //
 
-#endif /* GLOBALS_H_ */
+#endif // __globals_hpp__

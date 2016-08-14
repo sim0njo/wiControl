@@ -4,8 +4,7 @@
 //
 // Copyright (c) Jo Simons, 2015-2016, All Rights Reserved.
 //----------------------------------------------------------------------------
-#include <AppSettings.h>
-#include <Network.h>
+#include <network.h>
 #include <gpiod.h>
 
   //--------------------------------------------------------------------------
@@ -13,10 +12,10 @@
   //--------------------------------------------------------------------------
   tUint32 CGpiod::_systemOnConfig() 
   {
-    Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0010, "CGpiod::_systemOnConfig,emul   =%u", g_appCfg.gpiodEmul);
-    Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0020, "CGpiod::_systemOnConfig,mode   =%u", g_appCfg.gpiodMode);
-    Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0030, "CGpiod::_systemOnConfig,lock   =%u", g_appCfg.gpiodLock);
-    Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0040, "CGpiod::_systemOnConfig,disable=%u", g_appCfg.gpiodDisable);
+    Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0010, "CGpiod::_systemOnConfig,emul   =%u", g_app.m_gpiodEmul);
+    Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0020, "CGpiod::_systemOnConfig,mode   =%u", g_app.m_gpiodMode);
+    Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0030, "CGpiod::_systemOnConfig,lock   =%u", g_app.m_gpiodLock);
+    Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0040, "CGpiod::_systemOnConfig,disable=%u", g_app.m_gpiodDisable);
 
     // configure heartbeat timer
     memset(&m_hbeat, 0, sizeof(m_hbeat));
@@ -88,8 +87,8 @@
           evt.szObj = "pong";
           wifi_get_macaddr(0x0, byMac);
           gsprintf(str, "%s,%02X:%02X:%02X:%02X:%02X:%02X",
-                   Network.getClientAddr().toString().c_str(), byMac[0], byMac[1], byMac[2], byMac[3], byMac[4], byMac[5]);
-//        gsprintf(str, "%s;%06X", Network.getClientAddr().toString().c_str(), system_get_chip_id());
+                   g_network.staClientAddr().toString().c_str(), byMac[0], byMac[1], byMac[2], byMac[3], byMac[4], byMac[5]);
+//        gsprintf(str, "%s;%06X", g_network.staClientAddr().toString().c_str(), system_get_chip_id());
           evt.szEvt = str;
           DoEvt(&evt);
           break;
@@ -123,7 +122,7 @@
 
         case CGPIOD_SYS_CMD_LOGLEVEL:
           // handle set command
-          if ((pCmd->dwParms == CGPIOD_SYS_PRM_LOGLEVEL) && !g_appCfg.gpiodLock)
+          if ((pCmd->dwParms == CGPIOD_SYS_PRM_LOGLEVEL) && !g_app.m_gpiodLock)
             Debug.logClsLevels(DEBUG_CLS_0, pCmd->parmsSystem.dwParm);
 
           // report current value
@@ -134,59 +133,59 @@
 
         case CGPIOD_SYS_CMD_EMUL:
           // handle set command
-          if ((pCmd->dwParms == CGPIOD_SYS_PRM_EMUL) && !g_appCfg.gpiodLock) {
+          if ((pCmd->dwParms == CGPIOD_SYS_PRM_EMUL) && !g_app.m_gpiodLock) {
             Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0100, "CGpiod::_systemDoCmd,set emul to %u", pCmd->parmsSystem.dwParm);
           
-            g_appCfg.gpiodEmul = pCmd->parmsSystem.dwParm;
+            g_app.m_gpiodEmul = pCmd->parmsSystem.dwParm;
             OnInit();
             } // if
 
           // report current value
-          pCmd->dwRsp = g_appCfg.gpiodEmul;
-          evt.dwEvt   = g_appCfg.gpiodEmul;
+          pCmd->dwRsp = g_app.m_gpiodEmul;
+          evt.dwEvt   = g_app.m_gpiodEmul;
           DoSta(&evt);
           break;
 
         case CGPIOD_SYS_CMD_MODE: 
           // handle set command
-          if ((pCmd->dwParms == CGPIOD_SYS_PRM_MODE) && !g_appCfg.gpiodLock) {
+          if ((pCmd->dwParms == CGPIOD_SYS_PRM_MODE) && !g_app.m_gpiodLock) {
             Debug.logTxt(CLSLVL_GPIOD_SYSTEM | 0x0100, "CGpiod::_systemDoCmd,set mode to %u", pCmd->parmsSystem.dwParm);
-            g_appCfg.gpiodMode = pCmd->parmsSystem.dwParm;
+            g_app.m_gpiodMode = pCmd->parmsSystem.dwParm;
             } // if
 
           // report current value
-          pCmd->dwRsp = g_appCfg.gpiodMode;
-          evt.dwEvt   = g_appCfg.gpiodMode;
+          pCmd->dwRsp = g_app.m_gpiodMode;
+          evt.dwEvt   = g_app.m_gpiodMode;
           DoSta(&evt);
           break;
 
         case CGPIOD_SYS_CMD_LOCK:
           // handle set command
           if (pCmd->dwParms == CGPIOD_SYS_PRM_OFFON) {
-            g_appCfg.gpiodLock = pCmd->parmsSystem.dwParm ? 1 : 0;
+            g_app.m_gpiodLock = pCmd->parmsSystem.dwParm ? 1 : 0;
             } // if
 
           // report current value
-          pCmd->dwRsp = g_appCfg.gpiodLock;
-          evt.dwEvt   = g_appCfg.gpiodLock;
+          pCmd->dwRsp = g_app.m_gpiodLock;
+          evt.dwEvt   = g_app.m_gpiodLock;
           DoSta(&evt);
           break;
 
         case CGPIOD_SYS_CMD_DISABLE: 
           // handle command
-          if ((pCmd->dwParms == CGPIOD_SYS_PRM_OFFON) && !g_appCfg.gpiodLock) {
-            g_appCfg.gpiodDisable = pCmd->parmsSystem.dwParm ? 1 : 0;
+          if ((pCmd->dwParms == CGPIOD_SYS_PRM_OFFON) && !g_app.m_gpiodLock) {
+            g_app.m_gpiodDisable = pCmd->parmsSystem.dwParm ? 1 : 0;
             } // if
 
           // report current value
-          pCmd->dwRsp = g_appCfg.gpiodDisable;
-          evt.dwEvt   = g_appCfg.gpiodDisable;
+          pCmd->dwRsp = g_app.m_gpiodDisable;
+          evt.dwEvt   = g_app.m_gpiodDisable;
           DoSta(&evt);
           break;
 
         case CGPIOD_SYS_CMD_RESTART:
           // handle command
-          if ((pCmd->dwParms == CGPIOD_SYS_PRM_ACK) && (g_appCfg.gpiodLock == CGPIOD_LOCK_FALSE)) {
+          if ((pCmd->dwParms == CGPIOD_SYS_PRM_ACK) && (g_app.m_gpiodLock == CGPIOD_LOCK_FALSE)) {
             evt.dwEvt = 1;
             DoEvt(&evt);
 
@@ -197,7 +196,7 @@
 
         case CGPIOD_SYS_CMD_SAVE:
           if (pCmd->dwParms == CGPIOD_SYS_PRM_ACK) {
-            g_appCfg.save();
+            g_app.confSave();
 
             evt.dwEvt = 1;
             DoEvt(&evt);

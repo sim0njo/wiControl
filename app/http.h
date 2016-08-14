@@ -1,15 +1,20 @@
-#ifndef INCLUDE_HTTP_H_
-#define INCLUDE_HTTP_H_
+
+//----------------------------------------------------------------------------
+// http.h
+//
+// Copyright (c) Jo Simons, 2015-2016, All Rights Reserved.
+//----------------------------------------------------------------------------
+#ifndef __http_hpp__
+#define __http_hpp__
 
 #include <user_config.h>
 #include <SmingCore/SmingCore.h>
 #include <SmingCore/Debug.h>
-#include <AppSettings.h>
 
-class HTTPClass {
+class CHttp {
  public:
-  void               begin();
-  bool               isHttpClientAllowed(HttpRequest &request, HttpResponse &response);
+  void               Init();
+  bool               isClientAllowed(HttpRequest &request, HttpResponse &response);
 
   void               addWsCommand(String command, WebSocketMessageDelegate callback);
   void               notifyWsClients(String message);
@@ -26,6 +31,6 @@ class HTTPClass {
   HashMap<String, WebSocketMessageDelegate> wsCommandHandlers;
   }; //
 
-extern HTTPClass     g_http;
+extern CHttp     g_http;
 
-#endif //INCLUDE_HTTP_H_
+#endif // __http_hpp__

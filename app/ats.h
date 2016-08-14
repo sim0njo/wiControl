@@ -9,7 +9,6 @@
 
 #include <xstdafx.h>
 #include <xerror.h>
-#include <app_clslevels.h>
 
 //----------------------------------------------------------------------------
 // callbacks

@@ -21,10 +21,10 @@
     <div class="header">
         <nav>
             <ul class="nav nav-tabs">
-                <li role="presentation" class="active"><a href="/status"><b>{appAlias}@{mqttClientId}</b></a></li>
+                <li role="presentation" class="active"><a href="/status"><b>{appAlias}@{appNodeId}</b></a></li>
+                <li role="presentation"><a href="/gpiod">App</a></li>
                 <li role="presentation"><a href="/network">Network</a></li>
                 <li role="presentation"><a href="/mqtt">MQTT</a></li>
-                <li role="presentation"><a href="/gpiod">Gpiod</a></li>
                 <li role="presentation"><a href="/tools">Tools</a></li>
             </ul>
         </nav>
@@ -70,11 +70,11 @@
                </tr>
                <tr>
                  <td>Wifi Network</td>
-                 <td>{ssid}, {wifiStatus}</td>
+                 <td>{staSSID}, {staStatus}</td>
                </tr>
                <tr>
                  <td>IP Address</td>
-                 <td>{ip}, {ipOrigin}</td>
+                 <td>{staAddr}, {staAddrOrigin}</td>
                </tr>
 
                <tr>

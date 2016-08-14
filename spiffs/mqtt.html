@@ -19,10 +19,10 @@
     <div class="header">
         <nav>
             <ul class="nav nav-tabs">
-                <li role="presentation"><a href="/status"><b>{appAlias}@{mqttClientId}</b></a></li>
+                <li role="presentation"><a href="/status"><b>{appAlias}@{appNodeId}</b></a></li>
+                <li role="presentation"><a href="/gpiod">App</a></li>
                 <li role="presentation"><a href="/network">Network</a></li>
                 <li role="presentation" class="active"><a href="/mqtt">MQTT</a></li>
-                <li role="presentation"><a href="/gpiod">Gpiod</a></li>
                 <li role="presentation"><a href="/tools">Tools</a></li>
             </ul>
         </nav>
@@ -78,17 +78,6 @@
                     <div class="col-md-offset-2">
                         <div class="form-group">
                             <input class="form-control" style="width: 250px" type="text" name="mqttPswd" value="{mqttPswd}">
-                        </div>
-                    </div>
-				 </td>
-               </tr>
-
-               <tr>
-                 <td>ClientId</td>
-                 <td>
-                    <div class="col-md-offset-2">
-                        <div class="form-group">
-                            <input class="form-control" style="width: 250px" type="text" name="mqttClientId" value="{mqttClientId}">
                         </div>
                     </div>
 				 </td>

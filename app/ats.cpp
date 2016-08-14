@@ -4,9 +4,10 @@
 //
 // Copyright (c) Jo Simons, 2015-2016, All Rights Reserved.
 //----------------------------------------------------------------------------
-#include <HTTP.h>
+#include <http.h>
 #include <gpiod.h>
 #include <ats.h>
+#include <app_clslevels.h>
 
 //----------------------------------------------------------------------------
 // HTTP config callback
@@ -16,7 +17,7 @@ void                 atsOnHttpQuery(HttpRequest &request, HttpResponse &response
   tUint32 dw, dwCnt;
   CAtsReq req;
 
-  if (!g_http.isHttpClientAllowed(request, response))
+  if (!g_http.isClientAllowed(request, response))
     return;
 
   String strCcmd = (request.getRequestMethod() == RequestMethod::POST) ? request.getPostParameter("ccmd") :
@@ -46,7 +47,7 @@ void CAtsReq::DoCcmd(String strCcmd)
       gstrcpy(sz, cmdToken[n].c_str());
 
       // parse object, cmd and optional parms
-      if (g_gpiod.ParseCmd(&cmd, 0, sz, CGPIOD_ORIG_HTTP, g_appCfg.gpiodEmul)) {
+      if (g_gpiod.ParseCmd(&cmd, 0, sz, CGPIOD_ORIG_HTTP, g_app.m_gpiodEmul)) {
         Debug.logTxt(CLSLVL_ATS | 0x0300, "CAtsReq::DoCmd,ParseCmd() failed,dropping");
         dwErr = XERROR_SYNTAX;
         } // if

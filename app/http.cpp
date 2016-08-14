@@ -1,20 +1,20 @@
 
+//----------------------------------------------------------------------------
+// mqtt.cpp : MQTT client wrapper
+//
+// Copyright (c) Jo Simons, 2015-2016, All Rights Reserved.
+//----------------------------------------------------------------------------
 #include <user_config.h>
 #include <SmingCore.h>
-#include <HTTP.h>
+#include <http.h>
 #include <mqtt.h>
-#include <Network.h>
-#include <AppSettings.h>
+#include <network.h>
 #include <Services/WebHelpers/base64.h>
 #include <Wiring/SplitString.h>
 #include <ats.h>
 #include <gpiod.h>
 
-// Forward declarations
-void                 StartOtaUpdateWeb(String);
-void                 processRestartCommandWeb(void);
-
-HTTPClass            g_http;
+CHttp                g_http;
 
 
 //----------------------------------------------------------------------------
@@ -26,53 +26,52 @@ void httpOnStatus(HttpRequest &request, HttpResponse &response)
   TemplateFileStream *tmpl = new TemplateFileStream("status.html");
   auto               &vars = tmpl->variables();
 
-  vars["appAlias"]     = szAPP_ALIAS;
-  vars["appAuthor"]    = szAPP_AUTHOR;
-  vars["appDesc"]      = szAPP_DESC;
-  vars["mqttClientId"] = g_appCfg.mqttClientId;
+  vars["appAlias"]  = szAPP_ALIAS;
+  vars["appAuthor"] = szAPP_AUTHOR;
+  vars["appDesc"]   = szAPP_DESC;
+  vars["appNodeId"] = g_app.GetStrAttr("nodeId");
 
-  vars["ssid"] = g_appCfg.staSSID;
-  vars["wifiStatus"] = g_isNetworkConnected ? "Connected" : "Not connected";
+  vars["staSSID"]   = g_network.GetStrAttr("staSSID");
+  vars["staStatus"] = g_network.staConnected() ? "Connected" : "Not connected";
     
-  bool dhcp = g_appCfg.netwDHCP;
-  if (dhcp)
-    vars["ipOrigin"] = "DHCP";
+  if (g_network.GetNumAttr("staDHCP"))
+    vars["staAddrOrigin"] = "DHCP";
   else
-    vars["ipOrigin"] = "Static";
+    vars["staAddrOrigin"] = "Static";
 
-  if (!Network.getClientAddr().isNull())
+  if (!g_network.staClientAddr().isNull())
   {
-    vars["ip"] = Network.getClientAddr().toString();
+    vars["staAddr"] = g_network.staClientAddr().toString();
     }
   else
   {
-    vars["ip"] = "0.0.0.0";
-    vars["ipOrigin"] = "not configured";
+    vars["staAddr"] = "0.0.0.0";
+    vars["staAddrOrigin"] = "not configured";
     }
 
-  if (g_appCfg.mqttServer != "")
-  {
-    vars["mqttHost"]   = g_appCfg.mqttServer;
-    vars["mqttPort"]   = g_appCfg.mqttPort;
-    vars["mqttStatus"] = mqttIsConnected() ? "Connected":"Not connected";
-    }
-  else
-  {
-    vars["mqttHost"]   = "0.0.0.0";
-    vars["mqttPort"]   = "1883";
-    vars["mqttStatus"] = "Not configured";
-    }
+//if (g_appCfg.mqttServer != "")
+//{
+    vars["mqttHost"]   = g_mqtt.GetStrAttr("mqttHost");
+    vars["mqttPort"]   = g_mqtt.GetNumAttr("mqttPort");
+    vars["mqttStatus"] = g_mqtt.IsConnected() ? "Connected" : "Not connected";
+//  }
+//else
+//{
+//  vars["mqttHost"]   = "0.0.0.0";
+//  vars["mqttPort"]   = "1883";
+//  vars["mqttStatus"] = "Not configured";
+//  }
 
   vars["gpiodVersion"]  = szAPP_VERSION;
   vars["gpiodTopology"] = szAPP_TOPOLOGY;
 
-  vars["gpiodEmul"]    = (g_appCfg.gpiodEmul    == CGPIOD_EMUL_OUTPUT)  ? "output"   :
-                         (g_appCfg.gpiodEmul    == CGPIOD_EMUL_SHUTTER) ? "shutter"  : "<unknown>";
-  vars["gpiodMode"]    = (g_appCfg.gpiodMode    == CGPIOD_MODE_LOCAL)   ? "local"    :
-                         (g_appCfg.gpiodMode    == CGPIOD_MODE_MQTT)    ? "MQTT"     :
-                         (g_appCfg.gpiodMode    == CGPIOD_MODE_BOTH)    ? "both"     : "<unknown>";
-  vars["gpiodLock"]    = (g_appCfg.gpiodLock    == CGPIOD_LOCK_TRUE)    ? "disabled" : "enabled";
-  vars["gpiodDisable"] = (g_appCfg.gpiodDisable == CGPIOD_DISABLE_TRUE) ? "disabled" : "enabled";
+  vars["gpiodEmul"]    = (g_app.m_gpiodEmul    == CGPIOD_EMUL_OUTPUT)  ? "output"   :
+                         (g_app.m_gpiodEmul    == CGPIOD_EMUL_SHUTTER) ? "shutter"  : "<unknown>";
+  vars["gpiodMode"]    = (g_app.m_gpiodMode    == CGPIOD_MODE_LOCAL)   ? "local"    :
+                         (g_app.m_gpiodMode    == CGPIOD_MODE_MQTT)    ? "MQTT"     :
+                         (g_app.m_gpiodMode    == CGPIOD_MODE_BOTH)    ? "both"     : "<unknown>";
+  vars["gpiodLock"]    = (g_app.m_gpiodLock    == CGPIOD_LOCK_TRUE)    ? "disabled" : "enabled";
+  vars["gpiodDisable"] = (g_app.m_gpiodDisable == CGPIOD_DISABLE_TRUE) ? "disabled" : "enabled";
 
   sprintf(buf, "%s/%s/%s/%s",
           g_gpiod.PrintObjSta2String(str0, CGPIOD_OBJ_CLS_INPUT | 0, g_gpiod.GetState(CGPIOD_OBJ_CLS_INPUT | 0)),
@@ -81,7 +80,7 @@ void httpOnStatus(HttpRequest &request, HttpResponse &response)
           g_gpiod.PrintObjSta2String(str3, CGPIOD_OBJ_CLS_INPUT | 3, g_gpiod.GetState(CGPIOD_OBJ_CLS_INPUT | 3)));
   vars["gpiodInputs"] = buf;
 
-  if (g_appCfg.gpiodEmul == CGPIOD_EMUL_OUTPUT)
+  if (g_app.m_gpiodEmul == CGPIOD_EMUL_OUTPUT)
     sprintf(buf, "%s/%s/%s/%s",
             g_gpiod.PrintObjSta2String(str0, CGPIOD_OBJ_CLS_OUTPUT | 0, g_gpiod.GetState(CGPIOD_OBJ_CLS_OUTPUT | 0)),
             g_gpiod.PrintObjSta2String(str1, CGPIOD_OBJ_CLS_OUTPUT | 1, g_gpiod.GetState(CGPIOD_OBJ_CLS_OUTPUT | 1)),
@@ -107,57 +106,10 @@ void httpOnStatus(HttpRequest &request, HttpResponse &response)
 
 
   // --- Statistics --------------------------------------------------
-  vars["mqttRx"]        = g_mqttPktRx;
-  vars["mqttRxDropped"] = g_mqttPktRxDropped;
-  vars["mqttTx"]        = g_mqttPktTx;
+  vars["mqttRx"]        = g_mqtt.GetNumAttr("mqttPktRx");
+  vars["mqttRxDropped"] = g_mqtt.GetNumAttr("mqttPktRxDropped");
+  vars["mqttTx"]        = g_mqtt.GetNumAttr("mqttPktTx");
     
-  response.sendTemplate(tmpl); // will be automatically deleted
-  } //
-
-//----------------------------------------------------------------------------
-//
-//----------------------------------------------------------------------------
-void httpOnTools(HttpRequest &request, HttpResponse &response)
-{
-    g_appCfg.load();
-
-    if (!g_http.isHttpClientAllowed(request, response))
-        return;
-
-    if (request.getRequestMethod() == RequestMethod::POST)
-    {
-        String command = request.getPostParameter("Command");
-        
-        if (command.equals("Upgrade")) {
-            g_appCfg.webOtaBaseUrl = request.getPostParameter("webOtaBaseUrl");
-
-            g_appCfg.save();
-
-            Debug.println("Going to call: StartOtaUpdateWeb()");
-            StartOtaUpdateWeb(g_appCfg.webOtaBaseUrl);
-            Debug.println("Called: StartOtaUpdateWeb()");
-        }
-        else if (command.equals("Restart")) {
-            Debug.println("Going to call: processRestartCommandWeb()");
-            processRestartCommandWeb();
-            Debug.println("Called: processRestartCommandWeb()");
-        }
-        else {
-            Debug.printf("Unknown command: [%s]\r\n", command.c_str());
-        }
-
-    }
-
-  TemplateFileStream *tmpl = new TemplateFileStream("tools.html");
-  auto &vars = tmpl->variables();
-
-  vars["appAlias"]     = szAPP_ALIAS;
-  vars["appAuthor"]    = szAPP_AUTHOR;
-  vars["appDesc"]      = szAPP_DESC;
-  vars["mqttClientId"] = g_appCfg.mqttClientId;
-
-  vars["webOtaBaseUrl"] = g_appCfg.webOtaBaseUrl;
-
   response.sendTemplate(tmpl); // will be automatically deleted
   } //
 
@@ -166,7 +118,7 @@ void httpOnTools(HttpRequest &request, HttpResponse &response)
 //----------------------------------------------------------------------------
 void httpOnFile(HttpRequest &request, HttpResponse &response)
 {
-  if (!g_http.isHttpClientAllowed(request, response))
+  if (!g_http.isClientAllowed(request, response))
     return;
 
   String file = request.getPath();
@@ -189,51 +141,47 @@ void httpOnFile(HttpRequest &request, HttpResponse &response)
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-bool HTTPClass::isHttpClientAllowed(HttpRequest &request, HttpResponse &response)
+bool CHttp::isClientAllowed(HttpRequest &request, HttpResponse &response)
 {
-    if (g_appCfg.apPswd.equals(""))
-        return true;
+  if (!strcmp(g_network.GetStrAttr("apPswd"), ""))
+      return true;
 
-    String authHeader = request.getHeader("Authorization");
-    char userpass[32+1+32+1];
-    if (!authHeader.equals("") && authHeader.startsWith("Basic"))
-    {
-        Debug.printf("Authorization header %s\n", authHeader.c_str());
-        int r = base64_decode(authHeader.length()-6,
-                              authHeader.substring(6).c_str(),
-                              sizeof(userpass),
-                              (unsigned char *)userpass);
-        if (r > 0)
-        {
-            userpass[r]=0; //zero-terminate user:pass string
-            Debug.printf("Authorization header decoded %s\n", userpass);
-            String validUserPass = "admin:" + g_appCfg.apPswd;
-            if (validUserPass.equals(userpass))
-            {
-                return true;
-            }
+  String authHeader = request.getHeader("Authorization");
+  char userpass[32+1+32+1];
+  if (!authHeader.equals("") && authHeader.startsWith("Basic")) {
+    Debug.printf("Authorization header %s\n", authHeader.c_str());
+    int r = base64_decode(authHeader.length() - 6, authHeader.substring(6).c_str(),
+                          sizeof(userpass), (unsigned char *)userpass);
+
+    if (r > 0) {
+      userpass[r]=0; //zero-terminate user:pass string
+      Debug.printf("Authorization header decoded %s\n", userpass);
+      String validUserPass = "admin:"; // + g_network.GetStrAttr("apPswd");
+      validUserPass += g_network.GetStrAttr("apPswd");
+      if (validUserPass.equals(userpass)) {
+        return true;
         }
+      }
     }
 
-    response.authorizationRequired();
-    response.setHeader("Content-Type", "text/plain");
-    response.setHeader("WWW-Authenticate",
-                       String("Basic realm=\"MySensors Gateway ") + system_get_chip_id() + "\"");
-    return false;
-  } //
+  response.authorizationRequired();
+  response.setHeader("Content-Type", "text/plain");
+  response.setHeader("WWW-Authenticate",
+                     String("Basic realm=\"MySensors Gateway ") + system_get_chip_id() + "\"");
+  return false;
+  } // isClientAllowed
 
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-void HTTPClass::wsConnected(WebSocket& socket)
+void CHttp::wsConnected(WebSocket& socket)
 {
-    //
   } //
 
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-void HTTPClass::wsMessageReceived(WebSocket& socket, const String& message)
+void CHttp::wsMessageReceived(WebSocket& socket, const String& message)
 {
   Vector<String> commandToken;
   int numToken = splitString((String &)message,' ' , commandToken);
@@ -253,7 +201,7 @@ void HTTPClass::wsMessageReceived(WebSocket& socket, const String& message)
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-void HTTPClass::wsBinaryReceived(WebSocket& socket, uint8_t* data, size_t size)
+void CHttp::wsBinaryReceived(WebSocket& socket, uint8_t* data, size_t size)
 {
 	Serial.printf("Websocket binary data recieved, size: %d\r\n", size);
   } //
@@ -261,15 +209,14 @@ void HTTPClass::wsBinaryReceived(WebSocket& socket, uint8_t* data, size_t size)
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-void HTTPClass::wsDisconnected(WebSocket& socket)
+void CHttp::wsDisconnected(WebSocket& socket)
 {
-    //
   } //
 
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-void HTTPClass::addWsCommand(String command, WebSocketMessageDelegate callback)
+void CHttp::addWsCommand(String command, WebSocketMessageDelegate callback)
 {
   debugf("'%s' registered", command.c_str());
   wsCommandHandlers[command] = callback;
@@ -278,7 +225,7 @@ void HTTPClass::addWsCommand(String command, WebSocketMessageDelegate callback)
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-void HTTPClass::notifyWsClients(String message)
+void CHttp::notifyWsClients(String message)
 {
   WebSocketsList &clients = m_server.getActiveWebSockets();
   for (int i = 0; i < clients.count(); i++)
@@ -288,15 +235,17 @@ void HTTPClass::notifyWsClients(String message)
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-void HTTPClass::begin()
+void CHttp::Init()
 {
   m_server.listen(80);
   m_server.enableHeaderProcessing("Authorization");
   m_server.addPath("/",        httpOnStatus);
   m_server.addPath("/status",  httpOnStatus);
-  m_server.addPath("/network", networkOnHttpConfig);
-  m_server.addPath("/tools",   httpOnTools);
-  m_server.addPath("/mqtt",    mqttOnHttpConfig);
+  m_server.addPath("/network", HttpPathDelegate(&CNetwork::OnHttpConfig, &g_network));
+  m_server.addPath("/tools",   HttpPathDelegate(&CApplication::OnHttpTools, &g_app));
+//  m_server.addPath("/tools",   httpOnTools);
+//  m_server.addPath("/mqtt",    mqttOnHttpConfig);
+  m_server.addPath("/mqtt",    HttpPathDelegate(&CMqtt::OnHttpConfig, &g_mqtt));
   m_server.addPath("/gpiod",   gpiodOnHttpConfig);
   m_server.addPath("/ats",     atsOnHttpQuery);
 
@@ -304,9 +253,9 @@ void HTTPClass::begin()
 
   // Web Sockets configuration
   m_server.enableWebSockets(true);
-  m_server.setWebSocketConnectionHandler(WebSocketDelegate(&HTTPClass::wsConnected, this));
-  m_server.setWebSocketMessageHandler(WebSocketMessageDelegate(&HTTPClass::wsMessageReceived, this));
-  m_server.setWebSocketBinaryHandler(WebSocketBinaryDelegate(&HTTPClass::wsBinaryReceived, this));
-  m_server.setWebSocketDisconnectionHandler(WebSocketDelegate(&HTTPClass::wsDisconnected, this));
-  } //
+  m_server.setWebSocketConnectionHandler(WebSocketDelegate(&CHttp::wsConnected, this));
+  m_server.setWebSocketMessageHandler(WebSocketMessageDelegate(&CHttp::wsMessageReceived, this));
+  m_server.setWebSocketBinaryHandler(WebSocketBinaryDelegate(&CHttp::wsBinaryReceived, this));
+  m_server.setWebSocketDisconnectionHandler(WebSocketDelegate(&CHttp::wsDisconnected, this));
+  } // Init
 

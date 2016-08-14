@@ -1,9 +1,15 @@
 
+//----------------------------------------------------------------------------
+// ota.cpp : OTA wrapper
+//
+// Copyright (c) Jo Simons, 2015-2016, All Rights Reserved.
+//----------------------------------------------------------------------------
 #include <user_config.h>
 #include <SmingCore/SmingCore.h>
 #include <SmingCore/Network/TelnetServer.h>
-#include <AppSettings.h>
+#include <app.h>
 #include <mqtt.h>
+#include <network.h>
 
 /*******/
 /* OTA */
@@ -26,12 +32,18 @@ rBootHttpUpdate* g_otaUpdater = 0;
 bool             g_otaInProgress = false;
 int              g_otaNumTrials = 0;
 
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 void StartOtaUpdate() 
 {
   g_otaNumTrials++;
   g_otaStartTimer.initializeMs(50, TimerDelegate(otaUpdateHandler)).start(false);
   } // 
 
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 void StartOtaUpdateWeb(String webOtaBaseUrl) 
 {
   Debug.println("====== In StartOtaUpdateWeb(). ======");
@@ -40,10 +52,13 @@ void StartOtaUpdateWeb(String webOtaBaseUrl)
   StartOtaUpdate();
   } //
 
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 void otaUpdate_CallBack(bool result) {
 	
     Debug.println("In OTA callback...");
-    if(result == true)
+    if (result == true)
     {
         // success
         uint8 slot;
@@ -51,7 +66,10 @@ void otaUpdate_CallBack(bool result) {
         if (slot == 0) slot = 1; else slot = 0;
 #ifndef DISABLE_SPIFFS
         Debug.printf("Firmware updated, storing g_appCfg to new spiffs...\r\n");
-        g_appCfg.load();
+        g_app.confLoad();
+        g_mqtt.confLoad();
+        g_network.confLoad();
+
         spiffs_unmount();
         if (slot == 0)
         {
@@ -73,7 +91,9 @@ void otaUpdate_CallBack(bool result) {
           spiffs_mount_manual(0x40500000, SPIFF_SIZE);
 #endif
         }
-      g_appCfg.save();
+      g_app.confSave();
+      g_mqtt.confSave();
+      g_network.confSave();
 #else
       Debug.printf("spiffs disabled");
 #endif
@@ -93,6 +113,9 @@ void otaUpdate_CallBack(bool result) {
     }
   } //
 
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 void otaUpdateHandler()
 {
 	uint8 slot;
@@ -127,6 +150,9 @@ void otaUpdateHandler()
 	g_otaUpdater->start();
   } //
 
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 void processUpgradeCommand(String commandLine, CommandOutput* out)
 {
   Vector<String> commandToken;
@@ -144,6 +170,9 @@ void processUpgradeCommand(String commandLine, CommandOutput* out)
     }
   } //
 
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
 void otaEnable()
 {
   commandHandler.registerCommand(CommandDelegate("upgrade",

@@ -49,10 +49,10 @@
     <div class="header">
         <nav>
             <ul class="nav nav-tabs">
-                <li role="presentation"><a href="/status"><b>{appAlias}@{mqttClientId}</b></a></li>
+                <li role="presentation"><a href="/status"><b>{appAlias}@{appNodeId}</b></a></li>
+                 <li role="presentation"><a href="/gpiod">App</a></li>
                 <li role="presentation" class="active"><a href="/network">Network</a></li>
                 <li role="presentation"><a href="/mqtt">MQTT</a></li>
-                 <li role="presentation"><a href="/gpiod">Gpiod</a></li>
                 <li role="presentation"><a href="/tools">Tools</a></li>
             </ul>
         </nav>
@@ -74,7 +74,7 @@
                  <td>
                     <div class="col-md-offset-2">
                         <div class="form-group">
-                            <input class="form-control" style="width: 250px" type="text" name="ssid" value="{ssid}">
+                            <input class="form-control" style="width: 250px" type="text" name="staSSID" value="{staSSID}">
                         </div>
                     </div>
 				 </td>
@@ -85,7 +85,7 @@
                  <td>
                     <div class="col-md-offset-2">
                         <div class="form-group">
-                            <input class="form-control" style="width: 250px" type="password" name="password" value="{password}">
+                            <input class="form-control" style="width: 250px" type="password" name="staPswd" value="{staPswd}">
                         </div>
                     </div>
 				 </td>
@@ -99,31 +99,7 @@
                  <td>
                     <div class="col-md-offset-2">
                         <div class="form-group">
-                            <input class="form-control" style="width: 250px" type="password" name="apPassword" value="{apPassword}">
-                        </div>
-                    </div>
-				 </td>
-               </tr>
-
-               <tr>
-                 <th colspan="2">Wifi portal login</th>
-               </tr>
-               <tr>
-                 <td>URL</td>
-                 <td>
-                    <div class="col-md-offset-2">
-                        <div class="form-group">
-                            <input class="form-control" style="width: 500px" type="text" name="portalUrl" value="{portalUrl}">
-                        </div>
-                    </div>
-				 </td>
-               </tr>
-               <tr>
-                 <td>Data</td>
-                 <td>
-                    <div class="col-md-offset-2">
-                        <div class="form-group">
-                            <input class="form-control" style="width: 500px" type="text" name="portalData" value="{portalData}">
+                            <input class="form-control" style="width: 250px" type="password" name="apPswd" value="{apPswd}">
                         </div>
                     </div>
 				 </td>
@@ -139,10 +115,10 @@
                         <div class="form-group">
                             <div class="checkbox">
                                 <label>
-                                    <input type="radio" value="1" name="dhcp" {dhcpon}> Yes
+                                    <input type="radio" value="1" name="staDHCP" {dhcpon}> Yes
                                 </label>
                                 <label>
-                                    <input type="radio" value="0" name="dhcp" {dhcpoff}> No
+                                    <input type="radio" value="0" name="staDHCP" {dhcpoff}> No
                                 </label>
                             </div>
                         </div>
@@ -154,7 +130,7 @@
                  <td>
                     <div class="col-md-offset-2">
                         <div class="form-group">
-                            <input class="form-control" style="width: 250px" type="text" name="ip" value="{ip}">
+                            <input class="form-control" style="width: 250px" type="text" name="staAddr" value="{staAddr}">
                         </div>
                     </div>
 				 </td>
@@ -164,7 +140,7 @@
                  <td>
                     <div class="col-md-offset-2">
                         <div class="form-group">
-                            <input class="form-control" style="width: 250px" type="text" name="netmask" value="{netmask}">
+                            <input class="form-control" style="width: 250px" type="text" name="staMask" value="{staMask}">
                         </div>
                     </div>
 				 </td>
@@ -174,7 +150,7 @@
                  <td>
                     <div class="col-md-offset-2">
                         <div class="form-group">
-                            <input class="form-control" style="width: 250px" type="text" name="gateway" value="{gateway}">
+                            <input class="form-control" style="width: 250px" type="text" name="staGtwy" value="{staGtwy}">
                         </div>
                     </div>
 				 </td>

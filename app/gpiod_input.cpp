@@ -4,7 +4,6 @@
 //
 // Copyright (c) Jo Simons, 2015-2016, All Rights Reserved.
 //----------------------------------------------------------------------------
-#include <AppSettings.h>
 #include <gpiod.h>
 
   //--------------------------------------------------------------------------
@@ -28,7 +27,7 @@
                           (dwObj == CGPIOD_IN3) ? CGPIOD_IN3_PIN : -1; 
       pObj->dwPol       = CGPIOD_IO_POL_INVERT;  
       pObj->dwVal       = CGPIOD_IN_VAL_OUT; 
-      pObj->tmrDebounce = g_appCfg.gpiodInDebounce[dwObj]; // CGPIOD_IN_TMR_DEBOUNCE; 
+      pObj->tmrDebounce = g_app.m_gpiodInDebounce[dwObj]; // CGPIOD_IN_TMR_DEBOUNCE; 
       pObj->msDebounce  = 0; 
       pObj->msState     = 0; 
       } // for
@@ -156,7 +155,7 @@
 
     do {
       // exit if cmds disabled
-      if (g_appCfg.gpiodDisable && (pCmd->dwError = XERROR_ACCESS)) {
+      if (g_app.m_gpiodDisable && (pCmd->dwError = XERROR_ACCESS)) {
         Debug.logTxt(CLSLVL_GPIOD_INPUT | 0x0010, "%s,disabled", pFunc);
         break;
         } // if
@@ -170,9 +169,9 @@
 
         case CGPIOD_IN_CMD_DEBOUNCE:
           // handle if config commands not locked
-          if ((pCmd->dwParms & CGPIOD_IN_PRM_DEBOUNCE) && !g_appCfg.gpiodLock) {
-            pObj->tmrDebounce                                              = pCmd->parmsInput.dwDebounce; 
-            g_appCfg.gpiodInDebounce[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK] = pCmd->parmsInput.dwDebounce;
+          if ((pCmd->dwParms & CGPIOD_IN_PRM_DEBOUNCE) && !g_app.m_gpiodLock) {
+            pObj->tmrDebounce                                          = pCmd->parmsInput.dwDebounce; 
+            g_app.m_gpiodInDebounce[pCmd->dwObj & CGPIOD_OBJ_NUM_MASK] = pCmd->parmsInput.dwDebounce;
             } // if
 
           // report current value
