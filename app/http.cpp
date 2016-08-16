@@ -20,102 +20,6 @@ CHttp                g_http;
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-void httpOnStatus(HttpRequest &request, HttpResponse &response)
-{
-  char               buf[200], str0[16], str1[16], str2[16], str3[16];
-  TemplateFileStream *tmpl = new TemplateFileStream("status.html");
-  auto               &vars = tmpl->variables();
-
-  vars["appAlias"]  = szAPP_ALIAS;
-  vars["appAuthor"] = szAPP_AUTHOR;
-  vars["appDesc"]   = szAPP_DESC;
-  vars["appNodeId"] = g_app.GetStrAttr("nodeId");
-
-  vars["staSSID"]   = g_network.GetStrAttr("staSSID");
-  vars["staStatus"] = g_network.staConnected() ? "Connected" : "Not connected";
-    
-  if (g_network.GetNumAttr("staDHCP"))
-    vars["staAddrOrigin"] = "DHCP";
-  else
-    vars["staAddrOrigin"] = "Static";
-
-  if (!g_network.staClientAddr().isNull())
-  {
-    vars["staAddr"] = g_network.staClientAddr().toString();
-    }
-  else
-  {
-    vars["staAddr"] = "0.0.0.0";
-    vars["staAddrOrigin"] = "not configured";
-    }
-
-//if (g_appCfg.mqttServer != "")
-//{
-    vars["mqttHost"]   = g_mqtt.GetStrAttr("mqttHost");
-    vars["mqttPort"]   = g_mqtt.GetNumAttr("mqttPort");
-    vars["mqttStatus"] = g_mqtt.IsConnected() ? "Connected" : "Not connected";
-//  }
-//else
-//{
-//  vars["mqttHost"]   = "0.0.0.0";
-//  vars["mqttPort"]   = "1883";
-//  vars["mqttStatus"] = "Not configured";
-//  }
-
-  vars["gpiodVersion"]  = szAPP_VERSION;
-  vars["gpiodTopology"] = szAPP_TOPOLOGY;
-
-  vars["gpiodEmul"]    = (g_app.m_gpiodEmul    == CGPIOD_EMUL_OUTPUT)  ? "output"   :
-                         (g_app.m_gpiodEmul    == CGPIOD_EMUL_SHUTTER) ? "shutter"  : "<unknown>";
-  vars["gpiodMode"]    = (g_app.m_gpiodMode    == CGPIOD_MODE_LOCAL)   ? "local"    :
-                         (g_app.m_gpiodMode    == CGPIOD_MODE_MQTT)    ? "MQTT"     :
-                         (g_app.m_gpiodMode    == CGPIOD_MODE_BOTH)    ? "both"     : "<unknown>";
-  vars["gpiodLock"]    = (g_app.m_gpiodLock    == CGPIOD_LOCK_TRUE)    ? "disabled" : "enabled";
-  vars["gpiodDisable"] = (g_app.m_gpiodDisable == CGPIOD_DISABLE_TRUE) ? "disabled" : "enabled";
-
-  sprintf(buf, "%s/%s/%s/%s",
-          g_gpiod.PrintObjSta2String(str0, CGPIOD_OBJ_CLS_INPUT | 0, g_gpiod.GetState(CGPIOD_OBJ_CLS_INPUT | 0)),
-          g_gpiod.PrintObjSta2String(str1, CGPIOD_OBJ_CLS_INPUT | 1, g_gpiod.GetState(CGPIOD_OBJ_CLS_INPUT | 1)),
-          g_gpiod.PrintObjSta2String(str2, CGPIOD_OBJ_CLS_INPUT | 2, g_gpiod.GetState(CGPIOD_OBJ_CLS_INPUT | 2)),
-          g_gpiod.PrintObjSta2String(str3, CGPIOD_OBJ_CLS_INPUT | 3, g_gpiod.GetState(CGPIOD_OBJ_CLS_INPUT | 3)));
-  vars["gpiodInputs"] = buf;
-
-  if (g_app.m_gpiodEmul == CGPIOD_EMUL_OUTPUT)
-    sprintf(buf, "%s/%s/%s/%s",
-            g_gpiod.PrintObjSta2String(str0, CGPIOD_OBJ_CLS_OUTPUT | 0, g_gpiod.GetState(CGPIOD_OBJ_CLS_OUTPUT | 0)),
-            g_gpiod.PrintObjSta2String(str1, CGPIOD_OBJ_CLS_OUTPUT | 1, g_gpiod.GetState(CGPIOD_OBJ_CLS_OUTPUT | 1)),
-            g_gpiod.PrintObjSta2String(str2, CGPIOD_OBJ_CLS_OUTPUT | 2, g_gpiod.GetState(CGPIOD_OBJ_CLS_OUTPUT | 2)),
-            g_gpiod.PrintObjSta2String(str3, CGPIOD_OBJ_CLS_OUTPUT | 3, g_gpiod.GetState(CGPIOD_OBJ_CLS_OUTPUT | 3)));
-  else
-    sprintf(buf, "%s/%s",
-            g_gpiod.PrintObjSta2String(str0, CGPIOD_OBJ_CLS_SHUTTER | 0, g_gpiod.GetState(CGPIOD_OBJ_CLS_SHUTTER | 0)),
-            g_gpiod.PrintObjSta2String(str1, CGPIOD_OBJ_CLS_SHUTTER | 1, g_gpiod.GetState(CGPIOD_OBJ_CLS_SHUTTER | 1)));
-  vars["gpiodOutputs"] = buf;
-
-   
-  // --- System info -------------------------------------------------
-  sprintf (buf, "%x", system_get_chip_id());
-  vars["systemVersion"]  = build_git_sha;
-  vars["systemBuild"]    = build_time;
-  vars["systemFreeHeap"] = system_get_free_heap_size();
-  vars["systemStartup"]  = "todo";
-  vars["systemChipId"]   = buf;
-  uint32_t curMillis     = millis();
-  sprintf(buf, "%d s, %03d ms : ", curMillis / 1000, curMillis % 1000);
-  vars["systemUptime"]   = buf;
-
-
-  // --- Statistics --------------------------------------------------
-  vars["mqttRx"]        = g_mqtt.GetNumAttr("mqttPktRx");
-  vars["mqttRxDropped"] = g_mqtt.GetNumAttr("mqttPktRxDropped");
-  vars["mqttTx"]        = g_mqtt.GetNumAttr("mqttPktTx");
-    
-  response.sendTemplate(tmpl); // will be automatically deleted
-  } //
-
-//----------------------------------------------------------------------------
-//
-//----------------------------------------------------------------------------
 void httpOnFile(HttpRequest &request, HttpResponse &response)
 {
   if (!g_http.isClientAllowed(request, response))
@@ -239,12 +143,10 @@ void CHttp::Init()
 {
   m_server.listen(80);
   m_server.enableHeaderProcessing("Authorization");
-  m_server.addPath("/",        httpOnStatus);
-  m_server.addPath("/status",  httpOnStatus);
+  m_server.addPath("/",        HttpPathDelegate(&CApplication::httpOnStatus, &g_app));
+  m_server.addPath("/status",  HttpPathDelegate(&CApplication::httpOnStatus, &g_app));
   m_server.addPath("/network", HttpPathDelegate(&CNetwork::OnHttpConfig, &g_network));
-  m_server.addPath("/tools",   HttpPathDelegate(&CApplication::OnHttpTools, &g_app));
-//  m_server.addPath("/tools",   httpOnTools);
-//  m_server.addPath("/mqtt",    mqttOnHttpConfig);
+  m_server.addPath("/tools",   HttpPathDelegate(&CApplication::httpOnTools, &g_app));
   m_server.addPath("/mqtt",    HttpPathDelegate(&CMqtt::OnHttpConfig, &g_mqtt));
   m_server.addPath("/gpiod",   gpiodOnHttpConfig);
   m_server.addPath("/ats",     atsOnHttpQuery);

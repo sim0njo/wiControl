@@ -22,9 +22,8 @@
 //----------------------------------------------------------------------------
 class CApplication {
  public: 
-  bool               m_cpuBoost = true;
+  bool               m_cpuBoost;
   String             m_otaBaseUrl;
-  String             m_nodeId;
   
   tUint32            m_gpiodEmul = 0;
   tUint32            m_gpiodMode = 3;
@@ -34,8 +33,6 @@ class CApplication {
   tUint32            m_gpiodInDebounce[4] = { 100, 100, 100, 100 };
   tUint32            m_gpiodOutDefRun[4]  = {   0,   0,   0,   0 };
   tUint32            m_gpiodUdmDefRun[4]  = {  30,  30,  30,  30 };
-
-  tUint32            m_dwLogLevel = 0x3FFF;
 
  private:
   tUint32            m_dwError;                    //
@@ -48,7 +45,10 @@ class CApplication {
 
  public:
   //--------------------------------------------------------------------------
-                     CApplication();
+  CApplication() {
+    m_cpuBoost   = false;
+    m_otaBaseUrl = "";
+    } //
 
 	void               Init();
 	void               StartServices();
@@ -59,8 +59,6 @@ class CApplication {
   void               ReportHeapUsage();
 
 	void               OnRun();
-
-  void               OnHttpTools(HttpRequest &request, HttpResponse &response);
 
   // app_attr.cpp
   tCChar*            GetStrAttr(tCChar* szAttr);
@@ -73,12 +71,18 @@ class CApplication {
   void               cmdOnCpu(String commandLine, CommandOutput* pOut);
   void               cmdOnDebug(String commandLine, CommandOutput* pOut);
   void               cmdOnRestart(String commandLine, CommandOutput* pOut);
+  void               cmdOnUpgrade(String commandLine, CommandOutput* pOut);
 
   // app_conf.cpp
   void               confLoad();
   void               confSave();
   void               confDelete();
   bool               confExists();
+
+  // app_http.cpp
+  void               httpOnStatus(HttpRequest &request, HttpResponse &response);
+  void               httpOnTools(HttpRequest &request, HttpResponse &response);
+
   }; // CApplication
 
 extern CApplication g_app;

@@ -11,8 +11,8 @@
 //----------------------------------------------------------------------------
 tCChar* CApplication::GetStrAttr(tCChar* szAttr) 
 {
-  if      (!strcmp(szAttr, "nodeId"))
-    return m_nodeId.c_str();
+//if      (!strcmp(szAttr, "nodeId"))
+//  return m_nodeId.c_str();
 
 //else if (!strcmp(szAttr, "cpuBoost"))
 //  return m_strUser.c_str();

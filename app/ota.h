@@ -9,6 +9,6 @@
 #include <SmingCore/SmingCore.h>
 #include <xstdafx.h>
 
-void                 StartOtaUpdateWeb(String);
+void                 otaStartUpdateHttp(String);
 
 #endif //__ota_h__

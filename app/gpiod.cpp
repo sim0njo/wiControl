@@ -4,7 +4,6 @@
 //
 // Copyright (c) Jo Simons, 2015-2016, All Rights Reserved.
 //----------------------------------------------------------------------------
-//#include <AppSettings.h>
 #include <http.h>
 #include <gpiod.h>
 
@@ -23,7 +22,7 @@ void                 gpiodOnHttpConfig(HttpRequest &request, HttpResponse &respo
   if (request.getRequestMethod() == RequestMethod::POST) {
     g_app.m_gpiodEmul    = (request.getPostParameter("gpiodEmul")    == "2") ? CGPIOD_EMUL_SHUTTER : CGPIOD_EMUL_OUTPUT;
     g_app.m_gpiodMode    = (request.getPostParameter("gpiodMode")    == "1") ? CGPIOD_MODE_LOCAL   : 
-                            (request.getPostParameter("gpiodMode")    == "2") ? CGPIOD_MODE_MQTT    : CGPIOD_MODE_BOTH;
+                           (request.getPostParameter("gpiodMode")    == "2") ? CGPIOD_MODE_MQTT    : CGPIOD_MODE_BOTH;
     g_app.m_gpiodLock    = (request.getPostParameter("gpiodLock")    == "1") ? CGPIOD_LOCK_TRUE    : CGPIOD_LOCK_FALSE;
     g_app.m_gpiodDisable = (request.getPostParameter("gpiodDisable") == "1") ? CGPIOD_DISABLE_TRUE : CGPIOD_DISABLE_FALSE;
     g_app.confSave();
@@ -145,11 +144,6 @@ void CGpiod::OnRun()
     _shutterOnRun(msNow);
 #endif
 
-  // periodic checking of wifi connection
-//if (++m_dwTicks > (CGPIOD_PERIOD_NETWCHECK / CAPP_PERIOD)) {
-//  checkConnection();
-//  m_dwTicks = 0;
-//  } //
   } // OnRun
 
 //--------------------------------------------------------------------------
@@ -327,41 +321,3 @@ tUint32 CGpiod::DoCmd(tGpiodCmd* pCmd)
   return dwErr;
   } // DoCmd
 
-//----------------------------------------------------------------------------
-// begin GPIOD
-//----------------------------------------------------------------------------
-/*
-void CGpiod::begin()
-{
-  Debug.logTxt(CLSLVL_GPIOD | 0x0000, "CGpiod::begin");
-  OnConfig();
-  OnInit();
-
-  m_timerMqtt.initializeMs(1000, TimerDelegate(&CGpiod::checkConnection, this)).start(true);
-  m_timerRoot.initializeMs(50,   TimerDelegate(&CGpiod::OnRun, this)).start(true);
-  } // begin
-*/
-/*
-//----------------------------------------------------------------------------
-//
-//----------------------------------------------------------------------------
-void CGpiod::checkConnection()
-{
-  tChar str[32];
-
-  if (WifiStation.isConnected()) {
-    
-    if (mqttCheckClient()) {
-      // subscribe to cmd and cfg topics
-      Debug.logTxt(CLSLVL_GPIOD | 0x0010, "CGpiod::checkConnection,subscribe <node-id>/cmd/#");
-      mqttSubscribe("cmd/#");
-
-      // publish boot messages
-      Debug.logTxt(CLSLVL_GPIOD | 0x0030, "CGpiod::checkConnection,publish <node-id>/evt/boot");
-      gsprintf(str, "%s;%s", szAPP_VERSION, szAPP_TOPOLOGY);
-      mqttPublish(CGPIOD_EVT_PFX, "boot", str);
-      }
-
-    } 
-  } // checkConnection
-*/

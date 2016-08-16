@@ -20,8 +20,8 @@ tCChar* CMqtt::GetStrAttr(tCChar* szAttr)
   else if (!strcmp(szAttr, "mqttPswd"))
     return m_strPswd.c_str();
 
-  else if (!strcmp(szAttr, "mqttClientId"))
-    return m_strClientId.c_str();
+  else if (!strcmp(szAttr, "mqttNodeId"))
+    return m_strNodeId.c_str();
 
   return "";
   } //

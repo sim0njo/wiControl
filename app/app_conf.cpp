@@ -38,7 +38,6 @@ void CApplication::confLoad()
     fileGetContent(CAPP_CONF_FILE, strJson, size + 1);
     JsonObject& root = jsonBuffer.parseObject(strJson);
 
-    m_nodeId             = (const char *)root["nodeId"];
     m_cpuBoost           = root["cpuBoost"];
     m_otaBaseUrl         = (const char *)root["otaBaseUrl"];
 
@@ -72,10 +71,6 @@ void CApplication::confSave()
   DynamicJsonBuffer jsonBuffer;
   JsonObject& root = jsonBuffer.createObject();
 
-  if (confExists()) 
-    confDelete();
-
-  root["nodeId"]      = m_nodeId.c_str();
   root["cpuBoost"]    = m_cpuBoost;
   root["otaBaseUrl"]  = m_otaBaseUrl.c_str();
 

@@ -15,11 +15,22 @@
 #include <ota.h>
 
 CApplication         g_app;
-
-//FTPServer            g_ftp;
 TelnetServer         g_telnet;
-//static boolean g_firstTime = TRUE;
-//int            g_isNetworkConnected = FALSE;
+//FTPServer            g_ftp;
+
+//----------------------------------------------------------------------------
+// Sming Framework INIT method - called during boot
+//----------------------------------------------------------------------------
+void init()
+{
+  Serial.begin(SERIAL_BAUD_RATE); // 115200 by default
+  Serial.systemDebugOutput(true); // Enable debug output to serial
+
+  g_app.Init();
+
+  // start servers on system ready
+	System.onReady(SystemReadyDelegate(&CApplication::StartServices, &g_app));
+  } // init
 
 //----------------------------------------------------------------------------
 // callback function for network notifications
@@ -39,42 +50,8 @@ void OnNetworkEvent(int event)
 
   else {
     }
-/*
-  g_isNetworkConnected = connected;
-  if (connected) {
-    Debug.println("--> Wifi CONNECTED");
-    if (g_firstTime) 
-      g_firstTime = FALSE;
-    }
-  else
-    Debug.println("--> Wifi DISCONNECTED");
-*/
+
   } // OnNetworkEvent
-
-//----------------------------------------------------------------------------
-// Sming Framework INIT method - called during boot
-//----------------------------------------------------------------------------
-void init()
-{
-  Serial.begin(SERIAL_BAUD_RATE); // 115200 by default
-  Serial.systemDebugOutput(true); // Enable debug output to serial
-
-  g_app.Init();
-
-  // start servers on system ready
-	System.onReady(SystemReadyDelegate(&CApplication::StartServices, &g_app));
-  } // init
-
-//----------------------------------------------------------------------------
-//
-//----------------------------------------------------------------------------
-CApplication::CApplication() {
-  tChar str[16];
-
-  // compose default node-id
-  sprintf(str, "%x", system_get_chip_id());
-  m_nodeId = str;
-  } //
 
 //----------------------------------------------------------------------------
 //
@@ -114,10 +91,7 @@ void CApplication::Init() {
   Serial.commandProcessing(true);
   Debug.start();
 
-  // set node-id as MQTT client-id
   confLoad();
-//g_mqtt.SetClientId(m_appNodeId.c_str());
-
   cmdInit();
 
   // Start either wired or wireless networking
@@ -182,7 +156,7 @@ void CApplication::CheckConnection()
 
   if (WifiStation.isConnected()) {
     
-    if (g_mqtt.CheckClient(m_nodeId.c_str())) {
+    if (g_mqtt.CheckClient()) {
       // subscribe to cmd and cfg topics
       Debug.logTxt(CLSLVL_GPIOD | 0x0010, "CApp::CheckConnection,subscribe <node-id>/cmd/#");
       g_mqtt.Subscribe("cmd/#");
@@ -239,51 +213,5 @@ void CApplication::Reset() {
 //	rgbwwctrl.color_reset();
 //	network.forget_wifi();
 	Restart(500);
-  } //
-
-//----------------------------------------------------------------------------
-//
-//----------------------------------------------------------------------------
-void CApplication::OnHttpTools(HttpRequest &request, HttpResponse &response)
-{
-//    g_appCfg.load();
-
-  if (!g_http.isClientAllowed(request, response))
-    return;
-
-  if (request.getRequestMethod() == RequestMethod::POST) {
-    String command = request.getPostParameter("Command");
-        
-    if (command.equals("Upgrade")) {
-      m_otaBaseUrl = request.getPostParameter("webOtaBaseUrl");
-      confSave();
-
-      Debug.println("Going to call: StartOtaUpdateWeb()");
-      StartOtaUpdateWeb(m_otaBaseUrl);
-      Debug.println("Called: StartOtaUpdateWeb()");
-      }
-
-    else if (command.equals("Restart")) {
-      Debug.println("Going to call: processRestartCommandWeb()");
-      Restart(0);
-      Debug.println("Called: processRestartCommandWeb()");
-      }
-
-    else {
-      Debug.printf("Unknown command: [%s]\r\n", command.c_str());
-      }
-
-    }
-
-  TemplateFileStream *tmpl = new TemplateFileStream("tools.html");
-  auto &vars = tmpl->variables();
-
-  vars["appAlias"]   = szAPP_ALIAS;
-  vars["appAuthor"]  = szAPP_AUTHOR;
-  vars["appDesc"]    = szAPP_DESC;
-  vars["appNodeId"]  = m_nodeId;
-  vars["otaBaseUrl"] = m_otaBaseUrl;
-
-  response.sendTemplate(tmpl); // will be automatically deleted
   } //
 

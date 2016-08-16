@@ -21,7 +21,7 @@
     <div class="header">
         <nav>
             <ul class="nav nav-tabs">
-                <li role="presentation" class="active"><a href="/status"><b>{appAlias}@{appNodeId}</b></a></li>
+                <li role="presentation" class="active"><a href="/status"><b>{appAlias}</b></a></li>
                 <li role="presentation"><a href="/gpiod">App</a></li>
                 <li role="presentation"><a href="/network">Network</a></li>
                 <li role="presentation"><a href="/mqtt">MQTT</a></li>
@@ -38,7 +38,7 @@
            <table class="table table-bordered">
              <tbody>
                <tr>
-                 <th colspan="2">Gpiod</th>
+                 <th colspan="2">App</th>
                </tr>
                <tr>
                  <td>Version</td>
@@ -58,7 +58,7 @@
                </tr>
                <tr>
                  <td>Broker</td>
-                 <td>{mqttHost}:{mqttPort}, {mqttStatus}</td>
+                 <td>{mqttStatus}</td>
                </tr>
                <tr>
                  <td>Statistics</td>
@@ -70,11 +70,11 @@
                </tr>
                <tr>
                  <td>Wifi Network</td>
-                 <td>{staSSID}, {staStatus}</td>
+                 <td>{staStatus}</td>
                </tr>
                <tr>
-                 <td>IP Address</td>
-                 <td>{staAddr}, {staAddrOrigin}</td>
+                 <td>Wifi AP</td>
+                 <td>{apStatus}</td>
                </tr>
 
                <tr>

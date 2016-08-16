@@ -26,7 +26,9 @@ void CMqtt::confDelete() {
 //----------------------------------------------------------------------------
 void CMqtt::confLoad()
 {
+  char              str[32];
   DynamicJsonBuffer jsonBuffer;
+  tUint32           dwVersion;
 
   if (!confExists()) 
     confSave();
@@ -38,11 +40,23 @@ void CMqtt::confLoad()
     fileGetContent(CMQTT_CONF_FILE, strJson, size + 1);
     JsonObject& root = jsonBuffer.parseObject(strJson);
 
-    m_strHost     = (const char *)root["Host"];
-    m_dwPort      =               root["Port"];
-    m_strUser     = (const char *)root["User"];
-    m_strPswd     = (const char *)root["Pswd"];
-//  m_strClientId = (const char *)root["ClientId"];
+//  dwVersion = root["version"];
+//  Debug.printf("CMqtt::confLoad,version = %u\r\n", dwVersion);
+//  if (!root.containsKey("version")) {
+//    }
+
+    m_strHost   = (const char *)root["host"];
+    m_dwPort    =               root["port"];
+    m_strUser   = (const char *)root["user"];
+    m_strPswd   = (const char *)root["pswd"];
+    m_strNodeId = (const char *)root["nodeId"];
+
+    if (m_strNodeId.equals("")) {
+      sprintf(str, "%x", system_get_chip_id());
+      m_strNodeId = str;
+      confSave();
+      Debug.printf("CMqtt::confLoad,nodeId = %s\r\n", m_strNodeId.c_str());
+      }
 
     delete[] strJson;
     }
@@ -56,14 +70,11 @@ void CMqtt::confSave()
   DynamicJsonBuffer jsonBuffer;
   JsonObject& root = jsonBuffer.createObject();
 
-  if (confExists()) 
-    confDelete();
-
-  root["Host"]     = m_strHost.c_str();
-  root["Port"]     = m_dwPort;
-  root["User"]     = m_strUser.c_str();
-  root["Pswd"]     = m_strPswd.c_str();
-//root["ClientId"] = m_strClientId.c_str();
+  root["host"]   = m_strHost.c_str();
+  root["port"]   = m_dwPort;
+  root["user"]   = m_strUser.c_str();
+  root["pswd"]   = m_strPswd.c_str();
+  root["nodeId"] = m_strNodeId.c_str();
 
   // write to file
   String strRoot;

@@ -17,7 +17,7 @@ class CMqtt {
   tUint32            m_dwPort = 1883;
   String             m_strUser;
   String             m_strPswd;
-  String             m_strClientId;
+  String             m_strNodeId;
 
   MqttClient*        m_pClient = NULL;
   tUint32            m_bIsConnected = FALSE;
@@ -28,19 +28,18 @@ class CMqtt {
 
  public:
   // mqtt.cpp
-                     CMqtt();
-
-  tCChar*            GetStrAttr(tCChar* szAttr);
-  tUint32            GetNumAttr(tCChar* szAttr);
-
-  tUint32            StartClient(tCChar* szClientId);
-  tUint32            CheckClient(tCChar* szClientId);
+  tUint32            StartClient();
+  tUint32            CheckClient();
   void               Subscribe(tCChar* szTopicFilter);
   void               Publish(tCChar* szPfx, tCChar* szTopic, tCChar* szMsg);
   tUint32            IsConnected();
 
   void               OnHttpConfig(HttpRequest &request, HttpResponse &response);
   void               OnPublish(String strTopic, String strMsg);
+
+  // mqtt_attr.cpp
+  tCChar*            GetStrAttr(tCChar* szAttr);
+  tUint32            GetNumAttr(tCChar* szAttr);
 
   // mqtt_conf.cpp
   bool               confExists();

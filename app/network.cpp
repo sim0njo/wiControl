@@ -15,9 +15,6 @@
 CNetwork             g_network;
 Timer                g_apSetPasswordTimer;
 
-extern void  otaEnable();
-
-
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
@@ -32,11 +29,6 @@ void networkOnEvent(System_Event_t *e)
 void CNetwork::Init(NetworkEventDelegate dlg)
 {
   WifiStation.enable(false);
-
-  confDelete();
-  m_staSSID = "ASTR76-R1";
-  m_staPswd = "alcatel-lucent";
-
   confLoad();
   m_OnEvent = dlg;
 
@@ -54,51 +46,14 @@ void CNetwork::Init(NetworkEventDelegate dlg)
   // This will work both for wired and wireless
   wifi_set_event_handler_cb(networkOnEvent);
 
-//if (!m_bWired) {
-    if (m_staSSID.equals("")) {
-      WifiStation.enable(false);
-      }
-    else {
-      staReconnect(1);
-      }
-//  }
+  if (m_staSSID.equals("")) {
+    WifiStation.enable(false);
+    }
+  else {
+    staReconnect(1);
+    }
 
-  otaEnable();    
   } // Init
-
-//----------------------------------------------------------------------------
-//
-//----------------------------------------------------------------------------
-tCChar* CNetwork::GetStrAttr(tCChar* szAttr) 
-{
-  if      (!strcmp(szAttr, "staSSID"))
-    return m_staSSID.c_str();
-
-  else if (!strcmp(szAttr, "staPswd"))
-    return m_staPswd.c_str();
-
-  else if (!strcmp(szAttr, "staAddr"))
-    return WifiStation.getIP().toString().c_str();
-
-  else if (!strcmp(szAttr, "staMask"))
-    return WifiStation.getNetworkMask().toString().c_str();
-
-  else if (!strcmp(szAttr, "staGtwy"))
-    return WifiStation.getNetworkGateway().toString().c_str();
-
-  return "";
-  } //
-
-tUint32 CNetwork::GetNumAttr(tCChar* szAttr) 
-{
-  if      (!strcmp(szAttr, "apMode"))
-    return m_apMode;
-
-  else if (!strcmp(szAttr, "staDHCP"))
-    return m_staDHCP;
-
-  return 0;
-  } //
 
 //----------------------------------------------------------------------------
 // 
@@ -109,11 +64,6 @@ void CNetwork::OnHttpConfig(HttpRequest &request, HttpResponse &response)
     return;
 
   if (request.getRequestMethod() == RequestMethod::POST) {
-//  bool connectionTypeChanges =
-//   	m_bWired != (request.getPostParameter("wired") == "1");
-
-//  m_bWired  = request.getPostParameter("wired") == "1";
-
     String oldApPswd = m_apPswd;
     m_apPswd = request.getPostParameter("apPswd");
 
@@ -142,7 +92,6 @@ void CNetwork::OnHttpConfig(HttpRequest &request, HttpResponse &response)
   vars["appAlias"]  = szAPP_ALIAS;
   vars["appAuthor"] = szAPP_AUTHOR;
   vars["appDesc"]   = szAPP_DESC;
-  vars["appNodeId"] = g_app.GetStrAttr("nodeId");
 
   vars["staSSID"]   = m_staSSID;
   vars["staPswd"]   = m_staPswd;
@@ -166,24 +115,24 @@ void CNetwork::OnCmdApMode(String commandLine, CommandOutput* pOut)
   Vector<String> commandToken;
   int numToken = splitString(commandLine, ' ' , commandToken);
 
-    if (numToken != 2 ||
-        (commandToken[1] != "always" && commandToken[1] != "never" &&
-         commandToken[1] != "whenDisconnected"))
-    {
-      pOut->printf("Usage : \r\n\r\n");
-      pOut->printf("  apMode always           : Always have the AP enabled\r\n");
-      pOut->printf("  apMode never            : Never have the AP enabled\r\n");
-      pOut->printf("  apMode whenDisconnected : Only enable the AP when disconnected\r\n");
-      pOut->printf("                            from the network\r\n");
-      return;
-      }
+  if (numToken != 2 ||
+      (commandToken[1] != "always" && commandToken[1] != "never" &&
+       commandToken[1] != "whenDisconnected"))
+  {
+    pOut->printf("Usage : \r\n\r\n");
+    pOut->printf("  apMode always           : Always have the AP enabled\r\n");
+    pOut->printf("  apMode never            : Never have the AP enabled\r\n");
+    pOut->printf("  apMode whenDisconnected : Only enable the AP when disconnected\r\n");
+    pOut->printf("                            from the network\r\n");
+    return;
+    }
 
-    if      (commandToken[1] == "always")
-      m_apMode = CNETWORK_AP_MODE_ALWAYS_ON;
-    else if (commandToken[1] == "never")
-      m_apMode = CNETWORK_AP_MODE_ALWAYS_OFF;
-    else
-      m_apMode = CNETWORK_AP_MODE_WHEN_DISCONNECTED;
+  if      (commandToken[1] == "always")
+    m_apMode = CNETWORK_AP_MODE_ALWAYS_ON;
+  else if (commandToken[1] == "never")
+    m_apMode = CNETWORK_AP_MODE_ALWAYS_OFF;
+  else
+    m_apMode = CNETWORK_AP_MODE_WHEN_DISCONNECTED;
 
   confSave();
 
@@ -191,6 +140,22 @@ void CNetwork::OnCmdApMode(String commandLine, CommandOutput* pOut)
     m_OnEvent(CNETWORK_EVT_NEEDSRESTART);
 
   } // CNetwork::OnCmdApMode
+
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
+bool CNetwork::apEnabled()
+{
+  return WifiAccessPoint.isEnabled();
+  } // CNetwork::apEnabled
+
+//----------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------
+IPAddress CNetwork::apServerAddr()
+{
+  return WifiAccessPoint.getIP();
+  } //
 
 //----------------------------------------------------------------------------
 //

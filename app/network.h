@@ -37,22 +37,29 @@ class CNetwork {
                            0,
                            NtpTimeResultDelegate(&CNetwork::OnNtpTimeResult, this))
   {
-//  m_bWired       = false;
     m_apMode       = CNETWORK_AP_MODE_ALWAYS_ON;
+    m_apPswd       = "";
+
+    m_staSSID      = "";
+    m_staPswd      = "";
     m_staDHCP      = true;
+    m_staAddr      = "0.0.0.0";
+    m_staMask      = "0.0.0.0";
+    m_staGtwy      = "0.0.0.0";
+
     m_staConnected = false;
+    m_bHasIp       = false;
     };
 
-  tCChar*            GetStrAttr(tCChar* szAttr);
-  tUint32            GetNumAttr(tCChar* szAttr);
-
   void               Init(NetworkEventDelegate dlg = NULL);
-
   void               OnHttpConfig(HttpRequest &request, HttpResponse &response);
   void               OnCmdApMode(String commandLine, CommandOutput* pOut);
+  void               OnEvent(System_Event_t *e);
 
   void               apEnable();
   void               apDisable();
+  bool               apEnabled();
+  IPAddress          apServerAddr();
 
   void               staConnect();
   void               staReconnect(int delayMs);
@@ -62,35 +69,34 @@ class CNetwork {
   IPAddress          staClientMask();
   IPAddress          staClientGtwy();
     
+  // network_attr.cpp
+  tCChar*            GetStrAttr(tCChar* szAttr);
+  tUint32            GetNumAttr(tCChar* szAttr);
+
   // network_conf.cpp
   bool               confExists();
   void               confDelete();
   void               confLoad();
   void               confSave();
 
-  void               OnEvent(System_Event_t *e);
-
  private:
   void               OnNtpTimeResult(NtpClient& client, time_t ntpTime);
 
- private:
-//int                m_bWired;
-  
-  tUint32            m_apMode = CNETWORK_AP_MODE_ALWAYS_ON;
+  tUint32            m_apMode;
   String             m_apPswd;
 
   String             m_staSSID;
   String             m_staPswd;
-  bool               m_staDHCP = true;
+  bool               m_staDHCP;
   IPAddress          m_staAddr;
   IPAddress          m_staMask;
   IPAddress          m_staGtwy;
 
-  bool               m_staConnected = false;
+  bool               m_staConnected;
+  bool               m_bHasIp;
   Timer              m_timerReconnect;
 
   NetworkEventDelegate m_OnEvent;
-  bool               m_bHasIp = false;
   NtpClient          m_ntpClient;
   };
 

@@ -20,7 +20,7 @@
 #endif
 
 void otaUpdateHandler();
-void otaUpdate_CallBack(bool result);
+void otaUpdateCallBack(bool result);
 
 
 #define ROM_0_FNAME "/rom0.bin"
@@ -35,7 +35,7 @@ int              g_otaNumTrials = 0;
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-void StartOtaUpdate() 
+void otaStartUpdate() 
 {
   g_otaNumTrials++;
   g_otaStartTimer.initializeMs(50, TimerDelegate(otaUpdateHandler)).start(false);
@@ -44,18 +44,18 @@ void StartOtaUpdate()
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-void StartOtaUpdateWeb(String webOtaBaseUrl) 
+void otaStartUpdateHttp(String otaBaseUrl) 
 {
-  Debug.println("====== In StartOtaUpdateWeb(). ======");
-  g_otaBaseUrl = webOtaBaseUrl;
+  Debug.println("====== In otaStartUpdateHttp(). ======");
+  g_otaBaseUrl = otaBaseUrl;
   Debug.printf("Starting upgrade with images from %s\r\n", g_otaBaseUrl.c_str());
-  StartOtaUpdate();
+  otaStartUpdate();
   } //
 
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-void otaUpdate_CallBack(bool result) {
+void otaUpdateCallBack(bool result) {
 	
     Debug.println("In OTA callback...");
     if (result == true)
@@ -66,9 +66,9 @@ void otaUpdate_CallBack(bool result) {
         if (slot == 0) slot = 1; else slot = 0;
 #ifndef DISABLE_SPIFFS
         Debug.printf("Firmware updated, storing g_appCfg to new spiffs...\r\n");
-        g_app.confLoad();
-        g_mqtt.confLoad();
-        g_network.confLoad();
+//      g_app.confLoad();
+//      g_mqtt.confLoad();
+//      g_network.confLoad();
 
         spiffs_unmount();
         if (slot == 0)
@@ -107,7 +107,7 @@ void otaUpdate_CallBack(bool result) {
       // fail
       Debug.println("Firmware update failed!");
       if (g_otaNumTrials < 6)
-        StartOtaUpdate();
+        otaStartUpdate();
       else
         g_otaNumTrials = 0;
     }
@@ -144,7 +144,7 @@ void otaUpdateHandler()
 #endif
 
 	// set a callback (called on failure or success without switching requested)
-	g_otaUpdater->setCallback(otaUpdateDelegate(otaUpdate_CallBack));
+	g_otaUpdater->setCallback(otaUpdateDelegate(otaUpdateCallBack));
 
 	// start update
 	g_otaUpdater->start();
@@ -153,7 +153,7 @@ void otaUpdateHandler()
 //----------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------
-void processUpgradeCommand(String commandLine, CommandOutput* out)
+void otaCmdOnUpgrade(String commandLine, CommandOutput* out)
 {
   Vector<String> commandToken;
   int numToken = splitString(commandLine, ' ' , commandToken);
@@ -166,7 +166,7 @@ void processUpgradeCommand(String commandLine, CommandOutput* out)
   {
     g_otaBaseUrl = commandToken[1];
     out->printf("Starting upgrade with images from %s\r\n", g_otaBaseUrl.c_str());
-    StartOtaUpdate();
+    otaStartUpdate();
     }
   } //
 
@@ -178,6 +178,6 @@ void otaEnable()
   commandHandler.registerCommand(CommandDelegate("upgrade",
                                                  "Upgrade the system",
                                                  "System",
-                                                 processUpgradeCommand));
+                                                 otaCmdOnUpgrade));
   } //
 

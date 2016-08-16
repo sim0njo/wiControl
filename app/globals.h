@@ -9,8 +9,6 @@
 
 extern const char* build_time;
 extern const char* build_git_sha;
-//extern int         g_isNetworkConnected;
-/* why is type bool not known ?*/
 
 
 #define szAPP_ALIAS                    "wiControl" //

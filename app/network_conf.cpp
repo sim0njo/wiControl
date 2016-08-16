@@ -38,8 +38,6 @@ void CNetwork::confLoad()
     fileGetContent(CNETWORK_CONF_FILE, strJson, size + 1);
     JsonObject& root = jsonBuffer.parseObject(strJson);
 
-//  m_bWired = false; // root["wired"];
-
     if (!root.containsKey("apMode"))
       m_apMode = CNETWORK_AP_MODE_ALWAYS_ON;
     else {
@@ -48,8 +46,6 @@ void CNetwork::confLoad()
         m_apMode = CNETWORK_AP_MODE_ALWAYS_ON;
       else if (apMode.equals("never"))
         m_apMode = CNETWORK_AP_MODE_ALWAYS_OFF;
-//    else if (apMode.equals("whenDisconnected"))
-//      m_apMode = CNETWORK_AP_MODE_WHEN_DISCONNECTED;
       else
         m_apMode = CNETWORK_AP_MODE_WHEN_DISCONNECTED;
       } // else
@@ -73,11 +69,6 @@ void CNetwork::confSave()
 {
   DynamicJsonBuffer jsonBuffer;
   JsonObject& root = jsonBuffer.createObject();
-
-  if (confExists()) 
-    confDelete();
-
-//root["wired"]   = m_bWired;
 
   root["apMode"]  = (m_apMode == CNETWORK_AP_MODE_ALWAYS_ON)  ? "always" :
                     (m_apMode == CNETWORK_AP_MODE_ALWAYS_OFF) ? "never"  : "whenDisconnected";
